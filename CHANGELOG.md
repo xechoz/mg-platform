@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — 2026-10-24
 
 ### 移动端全屏与 PWA
 
