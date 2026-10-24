@@ -22,6 +22,7 @@ export class Button extends Phaser.GameObjects.Container {
   private readonly variant: ButtonVariant
   private enabled = true
   private hovered = false
+  private pressed = false
   private onClickHandler: () => void
 
   constructor(
@@ -55,23 +56,25 @@ export class Button extends Phaser.GameObjects.Container {
     this.redraw()
 
     const canHover = window.matchMedia('(hover: hover)').matches
-    if (canHover) {
-      this.zone.on('pointerover', () => {
-        this.hovered = true
-        this.redraw()
-        scene.tweens.add({ targets: this, scale: 1.03, duration: 90, ease: 'Quad.out' })
-      })
-      this.zone.on('pointerout', () => {
-        this.hovered = false
-        this.redraw()
-        scene.tweens.add({ targets: this, scale: 1, duration: 90, ease: 'Quad.out' })
-      })
-    }
+    this.zone.on('pointerover', () => {
+      if (!canHover) return
+      this.hovered = true
+      this.redraw()
+      scene.tweens.add({ targets: this, scale: 1.03, duration: 90, ease: 'Quad.out' })
+    })
+    this.zone.on('pointerout', () => {
+      this.hovered = false
+      this.cancelPress()
+      this.redraw()
+    })
+    this.zone.on('pointerupoutside', () => this.cancelPress())
     this.zone.on('pointerdown', () => {
+      this.pressed = true
       scene.tweens.add({ targets: this, scale: 0.97, duration: 60, ease: 'Quad.out' })
     })
     this.zone.on('pointerup', () => {
-      if (!this.enabled) return
+      if (!this.enabled || !this.pressed) return
+      this.pressed = false
       scene.tweens.add({ targets: this, scale: this.hovered ? 1.03 : 1, duration: 90 })
       this.onClickHandler()
     })
@@ -91,10 +94,17 @@ export class Button extends Phaser.GameObjects.Container {
 
   setEnabled(enabled: boolean): this {
     this.enabled = enabled
+    this.pressed = false
     this.setAlpha(enabled ? 1 : 0.45)
     if (enabled) this.zone.setInteractive({ useHandCursor: true })
     else this.zone.disableInteractive()
     return this
+  }
+
+  private cancelPress(): void {
+    if (!this.pressed) return
+    this.pressed = false
+    this.scene.tweens.add({ targets: this, scale: this.hovered ? 1.03 : 1, duration: 90 })
   }
 
   private labelColor(): string {
