@@ -36,7 +36,15 @@ export { PreloadScene } from './scenes/PreloadScene'
 export { SaveStore, type SaveStoreOptions } from './storage/SaveStore'
 export { type Settings, SettingsStore } from './storage/settings'
 export { Button, type ButtonOptions, type ButtonVariant } from './ui/Button'
+export { drawIcon, type IconName } from './ui/icons'
 export { Modal, type ModalAction, type ModalOptions } from './ui/Modal'
 export { createPanel } from './ui/panel'
-export { cssColor, defaultTheme, type Theme, textStyle } from './ui/theme'
+export {
+  cssColor,
+  defaultTheme,
+  displayTextStyle,
+  mixColor,
+  type Theme,
+  textStyle,
+} from './ui/theme'
 export type { Lang }

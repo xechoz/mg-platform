@@ -1,9 +1,10 @@
 import Phaser from 'phaser'
 import { maybeEnterFullscreen } from '../app/fullscreen'
 import { getServices } from '../app/services'
-import { cssColor, textStyle } from '../ui/theme'
+import { drawIcon } from '../ui/icons'
+import { cssColor, displayTextStyle, mixColor, textStyle } from '../ui/theme'
 
-const BAR_WIDTH = 420
+const BAR_WIDTH = 360
 
 /**
  * Loads the game's asset manifest, then shows a tap gate. The tap unlocks
@@ -11,6 +12,8 @@ const BAR_WIDTH = 420
  */
 export class PreloadScene extends Phaser.Scene {
   private loadingText?: Phaser.GameObjects.Text
+  private loadingTrack?: Phaser.GameObjects.Graphics
+  private loadingBar?: Phaser.GameObjects.Rectangle
 
   constructor() {
     super('Preload')
@@ -25,34 +28,45 @@ export class PreloadScene extends Phaser.Scene {
       (assets?.images?.length ?? 0) + (assets?.audio?.length ?? 0) + (assets?.json?.length ?? 0)
 
     this.cameras.main.setBackgroundColor(theme.bg)
+    this.drawBackdrop(width, height)
 
     this.add
-      .text(width / 2, height / 2 - 100, services.i18n.t('game.title'), {
-        ...textStyle(theme, 72, theme.text, true),
-        align: 'center',
-      })
+      .text(
+        width / 2,
+        height / 2 - 110,
+        services.i18n.t('game.title'),
+        displayTextStyle(theme, 84, cssColor(theme.accent), true, 8, 8),
+      )
       .setOrigin(0.5)
 
     if (assetCount > 0) {
       this.loadingText = this.add
         .text(
           width / 2,
-          height / 2 + 86,
+          height / 2 + 46,
           services.i18n.t('core.loading'),
           textStyle(theme, 24, theme.textMuted),
         )
         .setOrigin(0.5)
 
-      this.add
-        .rectangle(width / 2, height / 2 + 42, BAR_WIDTH, 10, theme.panelStroke)
-        .setOrigin(0.5)
+      this.loadingTrack = this.add.graphics()
+      this.loadingTrack.fillStyle(theme.surface, 1)
+      this.loadingTrack.fillRoundedRect(width / 2 - BAR_WIDTH / 2, height / 2 + 6, BAR_WIDTH, 16, 8)
+      this.loadingTrack.lineStyle(3, theme.ink, 1)
+      this.loadingTrack.strokeRoundedRect(
+        width / 2 - BAR_WIDTH / 2,
+        height / 2 + 6,
+        BAR_WIDTH,
+        16,
+        8,
+      )
 
-      const bar = this.add
-        .rectangle(width / 2 - BAR_WIDTH / 2, height / 2 + 42, 0, 10, theme.accent)
+      this.loadingBar = this.add
+        .rectangle(width / 2 - BAR_WIDTH / 2 + 4, height / 2 + 14, 0, 8, theme.accent)
         .setOrigin(0, 0.5)
 
       this.load.on('progress', (value: number) => {
-        bar.setSize(BAR_WIDTH * value, 10)
+        this.loadingBar?.setSize(Math.max(0, BAR_WIDTH * value - 8), 8)
       })
     }
 
@@ -67,21 +81,42 @@ export class PreloadScene extends Phaser.Scene {
     const theme = services.theme
 
     this.loadingText?.destroy()
+    this.loadingTrack?.destroy()
+    this.loadingBar?.destroy()
     services.platform.loadingFinished()
 
+    const card = this.add.container(width / 2, height / 2 + 80)
+    const panel = this.add.graphics()
+    panel.fillStyle(theme.shadow, 0.18)
+    panel.fillRoundedRect(-142, -42, 284, 84, 26)
+    panel.fillStyle(theme.ink, 1)
+    panel.fillRoundedRect(-146, -46, 292, 92, 30)
+    panel.fillStyle(theme.surface, 1)
+    panel.fillRoundedRect(-142, -42, 284, 84, 26)
+    panel.fillStyle(0xffffff, 0.22)
+    panel.fillRoundedRect(-126, -34, 252, 10, 5)
+
+    const playBase = this.add.graphics()
+    playBase.fillStyle(theme.accent, 1)
+    playBase.fillCircle(-64, 0, 24)
+    playBase.lineStyle(3, theme.ink, 1)
+    playBase.strokeCircle(-64, 0, 24)
+
+    const playIcon = this.add.graphics()
+    playIcon.setPosition(-64, 0)
+    drawIcon(playIcon, 'play', 26, theme.ink)
+
     const prompt = this.add
-      .text(
-        width / 2,
-        height / 2 + 86,
-        services.i18n.t('core.tapToStart'),
-        textStyle(theme, 30, cssColor(theme.accent), true),
-      )
+      .text(34, 0, services.i18n.t('core.tapToStart'), textStyle(theme, 28, theme.text, true))
       .setOrigin(0.5)
 
+    card.add([panel, playBase, playIcon, prompt])
+    card.setAlpha(0)
+    this.tweens.add({ targets: card, alpha: 1, duration: 260, ease: 'Quad.out' })
     this.tweens.add({
-      targets: prompt,
-      alpha: { from: 1, to: 0.35 },
-      duration: 900,
+      targets: card,
+      y: height / 2 + 72,
+      duration: 1100,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.inOut',
@@ -97,5 +132,25 @@ export class PreloadScene extends Phaser.Scene {
     // Phaser requires pointerup (not pointerdown) for fullscreen on touch devices.
     this.input.once('pointerup', start)
     this.input.keyboard?.once('keydown', start)
+  }
+
+  private drawBackdrop(width: number, height: number): void {
+    const theme = getServices().theme
+    const background = this.add.graphics()
+    const bands = 28
+    for (let index = 0; index < bands; index += 1) {
+      background.fillStyle(mixColor(theme.bg, theme.bgAlt, index / (bands - 1)), 1)
+      background.fillRect(0, (index * height) / bands, width, height / bands + 1)
+    }
+
+    background.fillStyle(theme.accentWarm, 0.32)
+    background.fillCircle(width * 0.82, height * 0.16, 96)
+    background.fillStyle(theme.accentWarm, 0.9)
+    background.fillCircle(width * 0.82, height * 0.16, 48)
+
+    background.fillStyle(0xffffff, 0.55)
+    background.fillCircle(width * 0.16, height * 0.22, 34)
+    background.fillCircle(width * 0.22, height * 0.22, 26)
+    background.fillRoundedRect(width * 0.1, height * 0.22, width * 0.2, 30, 15)
   }
 }

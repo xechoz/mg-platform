@@ -1,7 +1,6 @@
 import Phaser from 'phaser'
 import { Button, type ButtonVariant } from './Button'
-import type { Theme } from './theme'
-import { cssColor, textStyle } from './theme'
+import { cssColor, displayTextStyle, type Theme, textStyle } from './theme'
 
 export interface ModalAction {
   label: string
@@ -26,6 +25,8 @@ export interface ModalOptions {
   bodyFontSize?: number
 }
 
+const OUTLINE = 4
+
 export class Modal extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, theme: Theme, options: ModalOptions) {
     super(scene, 0, 0)
@@ -34,8 +35,7 @@ export class Modal extends Phaser.GameObjects.Container {
     const screenHeight = scene.scale.height
     const width = Math.min(options.width ?? 520, screenWidth - 48)
     const height = Math.min(options.height ?? 300, screenHeight - 48)
-    const left = screenWidth / 2 - width / 2
-    const top = screenHeight / 2 - height / 2
+    const radius = theme.radiusLarge
 
     const backdrop = new Phaser.GameObjects.Rectangle(
       scene,
@@ -44,56 +44,94 @@ export class Modal extends Phaser.GameObjects.Container {
       screenWidth,
       screenHeight,
       theme.overlay,
-      0.72,
+      0.62,
     )
     backdrop.setOrigin(0)
     backdrop.setInteractive()
+    backdrop.setAlpha(0)
+
+    const card = new Phaser.GameObjects.Container(scene, screenWidth / 2, screenHeight / 2)
+    card.setAlpha(0)
+    card.setScale(0.92)
 
     const panel = new Phaser.GameObjects.Graphics(scene)
-    panel.fillStyle(0x000000, 0.3)
-    panel.fillRoundedRect(left + 3, top + 6, width, height, theme.radius + 4)
+    panel.fillStyle(theme.shadow, 0.2)
+    panel.fillRoundedRect(-width / 2 + 2, -height / 2 + 12, width, height, radius)
+    panel.fillStyle(theme.ink, 1)
+    panel.fillRoundedRect(
+      -width / 2 - OUTLINE,
+      -height / 2 - OUTLINE,
+      width + OUTLINE * 2,
+      height + OUTLINE * 2,
+      radius + OUTLINE,
+    )
     panel.fillStyle(theme.panel, 1)
-    panel.fillRoundedRect(left, top, width, height, theme.radius + 4)
-    panel.lineStyle(1, theme.panelStroke, 1)
-    panel.strokeRoundedRect(left, top, width, height, theme.radius + 4)
+    panel.fillRoundedRect(-width / 2, -height / 2, width, height, radius)
+    panel.fillStyle(0xffffff, 0.2)
+    panel.fillRoundedRect(-width / 2 + 18, -height / 2 + 16, width - 36, 12, 6)
+    card.add(panel)
 
+    const titleSize = options.titleFontSize ?? 28
     const title = new Phaser.GameObjects.Text(
       scene,
-      screenWidth / 2,
-      top + 34,
+      0,
+      0,
       options.title,
-      textStyle(theme, options.titleFontSize ?? 28, cssColor(theme.accent), true),
-    ).setOrigin(0.5, 0)
+      textStyle(theme, titleSize, theme.text, true),
+    ).setOrigin(0.5)
+    const ribbonHeight = Math.round(titleSize * 1.55)
+    const ribbonWidth = Math.min(width - 40, title.width + Math.round(titleSize * 1.8))
+    const ribbonY = -height / 2 + 24 + ribbonHeight / 2
 
-    this.add([backdrop, panel, title])
+    const ribbon = new Phaser.GameObjects.Graphics(scene)
+    ribbon.fillStyle(theme.accent, 1)
+    ribbon.fillRoundedRect(
+      -ribbonWidth / 2,
+      -ribbonHeight / 2,
+      ribbonWidth,
+      ribbonHeight,
+      ribbonHeight / 2,
+    )
+    ribbon.lineStyle(OUTLINE, theme.ink, 1)
+    ribbon.strokeRoundedRect(
+      -ribbonWidth / 2,
+      -ribbonHeight / 2,
+      ribbonWidth,
+      ribbonHeight,
+      ribbonHeight / 2,
+    )
+    ribbon.setPosition(0, ribbonY)
+    title.setPosition(0, ribbonY - 2)
+    card.add([ribbon, title])
 
-    let contentBottom = title.y + title.height
+    let contentBottom = ribbonY + ribbonHeight / 2
     if (options.hero) {
       const hero = new Phaser.GameObjects.Text(
         scene,
-        screenWidth / 2,
-        contentBottom + 8,
+        0,
+        contentBottom + 12,
         options.hero,
-        textStyle(theme, options.heroFontSize ?? 64, cssColor(theme.accent), true),
+        displayTextStyle(
+          theme,
+          options.heroFontSize ?? 64,
+          cssColor(theme.accent),
+          true,
+          3,
+          Math.round((options.heroFontSize ?? 64) * 0.05),
+        ),
       ).setOrigin(0.5, 0)
-      this.add(hero)
+      card.add(hero)
       contentBottom = hero.y + hero.height
     }
 
     if (options.body) {
-      const body = new Phaser.GameObjects.Text(
-        scene,
-        screenWidth / 2,
-        contentBottom + 16,
-        options.body,
-        {
-          ...textStyle(theme, options.bodyFontSize ?? 18, theme.text),
-          align: 'center',
-          lineSpacing: 8,
-          wordWrap: { width: width - 72 },
-        },
-      ).setOrigin(0.5, 0)
-      this.add(body)
+      const body = new Phaser.GameObjects.Text(scene, 0, contentBottom + 14, options.body, {
+        ...textStyle(theme, options.bodyFontSize ?? 18, theme.text),
+        align: 'center',
+        lineSpacing: 8,
+        wordWrap: { width: width - 72 },
+      }).setOrigin(0.5, 0)
+      card.add(body)
     }
 
     const actions = options.actions ?? []
@@ -103,15 +141,15 @@ export class Modal extends Phaser.GameObjects.Container {
 
       if (layout === 'column') {
         const actionWidth = Math.min(options.actionWidth ?? width - 80, width - 48)
-        const actionHeight = options.actionHeight ?? 88
-        const gap = 16
+        const actionHeight = options.actionHeight ?? 84
+        const gap = 14
         const total = actions.length * actionHeight + (actions.length - 1) * gap
-        const startY = top + height - 40 - total + actionHeight / 2
+        const startY = height / 2 - 36 - total + actionHeight / 2
 
         actions.forEach((action, index) => {
           const button = new Button(
             scene,
-            screenWidth / 2,
+            0,
             startY + index * (actionHeight + gap),
             action.label,
             theme,
@@ -126,7 +164,7 @@ export class Modal extends Phaser.GameObjects.Container {
               },
             },
           )
-          this.add(button)
+          card.add(button)
         })
       } else {
         const gap = 14
@@ -136,13 +174,13 @@ export class Modal extends Phaser.GameObjects.Container {
         )
         const buttonHeight = options.actionHeight ?? 50
         const total = actions.length * buttonWidth + (actions.length - 1) * gap
-        const startX = screenWidth / 2 - total / 2 + buttonWidth / 2
+        const startX = -total / 2 + buttonWidth / 2
 
         actions.forEach((action, index) => {
           const button = new Button(
             scene,
             startX + index * (buttonWidth + gap),
-            top + height - buttonHeight / 2 - 27,
+            height / 2 - buttonHeight / 2 - 30,
             action.label,
             theme,
             {
@@ -156,15 +194,23 @@ export class Modal extends Phaser.GameObjects.Container {
               },
             },
           )
-          this.add(button)
+          card.add(button)
         })
       }
     }
 
+    this.add([backdrop, card])
     this.setDepth(1000)
-    this.setAlpha(0)
     scene.add.existing(this)
-    scene.tweens.add({ targets: this, alpha: 1, duration: 140, ease: 'Quad.out' })
+
+    scene.tweens.add({ targets: backdrop, alpha: 0.62, duration: 160, ease: 'Quad.out' })
+    scene.tweens.add({
+      targets: card,
+      alpha: 1,
+      scale: 1,
+      duration: 300,
+      ease: 'Back.out',
+    })
   }
 
   close(): void {
