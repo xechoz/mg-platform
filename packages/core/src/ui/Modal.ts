@@ -94,7 +94,7 @@ export class Modal extends Phaser.GameObjects.Container {
         displayTextStyle(
           theme,
           options.heroFontSize ?? 64,
-          cssColor(theme.accent),
+          cssColor(theme.accentInk),
           true,
           0,
           Math.round((options.heroFontSize ?? 64) * 0.05),

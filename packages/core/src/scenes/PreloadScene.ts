@@ -33,13 +33,10 @@ export class PreloadScene extends Phaser.Scene {
     if (services.def.backdrop) services.def.backdrop(backdrop, readViewport(this), theme)
     else this.drawFallbackBackdrop(backdrop, width, height)
 
+    const titleStyle = displayTextStyle(theme, 84, cssColor(theme.accent), true, 8, 8)
+    titleStyle.stroke = cssColor(theme.accentInk)
     this.add
-      .text(
-        width / 2,
-        height / 2 - 110,
-        services.i18n.t('game.title'),
-        displayTextStyle(theme, 84, cssColor(theme.accent), true, 8, 8),
-      )
+      .text(width / 2, height / 2 - 110, services.i18n.t('game.title'), titleStyle)
       .setOrigin(0.5)
 
     if (assetCount > 0) {
@@ -65,7 +62,7 @@ export class PreloadScene extends Phaser.Scene {
       )
 
       this.loadingBar = this.add
-        .rectangle(width / 2 - BAR_WIDTH / 2 + 4, height / 2 + 14, 0, 8, theme.accent)
+        .rectangle(width / 2 - BAR_WIDTH / 2 + 4, height / 2 + 14, 0, 8, theme.accentInk)
         .setOrigin(0, 0.5)
 
       this.load.on('progress', (value: number) => {

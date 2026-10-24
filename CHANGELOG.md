@@ -4,10 +4,11 @@
 
 ### 视觉
 
-- 贪吃蛇配色改版：葡萄紫 `#6e45e8` 作强调色，背景改为近白冷天空到暖奶油的过渡，薄荷/黄油作辅助色；强调色只用于色块，浅底文字用 `accentInk`，色块上的文字/图标用 `onAccent`，hover 一律变深。
-- `Theme` 增加 `onAccent`、移除只被 `Button` 使用的 `accentText`；`Button`、`Modal` 丝带标题、Preload 播放图标统一改用 `onAccent`；默认主题 hover 改为变深，`DebugOverlay` 改用正文色。
-- 蛇信子与腮红改为专属美术粉色，果实改为粉/珊瑚/琥珀，彩纸去掉天空色；favicon 与 180/192/512 图标改为葡萄紫底，重生成并填实透明角。
-- `colors.test.ts` 新增对比度与 hover 方向断言，防止浅色文字/变浅 hover 回归。
+- 贪吃蛇配色改为柠檬黄 `#ffe08a` 强调色，背景保持近白冷天空到暖奶油的过渡，薄荷/黄油作辅助色；强调色只用于色块，浅底文字用 `accentInk` `#8a5a00`，色块上的文字/图标用 `onAccent`（同为深琥珀），hover 一律变深。
+- 标题、主按钮与最高分徽章改为浅色填充 + 同色系深色描边/文字：标题用 `accentInk` 描边，主按钮用 `accentInk` 描边与底边，徽章用 `onAccent` 圆环与星标，去掉近黑描边带来的厚重感。
+- `Theme` 增加 `onAccent`、移除只被 `Button` 使用的 `accentText`；`accentInk` 从 CSS 字符串改为数值色；`Button`、`Modal` 丝带标题、Preload 播放图标统一改用 `onAccent`；默认主题 hover 改为变深，`DebugOverlay` 改用正文色。
+- 蛇信子与腮红改为专属美术粉色，果实改为粉/珊瑚/琥珀，彩纸去掉天空色；favicon 与 180/192/512 图标改为柠檬黄底、深琥珀内框，重生成并填实透明角。
+- `colors.test.ts` 保留对比度与 hover 方向断言，移除临时配色候选测试；防止浅色文字/变浅 hover 回归。
 
 ### 背景与控件
 

@@ -9,7 +9,7 @@ export interface Theme {
   accentHover: number
   accentAlt: number
   accentWarm: number
-  accentInk: string
+  accentInk: number
   /** Text and icon colour used on top of an accent fill. */
   onAccent: number
   text: string
@@ -45,7 +45,7 @@ export const defaultTheme: Theme = {
   accentHover: 0x0ea5e9,
   accentAlt: 0x35c77e,
   accentWarm: 0xfff1b8,
-  accentInk: '#0b7fae',
+  accentInk: 0x0b7fae,
   onAccent: 0x332b45,
   text: '#332b45',
   textMuted: '#65627a',
