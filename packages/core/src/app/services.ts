@@ -7,6 +7,7 @@ import { type Dictionary, I18n, resolveLang } from '../i18n/I18n'
 import { SaveStore, type SaveStoreOptions } from '../storage/SaveStore'
 import { SettingsStore } from '../storage/settings'
 import { defaultTheme, type Theme } from '../ui/theme'
+import type { Viewport } from './layout'
 
 export interface GameDefinition {
   id: string
@@ -19,6 +20,8 @@ export interface GameDefinition {
   defaultLang?: Lang
   theme?: Partial<Theme>
   debug?: boolean
+  /** Procedural backdrop shared by core screens; games keep the drawing code. */
+  backdrop?: (graphics: Phaser.GameObjects.Graphics, viewport: Viewport, theme: Theme) => void
   assets?: {
     images?: Array<{ key: string; url: string }>
     audio?: Array<{ key: string; urls: string | string[] }>

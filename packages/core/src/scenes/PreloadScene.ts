@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { maybeEnterFullscreen } from '../app/fullscreen'
+import { readViewport } from '../app/layout'
 import { getServices } from '../app/services'
 import { drawIcon } from '../ui/icons'
 import { cssColor, displayTextStyle, mixColor, textStyle } from '../ui/theme'
@@ -28,7 +29,9 @@ export class PreloadScene extends Phaser.Scene {
       (assets?.images?.length ?? 0) + (assets?.audio?.length ?? 0) + (assets?.json?.length ?? 0)
 
     this.cameras.main.setBackgroundColor(theme.bg)
-    this.drawBackdrop(width, height)
+    const backdrop = this.add.graphics()
+    if (services.def.backdrop) services.def.backdrop(backdrop, readViewport(this), theme)
+    else this.drawFallbackBackdrop(backdrop, width, height)
 
     this.add
       .text(
@@ -88,11 +91,11 @@ export class PreloadScene extends Phaser.Scene {
     const card = this.add.container(width / 2, height / 2 + 80)
     const panel = this.add.graphics()
     panel.fillStyle(theme.shadow, 0.18)
-    panel.fillRoundedRect(-140, -36, 284, 84, 26)
+    panel.fillRoundedRect(-140, -36, 284, 84, 42)
     panel.fillStyle(theme.ink, 1)
-    panel.fillRoundedRect(-145, -45, 290, 90, 29)
+    panel.fillRoundedRect(-145, -45, 290, 90, 45)
     panel.fillStyle(theme.surface, 1)
-    panel.fillRoundedRect(-142, -42, 284, 84, 26)
+    panel.fillRoundedRect(-142, -42, 284, 84, 42)
     panel.fillStyle(theme.highlight, 0.22)
     panel.fillRoundedRect(-126, -34, 252, 10, 5)
 
@@ -134,9 +137,12 @@ export class PreloadScene extends Phaser.Scene {
     this.input.keyboard?.once('keydown', start)
   }
 
-  private drawBackdrop(width: number, height: number): void {
+  private drawFallbackBackdrop(
+    background: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+  ): void {
     const theme = getServices().theme
-    const background = this.add.graphics()
     const bands = 28
     for (let index = 0; index < bands; index += 1) {
       background.fillStyle(mixColor(theme.bg, theme.bgAlt, index / (bands - 1)), 1)
