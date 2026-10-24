@@ -23,6 +23,7 @@ export function createGame(def: GameDefinition): Phaser.Game {
       autoCenter: Phaser.Scale.CENTER_BOTH,
       width: initial.width,
       height: initial.height,
+      fullscreenTarget: 'game',
     },
     render: {
       antialias: true,
@@ -56,8 +57,11 @@ function installPageStyles(services: GameServices): void {
     body {
       height: 100dvh; -webkit-tap-highlight-color: transparent;
       touch-action: none; user-select: none;
+      -webkit-user-select: none; -webkit-touch-callout: none;
     }
     #game { position: fixed; inset: 0; }
+    #game:fullscreen, #game:-webkit-full-screen { background: ${bg}; }
+    #game::backdrop { background: ${bg}; }
     #game canvas { display: block; }
   `
   document.head.appendChild(style)

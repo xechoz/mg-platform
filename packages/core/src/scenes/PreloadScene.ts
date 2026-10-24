@@ -1,12 +1,13 @@
 import Phaser from 'phaser'
+import { maybeEnterFullscreen } from '../app/fullscreen'
 import { getServices } from '../app/services'
 import { cssColor, textStyle } from '../ui/theme'
 
 const BAR_WIDTH = 420
 
 /**
- * Loads the game's asset manifest, then shows a tap gate. The tap is required
- * to unlock audio on iOS, so this scene exists in every game.
+ * Loads the game's asset manifest, then shows a tap gate. The tap unlocks
+ * audio on iOS and is the earliest gesture available for entering fullscreen.
  */
 export class PreloadScene extends Phaser.Scene {
   private loadingText?: Phaser.GameObjects.Text
@@ -87,12 +88,14 @@ export class PreloadScene extends Phaser.Scene {
     })
 
     const start = (): void => {
+      maybeEnterFullscreen(this.scale)
       services.audio.unlock()
       services.audio.play('start')
       this.scene.start(services.def.menuScene ?? 'Menu')
     }
 
-    this.input.once('pointerdown', start)
+    // Phaser requires pointerup (not pointerdown) for fullscreen on touch devices.
+    this.input.once('pointerup', start)
     this.input.keyboard?.once('keydown', start)
   }
 }

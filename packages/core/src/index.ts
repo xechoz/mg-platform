@@ -3,6 +3,14 @@ import type { Lang } from '@mg/platform'
 export { createGame } from './app/createGame'
 export { computeDesignSize, type DesignSize } from './app/designSize'
 export {
+  type FullscreenPolicy,
+  isEmbedded,
+  isMobileDevice,
+  isStandalone,
+  maybeEnterFullscreen,
+  shouldAutoFullscreen,
+} from './app/fullscreen'
+export {
   type LayoutListener,
   onLayoutChange,
   readViewport,

@@ -24,7 +24,7 @@ cpSync(join(root, 'templates', 'game'), target, { recursive: true })
 
 for (const file of readdirSync(target, { recursive: true })) {
   if (typeof file !== 'string') continue
-  if (!/\.(ts|json|html)$/.test(file)) continue
+  if (!/\.(ts|json|html|webmanifest)$/.test(file)) continue
   const path = join(target, file)
   const next = readFileSync(path, 'utf8')
     .replaceAll('__NAME__', name)

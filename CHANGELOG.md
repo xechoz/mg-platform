@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### 移动端全屏与 PWA
+
+- `@mg/core` 新增全屏策略：触屏、非 iframe、非 standalone 时，Preload 首次点击（`pointerup`）后请求 Fullscreen API；主菜单已是全屏，不等到开始游戏。
+- 主菜单内若仍未全屏，首次点击任意位置会补一次请求；点「开始游戏」也会补一次。桌面不自动全屏；Poki 等 iframe 交给平台播放器。
+- 贪吃蛇新增 `manifest.webmanifest`、iOS standalone meta 与 180/192/512 图标；不支持网页全屏的移动浏览器在菜单提示「分享 → 添加到主屏幕」。
+- iPhone Safari 仍不支持网页内全屏，A2HS/PWA 是唯一无浏览器 UI 的路径；Android/iPad 使用标准 Fullscreen API。
+- `#game` 作为 fullscreen target，进入/退出全屏只触发重排，不重启场景；补全屏背景与 `-webkit-touch-callout` 样式。
+- 模板与新游戏生成器同步带上 manifest / icons，`.webmanifest` 也参与 `__TITLE__` 占位替换。
+
 ### 响应式 UI：横竖屏全屏适配
 
 - 设计空间改为动态：短边固定 720 设计单位，长边随视口比例（`computeDesignSize`），`Scale.FIT` 铺满屏幕；手机横屏不再左右留黑边。

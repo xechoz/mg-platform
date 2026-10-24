@@ -265,6 +265,9 @@ services.createSave<MySave>({ name: 'save', version: 1, initial: () => ({ best: 
 - `GameDefinition.design` 只声明 `{ base: 720 }`。`installResponsiveViewport` 在视口变化时调用 `setGameSize`；场景用 `onLayoutChange(scene, fn)` 重排，不重启、不丢局。
 - 设计稿按手机最小约 0.54 缩放校验（720 设计单位 ≈ 390 CSS px 宽）：30px 正文 ≈ 16 CSS px，26px 标签 ≈ 14 CSS px。
 - 横竖屏都必须可玩，不再注入旋转遮罩；朝向变化由游戏场景自动暂停。
+- 移动端全屏：Preload 首次点击（`pointerup`）请求 Fullscreen API，进入主菜单时已经是全屏；仅触屏、非 iframe、非 standalone 时自动请求。`#game` 是全屏目标，进入/退出触发 resize 与重排，不重启、不丢局。
+- 主菜单内如果仍未全屏，首次点击任意位置会补一次请求；点「开始游戏」也会补一次。桌面不自动全屏，保留 F11；Poki 等 iframe 环境交给平台播放器。
+- iPhone Safari 不支持任意 DOM 元素全屏（iOS 26/27 仍只开放给 iPad）；通过 `apple-mobile-web-app-capable` + 「添加到主屏幕」以 standalone 启动，并在不支持的移动浏览器菜单里提示 A2HS。
 - 安全区：`safeAreaInDesign(scene)` 把 `env(safe-area-inset-*)` 换算成设计单位，HUD、按钮与页面边缘必须内缩，不能压到刘海或手势条。
 - 中文使用系统字体栈：Noto Sans SC / PingFang SC / Microsoft YaHei / system-ui。
 - **不打包 CJK 字体**；5MB+ 会毁首屏。
@@ -419,6 +422,7 @@ npm run site         # 涉及站点/多游戏时
 ### 已知取舍
 
 - 只有 `DevPlatform`；Poki 适配器未实现。
+- iPhone Safari 不支持网页内全屏，只能通过 A2HS/PWA 获得无浏览器 UI；Android/iPad 用 Fullscreen API。
 - 没有 `packages/assets`；共享素材出现前不建。
 - 没有 `packages/grid` / `packages/turn`；规则留在游戏内。
 - 贪吃蛇渲染暂时放在 `GameScene`；复杂后再拆 `src/view`。

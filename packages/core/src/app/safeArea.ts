@@ -25,7 +25,10 @@ export function readSafeAreaInsets(): Insets {
     'pointer-events:none',
     'padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)',
   ].join(';')
-  document.body.appendChild(probe)
+  // In element fullscreen only the fullscreen subtree is rendered; keep the
+  // probe inside it so the computed insets stay meaningful.
+  const host = document.fullscreenElement ?? document.body
+  host.appendChild(probe)
 
   const style = getComputedStyle(probe)
   const insets: Insets = {

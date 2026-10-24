@@ -34,6 +34,13 @@ npm run build:snake
 npm run preview -w @mg/snake
 ```
 
+## 移动端全屏
+
+- Android / iPad：首次点击「点击开始」后进入全屏，主菜单即全屏。
+- iPhone Safari：系统不开放网页元素全屏。用分享菜单「添加到主屏幕」启动，可获得无浏览器 UI 的独立窗口；游戏菜单会给出提示。
+- 桌面：不自动全屏，按 F11 即可。
+- Poki 等 iframe 环境：不自动请求全屏，由平台播放器控制。
+
 ## 结构
 
 ```

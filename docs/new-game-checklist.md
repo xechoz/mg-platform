@@ -15,7 +15,10 @@ games/my-game/
 ├─ game.manifest.json
 ├─ index.html
 ├─ vite.config.ts
-├─ public/favicon.svg
+├─ public/
+│  ├─ favicon.svg
+│  ├─ manifest.webmanifest
+│  └─ icons/              # 180 / 192 / 512
 └─ src/
    ├─ main.ts
    ├─ i18n.ts
@@ -28,6 +31,7 @@ games/my-game/
 - `src/i18n.ts`：至少保留 `game.title`，Preload 场景依赖它。
 - `src/main.ts`：`design: { base: 720 }`（短边 720 设计单位，长边随屏幕比例）；`scenes` 注册所有场景；`menuScene` 默认 `Menu`。
 - `PlaceholderScene`：改成真正的菜单场景（场景键保持 `Menu`）。
+- `public/manifest.webmanifest`：同步标题、描述、`theme_color`；`public/icons/` 放 180、192、512 的 PNG，正式上线前替换模板图标。
 
 ## 3. 场景约定
 
@@ -73,6 +77,7 @@ const save = services.createSave<MySave>({
 - 图片/音频放在 `public/` 或 `src/assets/`，通过 `GameDefinition.assets` 声明。
 - 不使用外部 CDN、字体、统计脚本。
 - 单游戏首包尽量控制在 1.5MB gzip 内；Phaser 本身约 370KB gzip。
+- `public/manifest.webmanifest` 与 `public/icons/` 提供 PWA/A2HS：180 给 iOS，192/512 给 manifest；图标要实色底、无透明角。
 - 上线前补 `thumb.png`（512×512）放到游戏根目录，站点构建会自动复制。
 
 ## 8. 提交前
@@ -86,6 +91,7 @@ npm run site
 
 人工检查：
 - [ ] 桌面 16:9、手机横屏与竖屏都可玩，转屏自动暂停并恢复倒计时
+- [ ] 手机首次点击进入全屏，主菜单已是全屏；iPhone 添加到主屏幕后无浏览器 UI
 - [ ] 首次点击后音效正常，静音可持久化
 - [ ] 暂停/失焦停表，恢复有倒计时
 - [ ] 最高分/进度重启后仍在
