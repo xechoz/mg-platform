@@ -52,7 +52,7 @@ export class PreloadScene extends Phaser.Scene {
       this.loadingTrack = this.add.graphics()
       this.loadingTrack.fillStyle(theme.surface, 1)
       this.loadingTrack.fillRoundedRect(width / 2 - BAR_WIDTH / 2, height / 2 + 6, BAR_WIDTH, 16, 8)
-      this.loadingTrack.lineStyle(3, theme.ink, 1)
+      this.loadingTrack.lineStyle(1, theme.borderSoft, 1)
       this.loadingTrack.strokeRoundedRect(
         width / 2 - BAR_WIDTH / 2,
         height / 2 + 6,
@@ -88,9 +88,9 @@ export class PreloadScene extends Phaser.Scene {
     const card = this.add.container(width / 2, height / 2 + 80)
     const panel = this.add.graphics()
     panel.fillStyle(theme.shadow, 0.18)
-    panel.fillRoundedRect(-142, -42, 284, 84, 26)
+    panel.fillRoundedRect(-140, -36, 284, 84, 26)
     panel.fillStyle(theme.ink, 1)
-    panel.fillRoundedRect(-146, -46, 292, 92, 30)
+    panel.fillRoundedRect(-145, -45, 290, 90, 29)
     panel.fillStyle(theme.surface, 1)
     panel.fillRoundedRect(-142, -42, 284, 84, 26)
     panel.fillStyle(theme.highlight, 0.22)
@@ -98,12 +98,12 @@ export class PreloadScene extends Phaser.Scene {
 
     const playBase = this.add.graphics()
     playBase.fillStyle(theme.accent, 1)
-    playBase.fillCircle(-64, 0, 24)
+    playBase.fillCircle(-37, 0, 24)
     playBase.lineStyle(3, theme.ink, 1)
-    playBase.strokeCircle(-64, 0, 24)
+    playBase.strokeCircle(-37, 0, 24)
 
     const playIcon = this.add.graphics()
-    playIcon.setPosition(-64, 0)
+    playIcon.setPosition(-37, 0)
     drawIcon(playIcon, 'play', 26, theme.onAccent)
 
     const prompt = this.add

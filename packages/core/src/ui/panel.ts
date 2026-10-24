@@ -12,14 +12,12 @@ export function createPanel(
 ): Phaser.GameObjects.Graphics {
   const panel = new Phaser.GameObjects.Graphics(scene)
   const radius = theme.radius
-  panel.fillStyle(theme.shadow, 0.16)
-  panel.fillRoundedRect(x + 2, y + 9, width, height, radius)
-  panel.fillStyle(theme.ink, 1)
-  panel.fillRoundedRect(x - 3, y - 3, width + 6, height + 6, radius + 3)
+  panel.fillStyle(theme.shadow, 0.1)
+  panel.fillRoundedRect(x + 2, y + 6, width, height, radius)
   panel.fillStyle(theme.panel, alpha)
   panel.fillRoundedRect(x, y, width, height, radius)
-  panel.fillStyle(theme.highlight, 0.18)
-  panel.fillRoundedRect(x + 12, y + 8, width - 24, 10, 5)
+  panel.lineStyle(1, theme.borderSoft, alpha)
+  panel.strokeRoundedRect(x + 0.5, y + 0.5, width - 1, height - 1, radius)
   scene.add.existing(panel)
   return panel
 }

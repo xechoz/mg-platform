@@ -265,7 +265,7 @@ services.createSave<MySave>({ name: 'save', version: 1, initial: () => ({ best: 
 
 - 设计空间短边固定 **720** 设计单位，长边 = 720 × 视口比例；`Scale.FIT` + `CENTER_BOTH`，比例在 0.38–2.6 内铺满无黑边。
 - `GameDefinition.design` 只声明 `{ base: 720 }`。`installResponsiveViewport` 在视口变化时调用 `setGameSize`；场景用 `onLayoutChange(scene, fn)` 重排，不重启、不丢局。
-- 设计稿按手机最小约 0.54 缩放校验（720 设计单位 ≈ 390 CSS px 宽）：30px 正文 ≈ 16 CSS px，26px 标签 ≈ 14 CSS px。
+- 设计稿按手机最小约 0.54 缩放校验（720 设计单位 ≈ 390 CSS px 宽）：30px 正文 ≈ 16 CSS px，26px 标签 ≈ 14 CSS px，24px 辅助提示 ≈ 13 CSS px。
 - 横竖屏都必须可玩，不再注入旋转遮罩；朝向变化由游戏场景自动暂停。
 - 移动端全屏：Preload 首次点击（`pointerup`）请求 Fullscreen API，进入主菜单时已经是全屏；仅触屏、非 iframe、非 standalone 时自动请求。`#game` 是全屏目标，进入/退出触发 resize 与重排，不重启、不丢局。
 - 主菜单内如果仍未全屏，首次点击任意位置会补一次请求；点「开始游戏」也会补一次。桌面不自动全屏，保留 F11；Poki 等 iframe 环境交给平台播放器。
@@ -275,8 +275,14 @@ services.createSave<MySave>({ name: 'save', version: 1, initial: () => ({ best: 
 - **不打包 CJK 字体**；5MB+ 会毁首屏。
 - 西文可用 OFL 字体，但要确认许可证和体积。
 - 占位阶段用 Phaser Graphics 程序化绘制；正式素材优先 CC0（如 Kenney）。
-- **视觉语言**：阳光糖果街机（sunny candy arcade）。贪吃蛇采用葡萄紫 `#6e45e8` 作主题强调色，近白冷天空到暖奶油作背景，薄荷/黄油作辅助色，墨色描边 + 硬偏移阴影 + 厚底按钮 + 贴纸徽章；`accent` 只作色块，浅底强调文字用 `accentInk`，色块上的文字/图标用 `onAccent`，hover 一律变深。不使用橙色作为主题强调色。公共 `defaultTheme` 是未定色游戏的通用浅色基线，游戏通过 `colors.ts` 覆盖。
-- 公共 UI token 统一在 `Theme`：`ink`、`accent`、`accentHover`、`accentInk`、`onAccent`、`accentAlt`、`accentWarm`、`surface`、`surfaceAlt`、`highlight`、`onDanger`、`shadow`、`radiusLarge`；`displayTextStyle()` 提供描边+硬阴影，`drawIcon()` 提供程序化图标；`Button` 统一 primary/soft/ghost/danger，`Modal` 统一贴纸卡片+丝带标题。游戏只覆盖 token，不另造一套控件。
+- **视觉语言**：阳光糖果街机（sunny candy arcade），但**描边分级**，不把所有表面都做成贴纸。三层规则：
+  - L0 游戏世界与品牌：棋盘相框、蛇、果实、Logo 标题、吉祥物、倒计时数字，保留 2–3px 墨线与硬阴影，这是识别度来源。
+  - L1 主行动：每屏最多一个（开始游戏、继续、再来一局、Preload 点击），墨线 + 厚底 + 硬阴影；`Button` 的 `primary` / `danger` 走这一层。
+  - L2 次行动：音效、语言、重开、主菜单、暂停键、摇杆，用 `surface` 面 + 1px `borderSoft` + 轻阴影，无厚底无高光；`Button` 的 `soft` / `ghost` 走这一层。
+  - L3 信息容器：分数卡、最高分、Modal 卡片、加载条、教学键帽，0–1px 弱边、无墨线，靠底色差与阴影分层。
+  - 文字描边只用于 Logo/大标题；分数、Modal hero、正文不再描边。
+- **配色**：贪吃蛇采用葡萄紫 `#6e45e8` 作主题强调色，近白冷天空到暖奶油作背景，薄荷/黄油作辅助色；`accent` 只作色块，浅底强调文字用 `accentInk`，色块上的文字/图标用 `onAccent`，hover 一律变深。不使用橙色作为主题强调色。公共 `defaultTheme` 是未定色游戏的通用浅色基线，游戏通过 `colors.ts` 覆盖。
+- 公共 UI token 统一在 `Theme`：`ink`、`borderSoft`、`accent`、`accentHover`、`accentInk`、`onAccent`、`accentAlt`、`accentWarm`、`surface`、`surfaceAlt`、`highlight`、`onDanger`、`shadow`、`radiusLarge`；`borderSoft` 只作 1px 弱边，不承担文字对比。`displayTextStyle()` 提供描边+硬阴影，`drawIcon()` 提供程序化图标；`Button` 统一 primary/soft/ghost/danger 并内置分层几何（soft 无墨线/无厚底），`Modal` 为无墨线卡片 + accent 丝带标题。游戏只覆盖 token，不另造一套控件。
 - **每个游戏的颜色只有一个入口**：`games/<id>/src/colors.ts`，同时包含该游戏的 `theme`（覆盖公共 token）和 `art`（蛇身、果实等专属美术色）。场景只使用 `getServices().theme` 或 `colors.art`，不写颜色字面量；透明度、`mixColor()` 派生色除外。公共层只保留 `Theme` 类型与通用默认值，不包含任何游戏专属色。
 - 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/彩纸）、`snakeArt.ts`（描边蛇身、表情蛇头、果实）、`gameArt.ts`（棋盘、蛇与果实的每帧绘制）、`mascot.ts`（菜单盘蛇）。颜色统一从 `games/snake/src/colors.ts` 读取，这些是表现层实现，不进入公共包。
 - `index.html`、`manifest.webmanifest`、`game.manifest.json`、`favicon.svg` 无法 import TS，保留静态字面量；`colors.test.ts` 校验它们与 `colors.ts` 的关键颜色一致，防止漂移。贪吃蛇的 favicon 以主题 `accent` 作底色、`onAccent` 作内边框；PWA PNG 由 favicon 重新生成并填实透明角。

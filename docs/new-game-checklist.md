@@ -70,6 +70,7 @@ const save = services.createSave<MySave>({
 ## 6. UI
 
 - 按钮用 `Button`，弹窗用 `Modal`，面板用 `createPanel`，文字样式用 `textStyle`。
+- 描边分级：墨线只给主行动和游戏世界；次行动/信息容器用 1px `borderSoft` + 轻阴影，不要给每个卡片都套墨线。
 - 颜色只从 `src/colors.ts` 读取：UI 用 `getServices().theme`，专属美术用 `colors.art`；场景里不写颜色字面量。浅底强调文字用 `accentInk`，色块上的文字/图标用 `onAccent`。
 - 所有文案走 `services.i18n.t('key')`，中英文都写。
 - 中文使用系统字体，不打包 CJK 字体。

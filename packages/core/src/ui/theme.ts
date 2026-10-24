@@ -16,7 +16,8 @@ export interface Theme {
   textMuted: string
   muted: number
   panel: number
-  panelStroke: number
+  /** Quiet 1px edge for cards and secondary controls. Never use for text contrast. */
+  borderSoft: number
   surface: number
   surfaceAlt: number
   danger: number
@@ -50,7 +51,7 @@ export const defaultTheme: Theme = {
   textMuted: '#65627a',
   muted: 0x65627a,
   panel: 0xfff9ec,
-  panelStroke: 0x332b45,
+  borderSoft: 0xd2d0d6,
   surface: 0xffffff,
   surfaceAlt: 0xfff3d9,
   danger: 0xe8504a,

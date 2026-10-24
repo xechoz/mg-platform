@@ -13,7 +13,32 @@ export interface ButtonOptions {
   onClick: () => void
 }
 
-const OUTLINE = 3
+interface VariantStyle {
+  /** Ink outline width. Zero means the control sits back from the sticker layer. */
+  outline: number
+  /** Extra thickness under the face, the chunky arcade lip. */
+  lip: number
+  shadowAlpha: number
+  shadowOffset: number
+  /** Top gloss strength. */
+  gloss: number
+  /** Draw a quiet 1px edge instead of an ink outline. */
+  softEdge: boolean
+}
+
+const VARIANT_STYLES: Record<ButtonVariant, VariantStyle> = {
+  primary: {
+    outline: 3,
+    lip: 6,
+    shadowAlpha: 0.16,
+    shadowOffset: 10,
+    gloss: 0.12,
+    softEdge: false,
+  },
+  danger: { outline: 3, lip: 6, shadowAlpha: 0.16, shadowOffset: 10, gloss: 0.12, softEdge: false },
+  soft: { outline: 0, lip: 0, shadowAlpha: 0.1, shadowOffset: 4, gloss: 0, softEdge: true },
+  ghost: { outline: 0, lip: 0, shadowAlpha: 0, shadowOffset: 0, gloss: 0, softEdge: false },
+}
 
 export class Button extends Phaser.GameObjects.Container {
   private readonly theme: Theme
@@ -87,7 +112,6 @@ export class Button extends Phaser.GameObjects.Container {
     this.zone.on('pointerdown', () => {
       this.pressed = true
       this.redraw()
-      scene.tweens.add({ targets: this, scale: 0.98, duration: 60, ease: 'Quad.out' })
     })
     this.zone.on('pointerup', () => {
       if (!this.enabled || !this.pressed) return
@@ -160,48 +184,82 @@ export class Button extends Phaser.GameObjects.Container {
   }
 
   private redraw(): void {
+    const style = VARIANT_STYLES[this.variant]
     const width = this.buttonWidth
     const height = this.buttonHeight
     const radius = Math.min(this.theme.radius, height / 2)
-    const lip = this.pressed ? 2 : 6
+    const press = this.pressOffset()
+    const lip = this.pressed ? Math.max(0, style.lip - 2) : style.lip
     const face = this.faceColor()
-    const lipColor = mixColor(face, this.theme.ink, this.variant === 'soft' ? 0.1 : 0.26)
 
     this.background.clear()
-    this.background.fillStyle(this.theme.shadow, 0.16)
-    this.background.fillRoundedRect(
-      -width / 2,
-      -height / 2 + (this.pressed ? 4 : 10),
-      width,
-      height,
-      radius,
-    )
-    this.background.fillStyle(this.theme.ink, 1)
-    this.background.fillRoundedRect(
-      -width / 2 - OUTLINE,
-      -height / 2 - OUTLINE,
-      width + OUTLINE * 2,
-      height + lip + OUTLINE * 2,
-      radius + OUTLINE,
-    )
-    this.background.fillStyle(lipColor, 1)
-    this.background.fillRoundedRect(-width / 2, -height / 2 + lip, width, height, radius)
-    this.background.fillStyle(face, this.variant === 'ghost' ? 0.82 : 1)
-    this.background.fillRoundedRect(-width / 2, -height / 2, width, height, radius)
-    this.background.fillStyle(this.theme.highlight, 0.16)
-    this.background.fillRoundedRect(
-      -width / 2 + 10,
-      -height / 2 + 7,
-      width - 20,
-      Math.max(6, height * 0.14),
-      Math.max(4, radius * 0.45),
-    )
+
+    if (style.shadowAlpha > 0) {
+      const offset = Math.max(2, style.shadowOffset - (this.pressed ? 4 : 0))
+      this.background.fillStyle(this.theme.shadow, style.shadowAlpha)
+      this.background.fillRoundedRect(-width / 2, -height / 2 + offset, width, height, radius)
+    }
+
+    if (style.outline > 0) {
+      this.background.fillStyle(this.theme.ink, 1)
+      this.background.fillRoundedRect(
+        -width / 2 - style.outline,
+        -height / 2 - style.outline + press,
+        width + style.outline * 2,
+        height + lip + style.outline * 2,
+        radius + style.outline,
+      )
+    }
+
+    if (lip > 0) {
+      this.background.fillStyle(mixColor(face, this.theme.ink, 0.26), 1)
+      this.background.fillRoundedRect(-width / 2, -height / 2 + lip + press, width, height, radius)
+    }
+
+    if (this.variant === 'ghost') {
+      this.background.fillStyle(this.theme.ink, this.hovered ? 0.08 : 0.04)
+      this.background.fillRoundedRect(-width / 2, -height / 2, width, height, radius)
+    } else {
+      this.background.fillStyle(face, 1)
+      this.background.fillRoundedRect(-width / 2, -height / 2 + press, width, height, radius)
+    }
+
+    if (style.softEdge) {
+      const border = this.hovered
+        ? mixColor(this.theme.borderSoft, this.theme.ink, 0.3)
+        : this.theme.borderSoft
+      this.background.lineStyle(1, border, 1)
+      this.background.strokeRoundedRect(
+        -width / 2 + 0.5,
+        -height / 2 + 0.5 + press,
+        width - 1,
+        height - 1,
+        radius,
+      )
+    }
+
+    if (style.gloss > 0) {
+      this.background.fillStyle(this.theme.highlight, style.gloss)
+      this.background.fillRoundedRect(
+        -width / 2 + 10,
+        -height / 2 + 7 + press,
+        width - 20,
+        Math.max(6, height * 0.14),
+        Math.max(4, radius * 0.45),
+      )
+    }
 
     this.layoutContent()
   }
 
+  /** Pressing sinks the face into its lip; it never scales the outline. */
+  private pressOffset(): number {
+    if (!this.pressed) return 0
+    return VARIANT_STYLES[this.variant].lip > 0 ? 3 : 1
+  }
+
   private layoutContent(): void {
-    const offset = this.pressed ? 3 : 0
+    const offset = this.pressOffset()
     const icon = this.iconGraphics
     const name = this.iconName
     if (!icon || !name) {

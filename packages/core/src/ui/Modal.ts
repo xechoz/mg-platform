@@ -25,8 +25,6 @@ export interface ModalOptions {
   bodyFontSize?: number
 }
 
-const OUTLINE = 4
-
 export class Modal extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, theme: Theme, options: ModalOptions) {
     super(scene, 0, 0)
@@ -57,18 +55,8 @@ export class Modal extends Phaser.GameObjects.Container {
     const panel = new Phaser.GameObjects.Graphics(scene)
     panel.fillStyle(theme.shadow, 0.2)
     panel.fillRoundedRect(-width / 2 + 2, -height / 2 + 12, width, height, radius)
-    panel.fillStyle(theme.ink, 1)
-    panel.fillRoundedRect(
-      -width / 2 - OUTLINE,
-      -height / 2 - OUTLINE,
-      width + OUTLINE * 2,
-      height + OUTLINE * 2,
-      radius + OUTLINE,
-    )
     panel.fillStyle(theme.panel, 1)
     panel.fillRoundedRect(-width / 2, -height / 2, width, height, radius)
-    panel.fillStyle(theme.highlight, 0.2)
-    panel.fillRoundedRect(-width / 2 + 18, -height / 2 + 16, width - 36, 12, 6)
     card.add(panel)
 
     const titleSize = options.titleFontSize ?? 28
@@ -92,14 +80,6 @@ export class Modal extends Phaser.GameObjects.Container {
       ribbonHeight,
       ribbonHeight / 2,
     )
-    ribbon.lineStyle(OUTLINE, theme.ink, 1)
-    ribbon.strokeRoundedRect(
-      -ribbonWidth / 2,
-      -ribbonHeight / 2,
-      ribbonWidth,
-      ribbonHeight,
-      ribbonHeight / 2,
-    )
     ribbon.setPosition(0, ribbonY)
     title.setPosition(0, ribbonY - 2)
     card.add([ribbon, title])
@@ -116,7 +96,7 @@ export class Modal extends Phaser.GameObjects.Container {
           options.heroFontSize ?? 64,
           cssColor(theme.accent),
           true,
-          3,
+          0,
           Math.round((options.heroFontSize ?? 64) * 0.05),
         ),
       ).setOrigin(0.5, 0)
