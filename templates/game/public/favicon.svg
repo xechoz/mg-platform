@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Mini Games</title>
+  <rect width="64" height="64" rx="14" fill="#0b1020" />
+  <rect x="16" y="16" width="32" height="32" rx="8" fill="#34d399" />
+</svg>

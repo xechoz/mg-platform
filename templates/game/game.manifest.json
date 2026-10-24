@@ -1,0 +1,14 @@
+{
+  "id": "__NAME__",
+  "order": 100,
+  "title": {
+    "zh": "__TITLE__",
+    "en": "__TITLE__"
+  },
+  "description": {
+    "zh": "新游戏，等待实现。",
+    "en": "A new game waiting to be built."
+  },
+  "themeColor": "#34d399",
+  "tags": []
+}

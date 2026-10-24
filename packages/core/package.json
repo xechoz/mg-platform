@@ -1,0 +1,14 @@
+{
+  "name": "@mg/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./rng": "./src/rng/index.ts"
+  },
+  "dependencies": {
+    "@mg/platform": "*",
+    "phaser": "^4.2.1"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "mini-games",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "workspaces": [
+    "packages/*",
+    "games/*"
+  ],
+  "scripts": {
+    "dev:snake": "npm run dev -w @mg/snake",
+    "build:snake": "npm run build -w @mg/snake",
+    "build:games": "npm run build --workspaces --if-present",
+    "site": "npm run build:games && node tooling/build-site.ts",
+    "new:game": "node tooling/create-game.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && biome check . && node tooling/check-boundaries.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.2",
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}
