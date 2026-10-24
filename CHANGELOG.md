@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### 文档与 AI 协作
+
+- 新增项目级 `AGENTS.md`，固化分层、边界、TypeScript、玩法、视觉、存档、发布等硬规则。
+- 扩展 `docs/architecture.md` 为完整设计手册：技术选型、公共层准入、游戏架构、质量门、变更流程与路线图。
+- 新增项目级 skill `.opencode/skills/mini-games-dev/SKILL.md`，覆盖新增游戏、公共层改动、依赖变更、发布与审查清单。
+- `README.md` 增加文档索引；所有约定仅作用于本仓库，不修改全局 OpenCode 配置。
+
 ## 1.0.0 — 2026-10-24
 
 首个可用版本：贪吃蛇 + 可复用游戏基础包。

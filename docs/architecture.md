@@ -1,20 +1,77 @@
-# 架构
+# 架构与工程原则
 
-## 技术选型
+本文件是 `mini-games` 的技术事实来源。AI 协作的硬规则见仓库根目录 `AGENTS.md`；新增游戏操作见 `docs/new-game-checklist.md`；发布见 `docs/publishing.md`。
+
+## 1. 项目状态
+
+- 版本：**1.0.0**
+- 已发布：`games/snake`（贪吃蛇）
+- 计划中：`games/lianliankan`（连连看）、`games/ludo`（Ludo）
+- 目标平台：自有网站优先，Poki 随后
+- 游戏模式：纯单人 vs AI；v1 不做热座、不做在线联机
+
+## 2. 设计目标与非目标
+
+### 目标
+
+- 多个小游戏共用一个稳定的游戏外壳，避免每次重做加载、缩放、音频、存档、暂停、平台适配。
+- 每个游戏独立构建、独立部署，可单独上架 Poki。
+- 规则层可测试、可复现、可序列化；表现层可替换。
+- 新游戏能在几分钟内生成可运行骨架。
+- 公共层的改动有明确边界，不被单个游戏的业务需求拖垮。
+
+### 非目标
+
+- 不做通用游戏编辑器。
+- 不追求跨引擎抽象；Phaser 就是唯一渲染/输入/音频底座。
+- 不提前设计联机、账号、云存档、排行榜。
+- 不为“以后可能复用”创建空包或空接口。
+
+## 3. 技术选型
 
 | 项     | 选择                   | 原因                                             |
 | ------ | ---------------------- | ------------------------------------------------ |
-| 语言   | TypeScript             | 规则型游戏需要类型约束；与 JS 基础衔接成本低     |
-| 引擎   | Phaser 4.2.1           | 2D Web 游戏成熟方案，场景/输入/音频/资源加载齐全 |
-| 构建   | Vite 8，每游戏独立构建 | 产物是纯静态站点，适配自有站与 Poki              |
+| 语言   | TypeScript 7           | 规则型游戏需要类型约束；与 JS 基础衔接成本低     |
+| 引擎   | Phaser 4.2             | 2D Web 游戏成熟方案，场景/输入/音频/资源加载齐全 |
+| 构建   | Vite 8，每游戏独立构建 | 纯静态产物，适配自有站与 Poki                    |
 | 包管理 | npm workspaces         | 环境已有，零额外工具                             |
-| 测试   | Vitest（规则层）       | 纯逻辑可快速覆盖，不依赖浏览器                   |
+| 测试   | Vitest 5               | 纯逻辑快速覆盖，不依赖浏览器                     |
 | 检查   | Biome + 自定义边界脚本 | 格式化、lint、依赖方向一次跑完                   |
+| CI     | GitHub Actions         | `check + test + build`，Node 24                  |
 
-不选 Kotlin/Compose：Web 产物重、首屏慢，平台 SDK 都是 JS 生态。
-不选自研引擎：三款游戏的核心价值在玩法，不在重写缩放/音频/输入。
+放弃的方案：
+- **Kotlin/Compose Multiplatform**：Web 产物体积大、首屏慢；Poki/CrazyGames SDK 都是 JS 生态；未来要 Android 可用 Capacitor 包 Web 构建。
+- **自研 Canvas 引擎**：缩放、音频解锁、图集、字体、输入、场景生命周期、可见性暂停都要重做，浪费时间且易出兼容 bug。
+- **React/DOM UI**：游戏循环、输入、缩放与 Canvas 的协调成本高于收益；HUD 用 Phaser 原生 GameObject 足够。
 
-## 分层
+## 4. 目录与分层
+
+```
+mini-games/
+├─ AGENTS.md                     # AI 硬规则（项目级）
+├─ packages/
+│  ├─ core/                      # Phaser 外壳、UI、音频、存档、i18n、调试
+│  └─ platform/                  # dev / Poki SDK 适配
+├─ games/
+│  ├─ snake/
+│  │  ├─ game.manifest.json      # 站点与打包共用的元数据
+│  │  ├─ src/logic/              # 纯 TS 规则（无 Phaser）
+│  │  ├─ src/scenes/             # Menu / Game / Hud
+│  │  ├─ src/main.ts             # GameDefinition 组装
+│  │  ├─ src/i18n.ts
+│  │  └─ src/save.ts
+│  └─ ...
+├─ templates/game/               # 新游戏模板
+├─ tooling/
+│  ├─ vite.game.ts               # 共享 Vite 配置
+│  ├─ build-site.ts              # 汇总 dist-site
+│  ├─ create-game.ts             # 新游戏生成器
+│  └─ check-boundaries.ts        # 依赖边界检查
+├─ docs/
+└─ .opencode/skills/             # 项目级 AI skill
+```
+
+依赖方向：
 
 ```
 games/*  ──>  packages/core  ──>  packages/platform
@@ -22,45 +79,108 @@ games/*  ──>  packages/core  ──>  packages/platform
    └──> packages/platform
 ```
 
-- `@mg/core`：Phaser 外壳。场景、UI 组件、音频、输入手势、存档机制、i18n、调试面板。
-- `@mg/platform`：唯一允许接触外部 SDK 的地方。当前只有 `DevPlatform`，Poki 适配器按同一接口补。
-- `@mg/assets`：等出现真正共享的字体/UI 图集/音效时再建，目前不预建。
-- `games/*/src/logic`：纯函数 + 不可变状态，零 Phaser 依赖，Vitest 覆盖。
+- `@mg/core`：Boot/Preload、缩放、场景生命周期、UI、音频、SaveStore、Settings、i18n、RNG、调试。
+- `@mg/platform`：唯一允许接触外部 SDK 的地方。
+- `games/*/src/logic`：纯函数 + 不可变 state，零 Phaser 依赖，Vitest 覆盖。
 - `games/*/src/scenes`：编排输入、渲染、动画、场景切换。
-- `games/*/src/view`：纯表现，可读逻辑状态，不回写规则。
+- `games/*/src/view`：复杂到需要拆时再建；目前贪吃蛇渲染在 `GameScene` 内。
 
-依赖规则由 `tooling/check-boundaries.ts` 强制：
-- `games/*` 不能互相 import；
-- `packages/*` 不能 import `games/*`；
-- `games/*/src/logic` 只能 import `@mg/core/rng`，不能 import Phaser；
-- 游戏代码不能直接使用 `window.PokiSDK` 或 `localStorage`。
+### 源码即包（JIT packages）
 
-## 为什么不把 grid / turn 做成公共包
+workspace 包的 `exports` 直接指向 `src/index.ts`，不预编译：
 
-- `grid` 的寻路规则（≤2 拐点、绕棋盘外圈）是连连看的玩法，贪吃蛇只用边界判断，Ludo 用预定义跑道。
+```json
+{
+  "exports": {
+    ".": "./src/index.ts",
+    "./rng": "./src/rng/index.ts"
+  }
+}
+```
+
+- 开发时 Vite 直接转译源码，改 `packages/core` 立即热更新。
+- `tsc --noEmit` 做全仓库类型检查。
+- 发布时每个游戏仍由 Vite 打成独立静态包。
+
+## 5. 依赖边界
+
+由 `tooling/check-boundaries.ts` 强制：
+- `games/*` 不能互相 import。
+- `packages/*` 不能 import `games/*`。
+- `games/*/src/logic` 不能 import Phaser；只能 import `@mg/core/rng`。
+- 游戏代码不能直接使用 `window.PokiSDK`。
+- 游戏代码不能直接使用 `localStorage`。
+
+运行：
+
+```bash
+npm run check
+```
+
+边界脚本不是风格建议，是硬约束。需要跨边界时先改架构、说明理由，不要绕过脚本。
+
+## 6. 公共层准入
+
+### 为什么不把 grid / turn 做成公共包
+
+- `grid` 的寻路规则（≤2 拐点、绕棋盘外圈）是连连看的玩法；贪吃蛇只用边界判断，Ludo 用预定义跑道。
 - `turn` 的回合规则（掷 6 额外回合、三连六惩罚、吃子、进家）是 Ludo 的玩法；飞行棋和大富翁会朝不同方向演进。
 - 共享它们会让一个游戏的规则改动波及另一个游戏，最后堆出一组游戏专属开关。
 
 结论：规则先留在各自游戏内。等飞行棋做完，再对比 Ludo 与飞行棋，只上提真正相同的机制（例如种子骰子、回合轮转、事件日志）。
 
-## 上提标准
+### 上提标准
 
 同时满足才上提，否则复制：
-1. 至少两个已发布的游戏实际用到；
-2. 两边用法一致，不需要游戏专属开关；
-3. 两边都有测试；
+1. 至少两个已发布的游戏实际用到。
+2. 两边用法一致，不需要游戏专属开关。
+3. 两边都有测试。
 4. 提取后的 API 比两份实现加起来更小、更清楚。
 
-## 公共层什么时候必须改
+### 公共层什么时候必须改
 
-- 平台 SDK、浏览器音频解锁、存储限制、缩放行为变化；
-- 存档格式或迁移 bug；
-- 性能、可访问性、崩溃修复；
+- 平台 SDK、浏览器音频解锁、存储限制、缩放行为变化。
+- 存档格式或迁移 bug。
+- 性能、可访问性、崩溃修复。
 - Phaser 大版本升级。
 
 规则：只增不破优先；破坏性改动必须在同一个提交里迁移所有游戏，CI 全绿。
 
-## 场景流
+### 反模式
+
+- 在 core 里写 `if (gameId === 'snake')`。
+- 为一个游戏加公共层开关，其他游戏永远走不到。
+- 提前创建 `packages/grid` / `packages/turn` / `packages/assets`。
+- 把“回合”“棋盘”“计分”这类游戏名词放进 `@mg/core` 的 API。
+
+## 7. 游戏架构模式
+
+### 7.1 纯逻辑层
+
+`src/logic` 只依赖类型和 `@mg/core/rng`：
+
+```ts
+createInitialState(config, rng): State
+enqueueDirection(state, direction): State
+step(state, rng): { state: State; events: Event[] }
+```
+
+约束：
+- 不 import Phaser、Scene、Texture、Audio。
+- 不读 DOM、不写 localStorage、不发网络请求。
+- state 是可序列化的普通对象；不存 class 实例、函数、DOM 节点。
+- 随机性通过传入的 `Rng`，保证同种子同结果。
+- 非法操作返回原 state 或明确的错误结果，不 throw 作为流程控制。
+- 规则事件（eat/die/win）由逻辑层产出，渲染层消费。
+
+贪吃蛇的落点：
+- 20×20 棋盘，初始长度 3。
+- 145ms/tick 起，最低 70ms；每 30 分加速 7ms；果实 10 分。
+- 输入队列最多 2，禁止 180° 反向。
+- 食物由种子 RNG 从空格中选；填满棋盘判胜。
+- 撞墙/撞自己判负；尾巴让出的格子不算碰撞。
+
+### 7.2 场景流
 
 ```
 Boot（初始化平台）
@@ -71,19 +191,240 @@ Boot（初始化平台）
        └─ 结算弹窗
 ```
 
-`Boot` 和 `Preload` 是 core 提供的保留场景键，游戏不要占用。
+- `Boot`、`Preload` 是 core 保留键，游戏不要占用。
+- 菜单默认键 `Menu`。
+- `GameScene` 拥有游戏循环、输入、渲染和平台事件。
+- `HudScene` 负责分数、按钮、暂停/结算弹窗；通过场景方法调用 `GameScene`。
+- 重开：先 `stop('Hud')` 再 `restart()`，避免 HUD 状态残留。
 
-## 关键约定
+### 7.3 GameDefinition
 
-- 设计分辨率固定 1280×720，横屏优先；`Scale.FIT` 自适应。
-- 所有文字走 Phaser Text + 系统字体栈，中文不打包 CJK 字体。
-- 存档走 `SaveStore`：带版本、可迁移、localStorage 不可用时回退内存。
-- 设置（音效、语言）全局共享，键为 `mg:settings:v1`。
-- 每个游戏存档键为 `mg:<gameId>:<name>`。
-- 平台事件：进入实际玩法 `gameplayStart()`，菜单/暂停/结算 `gameplayStop()`，胜利或新纪录 `happyTime()`。
-- 失败/暂停/失焦都要停表，恢复时给 3-2-1 倒计时，避免不公平死亡。
+每个游戏在 `src/main.ts` 组装：
 
-## 发布
+```ts
+createGame({
+  id: 'snake',
+  design: { width: 1280, height: 720 },
+  backgroundColor: 0x0b1020,
+  defaultLang: 'zh',
+  i18n: snakeI18n,
+  menuScene: 'Menu',
+  scenes: [MenuScene, GameScene, HudScene],
+})
+```
 
-- 自有站：`dist-site/`，每个游戏在 `/games/<id>/`，`base: './'` 保证子路径可用。
-- Poki：单游戏 zip，`index.html` 在根目录，所有资源本地化，无外部请求。构建时通过 `VITE_PLATFORM=poki` 注入 SDK 并选择适配器。
+可选字段：`theme`（覆盖主题 token）、`debug`、`assets`（images/audio/json）。
+
+### 7.4 Services
+
+场景通过 `getServices()` 获取：
+
+```ts
+const services = getServices()
+services.i18n.t('menu.play')
+services.audio.play('click')
+services.platform.gameplayStart()
+services.setSound(false)
+services.setLang('en')
+services.createSave<MySave>({ name: 'save', version: 1, initial: () => ({ best: 0 }) })
+```
+
+- 不要自己 new AudioContext、写 localStorage、读 `navigator.language`。
+- 平台事件只在玩法边界调用，不要每帧调用。
+
+### 7.5 表现层
+
+- 场景只读 state，渲染插值/动画/粒子，不回写规则。
+- 逻辑 tick 与渲染帧解耦：固定步进 + 两次 tick 间插值。
+- 动画不得阻塞输入；动画队列不得吞掉玩家操作。
+- 结算/暂停时停表；恢复时先倒计时再继续。
+
+## 8. 玩法与 UX 原则
+
+- **公平死亡**：失焦、切页、暂停都必须停表；恢复给 3-2-1 倒计时。
+- **输入缓冲**：方向/操作进入队列，不能因渲染帧或动画丢失。
+- **非法输入明确拒绝**：例如贪吃蛇禁止直接反向；不要静默改成别的方向。
+- **确定性**：种子 RNG 驱动食物/关卡/洗牌；测试可复现。
+- **难度可解释**：速度曲线、AI 难度、生成概率写在 config，不散落在渲染代码。
+- **状态可恢复**：v1 至少持久化最高分/进度；state 设计保持可序列化，为以后云存档留路。
+- **结算完整**：显示分数/最高分/失败原因；提供重开和回菜单。
+- **新手可读**：菜单写清操作方式；首次进入不要求读长说明。
+- **移动端优先验证**：横屏可玩，按钮触控区域足够大，滑动不与页面滚动冲突。
+
+## 9. 视觉与资源
+
+- 设计分辨率 **1280×720**，横屏优先；`Scale.FIT` + `CENTER_BOTH`。
+- 竖屏显示“请横屏游玩”遮罩（core 注入，CSS media query）。
+- 中文使用系统字体栈：Noto Sans SC / PingFang SC / Microsoft YaHei / system-ui。
+- **不打包 CJK 字体**；5MB+ 会毁首屏。
+- 西文可用 OFL 字体，但要确认许可证和体积。
+- 占位阶段用 Phaser Graphics 程序化绘制；正式素材优先 CC0（如 Kenney）。
+- 图标优先 Lucide 等开源图标，只取实际用到的，记录来源/许可证。
+- 音效目前用 WebAudio 程序化合成，零素材；以后换文件时保持 `AudioManager` 调用点不变。
+- 运行时零外部请求：无 CDN、外部字体、统计脚本、远程图片/音频。
+- 首包目标 ≤ 1.5MB gzip；Phaser 本身约 370KB gzip。贪吃蛇 1.0 约 367KB gzip。
+
+## 10. 存档与设置
+
+### SaveStore
+
+```ts
+const save = services.createSave<MySave>({
+  name: 'save',
+  version: 1,
+  initial: () => ({ best: 0 }),
+  migrate: (old, fromVersion) => {
+    // 返回新结构，或 null 表示无法迁移
+  },
+})
+```
+
+- 键：`mg:<gameId>:<name>`。
+- 信封：`{ version, data }`。
+- 版本不匹配时调用 `migrate`；失败/损坏回退 `initial()`。
+- localStorage 不可用（隐私模式、受限 iframe）自动回退内存。
+- 改字段必须升版本并提供迁移；不要静默丢档。
+- 不要把 Phaser 对象、函数、DOM 写进存档。
+
+### 设置
+
+- 全局键：`mg:settings:v1`。
+- 字段：`sound: boolean`、`lang: 'zh' | 'en'`。
+- 通过 `services.setSound()` / `services.setLang()` 修改，自动持久化并同步运行时。
+- 设置是跨游戏共享的；不要为单个游戏另建音效/语言偏好。
+
+## 11. i18n
+
+- 默认中文；英文同步准备。
+- 解析顺序：URL `?lang=` > 已存选择 > 游戏 `defaultLang`。
+- **不做 navigator 嗅探**：中文站不应因为浏览器是英文就自动变英文。
+- 每个游戏必须提供 `game.title`；Preload 依赖它。
+- 玩家可见文案全部走 `services.i18n.t(key, params)`；中英文词典都要有。
+- key 命名：`game.*`、`menu.*`、`hud.*`、`pause.*`、`over.*`；core 用 `core.*`。
+- 参数用 `{name}` 占位；缺失 key 回退中文，再回退 key 本身。
+- 语言切换后重建/刷新当前场景，确保所有文本更新。
+
+## 12. 平台适配
+
+`PlatformAdapter` 接口：
+
+```ts
+readonly name: string
+
+init(): Promise<void>
+loadingFinished(): void
+gameplayStart(): void
+gameplayStop(): void
+commercialBreak(): Promise<void>
+rewardedBreak(): Promise<boolean>
+happyTime(): void
+lang(): Lang | null
+haptic(ms: number): void
+```
+
+- 游戏代码只依赖接口，不碰 `window.PokiSDK`。
+- 当前只有 `DevPlatform`。
+- 进入实际玩法 `gameplayStart()`；菜单/暂停/结算 `gameplayStop()`；胜利/新纪录 `happyTime()`。
+- 广告只在局间/重开触发，不在操作中打断；广告期间停表、静音、加输入锁。
+- Poki 构建：单游戏 zip、`index.html` 在根、资源相对路径、运行时无外部请求。
+- `VITE_PLATFORM=poki` 目前会回退 Dev，适配器完成前不要提审。
+
+## 13. 代码规范
+
+- TypeScript strict；默认非空；可空只在 I/O 边界出现并一次性收敛。
+- 默认 immutable：`readonly`、纯函数、不可变数组；可变状态最小化。
+- 不防御性编程：不写无意义的 null 检查、兜底 try-catch、冗余参数校验。
+- 核心逻辑 FP 取向，整体架构 OOP；不硬套 monad/类型类。
+- 文件按职责命名：`state.ts`、`types.ts`、`config.ts`、`save.ts`、`*Scene.ts`。
+- 不引入 `any`；需要时先说明并收窄。
+- 注释只解释“为什么”，不复述代码。
+- 新依赖必须说明必要性、体积、许可证；优先标准库和已有依赖。
+
+## 14. 测试与质量门
+
+### 自动检查
+
+```bash
+npm run check        # tsc + Biome + 依赖边界
+npm run test         # Vitest
+npm run build:snake  # 或对应游戏
+npm run site         # 涉及站点/多游戏时
+```
+
+### 测试范围
+
+- 规则层：移动、碰撞、吃子、胜负、非法输入、随机复现、速度曲线。
+- 核心：SaveStore 初始/持久化/迁移/损坏回退；i18n 回退与语言解析。
+- 每个新游戏至少覆盖：初始状态、正常推进、边界失败、胜利条件、种子确定性。
+
+### 浏览器 smoke
+
+至少检查：
+- 桌面 1280×720。
+- 手机横屏 844×390。
+- 竖屏 390×844（应显示旋转提示）。
+- 首屏 → 点击开始 → 菜单 → 游戏 → 暂停 → 重开 → 结算 → 回菜单。
+- 失焦/切页自动暂停；恢复有倒计时。
+- 中英文切换、音效开关、刷新后持久化。
+- console 无报错；Network 无外部请求。
+- 首包 gzip 体积无明显回退。
+
+仓库目前没有内置 Playwright 用例；smoke 可由开发者在浏览器或临时脚本完成。若以后固化，优先加 `@playwright/test` 并用系统 Chromium，避免把浏览器二进制提交进仓库。
+
+## 15. 变更流程
+
+### 新游戏
+
+1. `npm run new:game -- <name>`
+2. `npm install`
+3. 按 `docs/new-game-checklist.md` 改 manifest、i18n、场景。
+4. 先写 `src/logic` 和测试，再做场景/渲染。
+5. 跑完整质量门，补 `thumb.png`，更新 CHANGELOG。
+
+### 修改公共层
+
+1. 先判断是基础设施需求还是单个游戏的业务需求。
+2. 业务需求 → 留在游戏内，复制实现。
+3. 基础设施需求 → 列出受影响游戏，补回归测试，更新所有游戏。
+4. 破坏性改动必须同提交迁移，CI 全绿。
+
+### 新增依赖
+
+- 说明为什么现有依赖/标准库不够。
+- 检查体积、许可证、维护状态、浏览器兼容。
+- 运行时依赖优先少而稳；开发依赖不进入产物。
+
+### 发布
+
+1. 更新版本号（根、游戏、core、platform 保持一致）。
+2. 更新 `CHANGELOG.md`。
+3. `npm run check && npm run test && npm run site`。
+4. commit → push → tag → GitHub Release（附游戏 zip）。
+5. 确认 CI 在 `main` 和 tag 上都通过。
+
+## 16. 已知取舍与路线图
+
+### 已知取舍
+
+- 只有 `DevPlatform`；Poki 适配器未实现。
+- 没有 `packages/assets`；共享素材出现前不建。
+- 没有 `packages/grid` / `packages/turn`；规则留在游戏内。
+- 贪吃蛇渲染暂时放在 `GameScene`；复杂后再拆 `src/view`。
+- v1 不做热座、在线联机、账号、排行榜。
+- 没有内置 E2E；浏览器 smoke 目前是人工/临时脚本。
+
+### 路线图
+
+| 阶段 | 内容                                              | 验收                                                 |
+| ---- | ------------------------------------------------- | ---------------------------------------------------- |
+| M2   | 连连看：10×8、≤2 拐点、绕边界、死局洗牌、种子可解 | 寻路单测、洗牌、种子复现                             |
+| M3   | Ludo：1 玩家 + 3 AI、掷骰/吃子/进家、动画队列     | 完整一局无死锁、规则测试、AI <100ms                  |
+| M4   | 打磨、Poki 适配、SDK 注入、提审                   | Poki Inspector 通过、单游戏 zip 独立可跑、无外部请求 |
+
+## 17. 相关文档
+
+- `AGENTS.md` — AI 必须遵守的硬规则
+- `docs/new-game-checklist.md` — 新游戏操作清单
+- `docs/publishing.md` — 自有站与 Poki 发布
+- `README.md` — 快速开始与命令
+- `.opencode/skills/mini-games-dev/SKILL.md` — 项目开发 skill

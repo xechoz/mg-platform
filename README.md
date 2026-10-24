@@ -35,6 +35,10 @@ npm run preview -w @mg/snake
 ## 结构
 
 ```
+AGENTS.md      # 项目级 AI 硬规则
+.opencode/
+└─ skills/     # 项目级 AI skill（仅本仓库）
+
 packages/
 ├─ core/        # 游戏外壳：场景、UI、音频、存档、i18n、调试
 └─ platform/    # 平台适配：dev（Poki 接口已预留）
@@ -44,7 +48,6 @@ games/
    ├─ game.manifest.json   # 标题/描述/主题色，站点与打包共用
    ├─ src/logic/           # 纯 TS 规则，可单测，不 import Phaser
    ├─ src/scenes/          # Menu / Game / Hud
-   ├─ src/view/            # 渲染与表现（目前渲染在 GameScene 内）
    └─ src/main.ts
 
 tooling/       # Vite 预设、站点构建、边界检查、新游戏生成器
@@ -61,6 +64,14 @@ docs/          # 架构、开发清单、发布说明
 - 公共层不 import 游戏；游戏之间不互相 import；`src/logic` 不 import Phaser。
 
 详见 [docs/architecture.md](docs/architecture.md)。
+
+## 文档
+
+- [AGENTS.md](AGENTS.md) — AI 协作硬规则（项目级，仅本仓库）
+- [docs/architecture.md](docs/architecture.md) — 完整设计、原则、技术要点
+- [docs/new-game-checklist.md](docs/new-game-checklist.md) — 新增游戏清单
+- [docs/publishing.md](docs/publishing.md) — 自有站与 Poki 发布
+- [.opencode/skills/mini-games-dev/SKILL.md](.opencode/skills/mini-games-dev/SKILL.md) — 项目开发 skill
 
 ## 发布
 
