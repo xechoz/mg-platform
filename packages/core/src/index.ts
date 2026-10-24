@@ -1,8 +1,15 @@
 import type { Lang } from '@mg/platform'
 
 export { createGame } from './app/createGame'
+export { computeDesignSize, type DesignSize } from './app/designSize'
+export {
+  type LayoutListener,
+  onLayoutChange,
+  readViewport,
+  type Viewport,
+} from './app/layout'
 export { onAppHidden } from './app/lifecycle'
-export { PORTRAIT_BLOCK_QUERY } from './app/orientation'
+export { type Insets, NO_INSETS, readSafeAreaInsets, safeAreaInDesign } from './app/safeArea'
 export {
   createServices,
   type GameDefinition,
@@ -10,6 +17,7 @@ export {
   getServices,
   type SaveConfig,
 } from './app/services'
+export { installResponsiveViewport } from './app/viewport'
 export { AudioManager, type SfxName } from './audio/AudioManager'
 export { DebugOverlay } from './debug/DebugOverlay'
 export { coreI18n } from './i18n/core'

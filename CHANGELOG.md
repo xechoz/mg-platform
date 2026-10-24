@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### 响应式 UI：横竖屏全屏适配
+
+- 设计空间改为动态：短边固定 720 设计单位，长边随视口比例（`computeDesignSize`），`Scale.FIT` 铺满屏幕；手机横屏不再左右留黑边。
+- `GameDefinition.design` 由 `{ width, height }` 改为 `{ base: 720 }`；`installResponsiveViewport` 在尺寸变化时 `setGameSize`，场景通过 `onLayoutChange` 重排，不重启、不丢局。
+- 新增 `safeAreaInDesign()`：把 `env(safe-area-inset-*)` 换算成设计单位，刘海与手势条区域自动内缩。
+- 移除竖屏旋转遮罩、`PORTRAIT_BLOCK_QUERY` 与 `core.rotate`；横竖屏都可玩，朝向变化自动暂停，恢复走 3-2-1。
+- 贪吃蛇新增 `src/ui/layout.ts`：棋盘保持最大正方形，分数与暂停收进棋盘外同一块 HUD 区域（横屏左侧、竖屏顶部），不占用盘面。
+- 游戏页移除操作提示，说明只保留在菜单；删除 `hud.hint` 文案。
+- `Modal` 宽高与动作按钮按视口裁剪，小窗口不再溢出。
+- 新增 `designSize` 与 snake `layout` 单测。
+
 ### 贪吃蛇 UI 与移动端体验
 
 - 游戏页改为单棋盘居中布局（672×672），移除右侧 536×672 HUD 面板；左侧只保留当前分数与操作提示，右上角保留一个小号暂停按钮。
@@ -10,7 +21,6 @@
 - 图标按钮改为“按下与抬起都在按钮上”才触发，避免拖动经过暂停按钮时误触。
 - 菜单改为居中单列，开始按钮 480×96，音效/语言按钮 230×92，插画降为低透明度背景。
 - 暂停与结算弹窗改为竖排大按钮；结算展示大分数并延迟 700ms，让玩家看清死亡位置。
-- 竖屏提示现在会阻断输入并自动暂停，转回横屏后进入暂停→继续→3-2-1 流程。
 - 修复画布 flex 与 Phaser `CENTER_BOTH` 叠加导致的双重居中；同步 `100dvh`、页面背景与 `theme-color`。
 - `@mg/core`：Modal 支持 `actionsLayout`、`hero` 与字号覆盖；Button hover 仅在支持 hover 的设备启用，并增加按下归属判定，避免场景切换或拖动时同一个 `pointerup` 误触；Preload 字号放大。
 
@@ -19,6 +29,8 @@
 - 新增项目级 `AGENTS.md`，固化分层、边界、TypeScript、玩法、视觉、存档、发布等硬规则。
 - 扩展 `docs/architecture.md` 为完整设计手册：技术选型、公共层准入、游戏架构、质量门、变更流程与路线图。
 - 新增项目级 skill `.opencode/skills/mini-games-dev/SKILL.md`，覆盖新增游戏、公共层改动、依赖变更、发布与审查清单。
+- 更新 `AGENTS.md` 第 24 条、`docs/architecture.md`、`docs/new-game-checklist.md` 与 skill 审查清单：动态设计空间、HUD 不占棋盘、安全区内缩、转屏自动暂停。
+- `README.md` 补充局域网调试说明：dev server 默认 `host: true`，手机同 Wi-Fi 打开终端打印的 Network 地址。
 - `README.md` 增加文档索引；所有约定仅作用于本仓库，不修改全局 OpenCode 配置。
 
 ## 1.0.0 — 2026-10-24

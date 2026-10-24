@@ -99,6 +99,9 @@ npm run site         # 涉及站点/多游戏时
 - 文案：全部 `services.i18n.t()`，中英文都写；`game.title` 必填。
 - 平台：`services.platform.gameplayStart()` / `gameplayStop()` / `happyTime()`。
 - UI：`Button`、`Modal`、`createPanel`、`textStyle`；不要另造一套风格。
+- 场景用 `onLayoutChange(scene, fn)` 重排，不重启场景；`GameDefinition.design` 只写 `{ base: 720 }`。
+- HUD（分数、暂停）放在棋盘外的空白区，不压缩游戏区；安全区用 `safeAreaInDesign(scene)` 内缩。
+- 横竖屏都要能玩；朝向变化自动暂停，不写旋转遮罩。
 
 ## 审查清单
 
@@ -111,7 +114,7 @@ npm run site         # 涉及站点/多游戏时
 - [ ] 暂停/失焦停表，恢复倒计时。
 - [ ] 存档版本/迁移正确，旧档可读。
 - [ ] 中英文文案完整，默认中文。
-- [ ] 1280×720 横屏；竖屏提示正常。
+- [ ] 短边 720 动态设计空间；横竖屏都可玩，转屏自动暂停。
 - [ ] 运行时零外部请求；无 CJK 字体包。
 - [ ] 新增规则边界有测试。
 - [ ] `npm run check` / `test` / 构建通过。

@@ -14,7 +14,7 @@
 ```bash
 npm install
 
-npm run dev:snake        # 本地开发贪吃蛇
+npm run dev:snake        # 本地开发贪吃蛇，同时监听局域网
 npm run build:snake      # 构建单个游戏到 games/snake/dist
 
 npm run test             # Vitest：规则层单测
@@ -24,6 +24,8 @@ npm run check            # 类型 + Biome + 依赖边界检查
 npm run site             # 构建全部游戏 + 汇总成 dist-site
 npm run new:game -- foo  # 从模板创建 games/foo
 ```
+
+开发服务器默认监听所有网卡（`tooling/vite.game.ts` 的 `host: true`）。启动后终端会打印 `Network: http://<你的局域网 IP>:5173/`，手机与电脑连同一 Wi-Fi 后直接用浏览器打开该地址即可调试。5173 被占用时 Vite 会自动换端口，以终端打印为准。
 
 本地查看构建产物：
 

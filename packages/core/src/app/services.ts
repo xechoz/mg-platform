@@ -10,7 +10,8 @@ import { defaultTheme, type Theme } from '../ui/theme'
 
 export interface GameDefinition {
   id: string
-  design: { width: number; height: number }
+  /** Short side of the design space, in design units. The long side follows the viewport aspect. */
+  design: { base: number }
   scenes: Phaser.Types.Scenes.SceneType[]
   i18n: Record<Lang, Dictionary>
   menuScene?: string
@@ -89,8 +90,6 @@ export function createServices(def: GameDefinition): GameServices {
       i18n.setLang(next)
       document.documentElement.lang = next === 'zh' ? 'zh-CN' : 'en'
       document.title = `${i18n.t('game.title')} · Mini Games`
-      const hint = document.querySelector('.mg-rotate-hint')
-      if (hint) hint.textContent = i18n.t('core.rotate')
     },
   }
 

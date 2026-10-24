@@ -30,10 +30,10 @@ export class Modal extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, theme: Theme, options: ModalOptions) {
     super(scene, 0, 0)
 
-    const screenWidth = scene.cameras.main.width
-    const screenHeight = scene.cameras.main.height
-    const width = options.width ?? 520
-    const height = options.height ?? 300
+    const screenWidth = scene.scale.width
+    const screenHeight = scene.scale.height
+    const width = Math.min(options.width ?? 520, screenWidth - 48)
+    const height = Math.min(options.height ?? 300, screenHeight - 48)
     const left = screenWidth / 2 - width / 2
     const top = screenHeight / 2 - height / 2
 
@@ -102,7 +102,7 @@ export class Modal extends Phaser.GameObjects.Container {
       const actionFontSize = options.actionFontSize ?? (layout === 'column' ? 26 : 20)
 
       if (layout === 'column') {
-        const actionWidth = options.actionWidth ?? width - 80
+        const actionWidth = Math.min(options.actionWidth ?? width - 80, width - 48)
         const actionHeight = options.actionHeight ?? 88
         const gap = 16
         const total = actions.length * actionHeight + (actions.length - 1) * gap
@@ -129,9 +129,12 @@ export class Modal extends Phaser.GameObjects.Container {
           this.add(button)
         })
       } else {
-        const buttonWidth = options.actionWidth ?? (actions.length > 2 ? 150 : 180)
-        const buttonHeight = options.actionHeight ?? 50
         const gap = 14
+        const buttonWidth = Math.min(
+          options.actionWidth ?? (actions.length > 2 ? 150 : 180),
+          Math.floor((width - 48 - (actions.length - 1) * gap) / actions.length),
+        )
+        const buttonHeight = options.actionHeight ?? 50
         const total = actions.length * buttonWidth + (actions.length - 1) * gap
         const startX = screenWidth / 2 - total / 2 + buttonWidth / 2
 

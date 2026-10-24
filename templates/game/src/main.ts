@@ -4,7 +4,7 @@ import { PlaceholderScene } from './scenes/PlaceholderScene'
 
 createGame({
   id: '__NAME__',
-  design: { width: 1280, height: 720 },
+  design: { base: 720 },
   backgroundColor: 0x0b1020,
   defaultLang: 'zh',
   i18n: gameI18n,

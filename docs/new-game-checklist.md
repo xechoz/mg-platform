@@ -26,7 +26,7 @@ games/my-game/
 
 - `game.manifest.json`：`id`、中英文标题/描述、主题色、排序。
 - `src/i18n.ts`：至少保留 `game.title`，Preload 场景依赖它。
-- `src/main.ts`：设计分辨率保持 1280×720；`scenes` 注册所有场景；`menuScene` 默认 `Menu`。
+- `src/main.ts`：`design: { base: 720 }`（短边 720 设计单位，长边随屏幕比例）；`scenes` 注册所有场景；`menuScene` 默认 `Menu`。
 - `PlaceholderScene`：改成真正的菜单场景（场景键保持 `Menu`）。
 
 ## 3. 场景约定
@@ -85,7 +85,7 @@ npm run site
 ```
 
 人工检查：
-- [ ] 桌面 16:9 与手机横屏可玩
+- [ ] 桌面 16:9、手机横屏与竖屏都可玩，转屏自动暂停并恢复倒计时
 - [ ] 首次点击后音效正常，静音可持久化
 - [ ] 暂停/失焦停表，恢复有倒计时
 - [ ] 最高分/进度重启后仍在
