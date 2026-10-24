@@ -21,6 +21,7 @@ games/my-game/
 │  └─ icons/              # 180 / 192 / 512
 └─ src/
    ├─ main.ts
+   ├─ colors.ts
    ├─ i18n.ts
    └─ scenes/PlaceholderScene.ts
 ```
@@ -29,7 +30,8 @@ games/my-game/
 
 - `game.manifest.json`：`id`、中英文标题/描述、主题色、排序。
 - `src/i18n.ts`：至少保留 `game.title`，Preload 场景依赖它。
-- `src/main.ts`：`design: { base: 720 }`（短边 720 设计单位，长边随屏幕比例）；`scenes` 注册所有场景；`menuScene` 默认 `Menu`。
+- `src/main.ts`：`design: { base: 720 }`（短边 720 设计单位，长边随屏幕比例）；`scenes` 注册所有场景；`menuScene` 默认 `Menu`；通过 `theme: colors.theme` 注入游戏主题，不再单独写 `backgroundColor`。
+- `src/colors.ts`：该游戏唯一的颜色配置，包含 `theme`（覆盖公共 token）和 `art`（游戏专属美术色）。
 - `PlaceholderScene`：改成真正的菜单场景（场景键保持 `Menu`）。
 - `public/manifest.webmanifest`：同步标题、描述、`theme_color`；`public/icons/` 放 180、192、512 的 PNG，正式上线前替换模板图标。
 
@@ -68,9 +70,11 @@ const save = services.createSave<MySave>({
 ## 6. UI
 
 - 按钮用 `Button`，弹窗用 `Modal`，面板用 `createPanel`，文字样式用 `textStyle`。
+- 颜色只从 `src/colors.ts` 读取：UI 用 `getServices().theme`，专属美术用 `colors.art`；场景里不写颜色字面量。
 - 所有文案走 `services.i18n.t('key')`，中英文都写。
 - 中文使用系统字体，不打包 CJK 字体。
 - 图标优先用 Lucide 等开源图标，只引入实际用到的。
+- HTML/manifest/favicon 的颜色是静态品牌资源，用 `colors.test.ts` 校验与 `colors.ts` 一致。
 
 ## 7. 资源
 

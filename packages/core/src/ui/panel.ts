@@ -18,7 +18,7 @@ export function createPanel(
   panel.fillRoundedRect(x - 3, y - 3, width + 6, height + 6, radius + 3)
   panel.fillStyle(theme.panel, alpha)
   panel.fillRoundedRect(x, y, width, height, radius)
-  panel.fillStyle(0xffffff, 0.18)
+  panel.fillStyle(theme.highlight, 0.18)
   panel.fillRoundedRect(x + 12, y + 8, width - 24, 10, 5)
   scene.add.existing(panel)
   return panel

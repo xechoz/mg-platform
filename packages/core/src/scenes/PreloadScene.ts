@@ -93,7 +93,7 @@ export class PreloadScene extends Phaser.Scene {
     panel.fillRoundedRect(-146, -46, 292, 92, 30)
     panel.fillStyle(theme.surface, 1)
     panel.fillRoundedRect(-142, -42, 284, 84, 26)
-    panel.fillStyle(0xffffff, 0.22)
+    panel.fillStyle(theme.highlight, 0.22)
     panel.fillRoundedRect(-126, -34, 252, 10, 5)
 
     const playBase = this.add.graphics()
@@ -148,7 +148,7 @@ export class PreloadScene extends Phaser.Scene {
     background.fillStyle(theme.accentWarm, 0.9)
     background.fillCircle(width * 0.82, height * 0.16, 48)
 
-    background.fillStyle(0xffffff, 0.55)
+    background.fillStyle(theme.highlight, 0.55)
     background.fillCircle(width * 0.16, height * 0.22, 34)
     background.fillCircle(width * 0.22, height * 0.22, 26)
     background.fillRoundedRect(width * 0.1, height * 0.22, width * 0.2, 30, 15)

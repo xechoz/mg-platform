@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### 工程
+
+- 颜色配置收拢到每个游戏自己的 `src/colors.ts`：`theme` 管理 UI 主题覆盖，`art` 管理游戏专属美术色；场景与核心组件不再写颜色字面量。
+- 核心 `Theme` 增加 `highlight`、`onDanger`，移除未使用的 `boardLine`；白色高光和危险按钮前景改由主题 token 控制。
+- 删除 `games/snake/src/ui/palette.ts`，颜色并入 `games/snake/src/colors.ts`；新增品牌一致性测试，校验 HTML/manifest/favicon 与颜色配置同步。
+- 新游戏模板同步新增 `src/colors.ts`，不再在 `main.ts` 写 `backgroundColor`。
+- 无玩法、存档、输入或视觉表现变化。
+
 ## 2.0.0 — 2026-10-24
 
 ### 视觉系统（@mg/core）

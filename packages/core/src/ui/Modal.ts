@@ -67,7 +67,7 @@ export class Modal extends Phaser.GameObjects.Container {
     )
     panel.fillStyle(theme.panel, 1)
     panel.fillRoundedRect(-width / 2, -height / 2, width, height, radius)
-    panel.fillStyle(0xffffff, 0.2)
+    panel.fillStyle(theme.highlight, 0.2)
     panel.fillRoundedRect(-width / 2 + 18, -height / 2 + 16, width - 36, 12, 6)
     card.add(panel)
 

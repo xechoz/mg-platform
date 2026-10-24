@@ -4,7 +4,6 @@ export interface Theme {
   bgAlt: number
   board: number
   boardAlt: number
-  boardLine: number
   ink: number
   accent: number
   accentHover: number
@@ -21,6 +20,8 @@ export interface Theme {
   surfaceAlt: number
   danger: number
   dangerHover: number
+  onDanger: number
+  highlight: number
   overlay: number
   shadow: number
   radius: number
@@ -37,7 +38,6 @@ export const defaultTheme: Theme = {
   bgAlt: 0xe8faef,
   board: 0xfff9ec,
   boardAlt: 0xeaf9e8,
-  boardLine: 0xffffff,
   ink: 0x332b45,
   accent: 0x38bdf8,
   accentHover: 0x7dd3fc,
@@ -54,6 +54,8 @@ export const defaultTheme: Theme = {
   surfaceAlt: 0xfff3d9,
   danger: 0xe8504a,
   dangerHover: 0xf26b64,
+  onDanger: 0xfff9ec,
+  highlight: 0xffffff,
   overlay: 0x2a2038,
   shadow: 0x332b45,
   radius: 18,

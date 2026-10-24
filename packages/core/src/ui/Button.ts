@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { drawIcon, type IconName } from './icons'
-import { mixColor, type Theme, textStyle } from './theme'
+import { cssColor, mixColor, type Theme, textStyle } from './theme'
 
 export type ButtonVariant = 'primary' | 'soft' | 'ghost' | 'danger'
 
@@ -136,12 +136,12 @@ export class Button extends Phaser.GameObjects.Container {
 
   private labelColor(): string {
     if (this.variant === 'primary') return this.theme.accentText
-    if (this.variant === 'danger') return '#fff9ec'
+    if (this.variant === 'danger') return cssColor(this.theme.onDanger)
     return this.theme.text
   }
 
   private iconColor(): number {
-    if (this.variant === 'danger') return 0xfff9ec
+    if (this.variant === 'danger') return this.theme.onDanger
     return this.theme.ink
   }
 
@@ -187,7 +187,7 @@ export class Button extends Phaser.GameObjects.Container {
     this.background.fillRoundedRect(-width / 2, -height / 2 + lip, width, height, radius)
     this.background.fillStyle(face, this.variant === 'ghost' ? 0.82 : 1)
     this.background.fillRoundedRect(-width / 2, -height / 2, width, height, radius)
-    this.background.fillStyle(0xffffff, 0.16)
+    this.background.fillStyle(this.theme.highlight, 0.16)
     this.background.fillRoundedRect(
       -width / 2 + 10,
       -height / 2 + 7,
