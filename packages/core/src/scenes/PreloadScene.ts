@@ -104,7 +104,7 @@ export class PreloadScene extends Phaser.Scene {
 
     const playIcon = this.add.graphics()
     playIcon.setPosition(-64, 0)
-    drawIcon(playIcon, 'play', 26, theme.ink)
+    drawIcon(playIcon, 'play', 26, theme.onAccent)
 
     const prompt = this.add
       .text(34, 0, services.i18n.t('core.tapToStart'), textStyle(theme, 28, theme.text, true))

@@ -135,12 +135,13 @@ export class Button extends Phaser.GameObjects.Container {
   }
 
   private labelColor(): string {
-    if (this.variant === 'primary') return this.theme.accentText
+    if (this.variant === 'primary') return cssColor(this.theme.onAccent)
     if (this.variant === 'danger') return cssColor(this.theme.onDanger)
     return this.theme.text
   }
 
   private iconColor(): number {
+    if (this.variant === 'primary') return this.theme.onAccent
     if (this.variant === 'danger') return this.theme.onDanger
     return this.theme.ink
   }

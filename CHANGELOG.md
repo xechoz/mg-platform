@@ -2,13 +2,20 @@
 
 ## Unreleased
 
+### 视觉
+
+- 贪吃蛇配色改版：葡萄紫 `#6e45e8` 作强调色，背景改为近白冷天空到暖奶油的过渡，薄荷/黄油作辅助色；强调色只用于色块，浅底文字用 `accentInk`，色块上的文字/图标用 `onAccent`，hover 一律变深。
+- `Theme` 增加 `onAccent`、移除只被 `Button` 使用的 `accentText`；`Button`、`Modal` 丝带标题、Preload 播放图标统一改用 `onAccent`；默认主题 hover 改为变深，`DebugOverlay` 改用正文色。
+- 蛇信子与腮红改为专属美术粉色，果实改为粉/珊瑚/琥珀，彩纸去掉天空色；favicon 与 180/192/512 图标改为葡萄紫底，重生成并填实透明角。
+- `colors.test.ts` 新增对比度与 hover 方向断言，防止浅色文字/变浅 hover 回归。
+
 ### 工程
 
 - 颜色配置收拢到每个游戏自己的 `src/colors.ts`：`theme` 管理 UI 主题覆盖，`art` 管理游戏专属美术色；场景与核心组件不再写颜色字面量。
 - 核心 `Theme` 增加 `highlight`、`onDanger`，移除未使用的 `boardLine`；白色高光和危险按钮前景改由主题 token 控制。
 - 删除 `games/snake/src/ui/palette.ts`，颜色并入 `games/snake/src/colors.ts`；新增品牌一致性测试，校验 HTML/manifest/favicon 与颜色配置同步。
 - 新游戏模板同步新增 `src/colors.ts`，不再在 `main.ts` 写 `backgroundColor`。
-- 无玩法、存档、输入或视觉表现变化。
+- 颜色收拢本身无玩法、存档或输入变化；视觉改版见「视觉」。
 
 ## 2.0.0 — 2026-10-24
 

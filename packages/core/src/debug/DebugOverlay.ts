@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { cssColor, type Theme, textStyle } from '../ui/theme'
+import { type Theme, textStyle } from '../ui/theme'
 
 export class DebugOverlay {
   private readonly text: Phaser.GameObjects.Text
@@ -13,7 +13,7 @@ export class DebugOverlay {
       8,
       6,
       '',
-      textStyle(theme, 14, cssColor(theme.accentHover)),
+      textStyle(theme, 14, theme.text),
     ).setDepth(2000)
     scene.add.existing(this.text)
   }

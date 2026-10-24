@@ -77,7 +77,7 @@ export class Modal extends Phaser.GameObjects.Container {
       0,
       0,
       options.title,
-      textStyle(theme, titleSize, theme.text, true),
+      textStyle(theme, titleSize, cssColor(theme.onAccent), true),
     ).setOrigin(0.5)
     const ribbonHeight = Math.round(titleSize * 1.55)
     const ribbonWidth = Math.min(width - 40, title.width + Math.round(titleSize * 1.8))

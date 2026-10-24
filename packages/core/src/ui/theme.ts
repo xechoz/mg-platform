@@ -10,7 +10,8 @@ export interface Theme {
   accentAlt: number
   accentWarm: number
   accentInk: string
-  accentText: string
+  /** Text and icon colour used on top of an accent fill. */
+  onAccent: number
   text: string
   textMuted: string
   muted: number
@@ -40,11 +41,11 @@ export const defaultTheme: Theme = {
   boardAlt: 0xeaf9e8,
   ink: 0x332b45,
   accent: 0x38bdf8,
-  accentHover: 0x7dd3fc,
+  accentHover: 0x0ea5e9,
   accentAlt: 0x35c77e,
   accentWarm: 0xfff1b8,
   accentInk: '#0b7fae',
-  accentText: '#332b45',
+  onAccent: 0x332b45,
   text: '#332b45',
   textMuted: '#65627a',
   muted: 0x65627a,
