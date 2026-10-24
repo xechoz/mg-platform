@@ -4,7 +4,7 @@
 
 ## 1. 项目状态
 
-- 版本：**1.1.0**
+- 版本：**2.0.0**
 - 已发布：`games/snake`（贪吃蛇）
 - 计划中：`games/lianliankan`（连连看）、`games/ludo`（Ludo）
 - 目标平台：自有网站优先，Poki 随后
@@ -273,10 +273,13 @@ services.createSave<MySave>({ name: 'save', version: 1, initial: () => ({ best: 
 - **不打包 CJK 字体**；5MB+ 会毁首屏。
 - 西文可用 OFL 字体，但要确认许可证和体积。
 - 占位阶段用 Phaser Graphics 程序化绘制；正式素材优先 CC0（如 Kenney）。
-- 图标优先 Lucide 等开源图标，只取实际用到的，记录来源/许可证。
+- **视觉语言**：阳光糖果街机（sunny candy arcade）。浅蓝作主题强调色（`#38bdf8`），奶油/薄荷/白作底色，墨色描边 + 硬偏移阴影 + 厚底按钮 + 贴纸徽章；按钮、强调文字、进度/高亮统一使用浅蓝，不使用橙色作为主题强调色。
+- 公共 UI token 统一在 `Theme`：`ink`、`accent`、`accentHover`、`accentInk`、`accentAlt`、`accentWarm`、`surface`、`surfaceAlt`、`shadow`、`radiusLarge`；`displayTextStyle()` 提供描边+硬阴影，`drawIcon()` 提供程序化图标；`Button` 统一 primary/soft/ghost/danger，`Modal` 统一贴纸卡片+丝带标题。游戏只覆盖 token，不另造一套控件。
+- 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/彩纸）、`snakeArt.ts`（描边蛇身、表情蛇头、果实）、`gameArt.ts`（棋盘、蛇与果实的每帧绘制）、`mascot.ts`（菜单盘蛇）、`palette.ts`（蛇与果实色）。这些是表现层实现，不进入公共包。
+- 图标优先 Lucide 等开源图标，只取实际用到的，记录来源/许可证。当前菜单/按钮图标为程序化 Graphics，不引入图标依赖。
 - 音效目前用 WebAudio 程序化合成，零素材；以后换文件时保持 `AudioManager` 调用点不变。
 - 运行时零外部请求：无 CDN、外部字体、统计脚本、远程图片/音频。
-- 首包目标 ≤ 1.5MB gzip；Phaser 本身约 370KB gzip。贪吃蛇 1.0 约 370KB gzip。
+- 首包目标 ≤ 1.5MB gzip；Phaser 本身约 370KB gzip。贪吃蛇 2.0 约 375KB gzip。
 
 ## 10. 存档与设置
 
