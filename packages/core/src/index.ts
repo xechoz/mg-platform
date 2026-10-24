@@ -2,6 +2,7 @@ import type { Lang } from '@mg/platform'
 
 export { createGame } from './app/createGame'
 export { onAppHidden } from './app/lifecycle'
+export { PORTRAIT_BLOCK_QUERY } from './app/orientation'
 export {
   createServices,
   type GameDefinition,

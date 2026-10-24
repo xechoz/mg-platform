@@ -2,11 +2,12 @@ import Phaser from 'phaser'
 import { BootScene } from '../scenes/BootScene'
 import { PreloadScene } from '../scenes/PreloadScene'
 import { cssColor } from '../ui/theme'
+import { PORTRAIT_BLOCK_QUERY } from './orientation'
 import { createServices, type GameDefinition, type GameServices } from './services'
 
 export function createGame(def: GameDefinition): Phaser.Game {
   const services = createServices(def)
-  installPageStyles()
+  installPageStyles(services)
   installRotateHint(services)
 
   return new Phaser.Game({
@@ -34,22 +35,34 @@ export function createGame(def: GameDefinition): Phaser.Game {
   })
 }
 
-function installPageStyles(): void {
+function installPageStyles(services: GameServices): void {
+  const bg = cssColor(services.theme.bg)
+  document.body.style.backgroundColor = bg
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg)
+
   if (document.getElementById('mg-page-style')) return
   const style = document.createElement('style')
   style.id = 'mg-page-style'
   style.textContent = `
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0b1020; }
-    body { -webkit-tap-highlight-color: transparent; touch-action: none; user-select: none; }
-    #game { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; overscroll-behavior: none; background: ${bg};
+    }
+    body {
+      height: 100dvh; -webkit-tap-highlight-color: transparent;
+      touch-action: none; user-select: none;
+    }
+    #game { position: fixed; inset: 0; }
     #game canvas { display: block; }
     .mg-rotate-hint {
-      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
-      background: rgba(5, 7, 13, 0.88); color: #e8eefc; z-index: 10; padding: 24px;
-      font: 600 18px/1.5 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-      text-align: center; pointer-events: none;
+      position: fixed; inset: 0; display: none; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px;
+      background: rgba(5, 7, 13, 0.96); color: #e8eefc; z-index: 10; padding: 24px;
+      font: 600 20px/1.5 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      text-align: center; pointer-events: auto;
     }
-    @media (orientation: portrait) and (max-width: 900px) {
+    .mg-rotate-hint::before { content: '⟳'; font-size: 44px; line-height: 1; }
+    @media ${PORTRAIT_BLOCK_QUERY} {
       .mg-rotate-hint { display: flex; }
     }
   `

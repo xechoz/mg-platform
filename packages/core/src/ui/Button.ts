@@ -54,16 +54,19 @@ export class Button extends Phaser.GameObjects.Container {
     this.add([this.background, this.label, this.zone])
     this.redraw()
 
-    this.zone.on('pointerover', () => {
-      this.hovered = true
-      this.redraw()
-      scene.tweens.add({ targets: this, scale: 1.03, duration: 90, ease: 'Quad.out' })
-    })
-    this.zone.on('pointerout', () => {
-      this.hovered = false
-      this.redraw()
-      scene.tweens.add({ targets: this, scale: 1, duration: 90, ease: 'Quad.out' })
-    })
+    const canHover = window.matchMedia('(hover: hover)').matches
+    if (canHover) {
+      this.zone.on('pointerover', () => {
+        this.hovered = true
+        this.redraw()
+        scene.tweens.add({ targets: this, scale: 1.03, duration: 90, ease: 'Quad.out' })
+      })
+      this.zone.on('pointerout', () => {
+        this.hovered = false
+        this.redraw()
+        scene.tweens.add({ targets: this, scale: 1, duration: 90, ease: 'Quad.out' })
+      })
+    }
     this.zone.on('pointerdown', () => {
       scene.tweens.add({ targets: this, scale: 0.97, duration: 60, ease: 'Quad.out' })
     })

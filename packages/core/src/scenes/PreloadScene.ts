@@ -2,7 +2,7 @@ import Phaser from 'phaser'
 import { getServices } from '../app/services'
 import { cssColor, textStyle } from '../ui/theme'
 
-const BAR_WIDTH = 320
+const BAR_WIDTH = 420
 
 /**
  * Loads the game's asset manifest, then shows a tap gate. The tap is required
@@ -26,8 +26,8 @@ export class PreloadScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(theme.bg)
 
     this.add
-      .text(width / 2, height / 2 - 80, services.i18n.t('game.title'), {
-        ...textStyle(theme, 44, theme.text, true),
+      .text(width / 2, height / 2 - 100, services.i18n.t('game.title'), {
+        ...textStyle(theme, 72, theme.text, true),
         align: 'center',
       })
       .setOrigin(0.5)
@@ -36,20 +36,22 @@ export class PreloadScene extends Phaser.Scene {
       this.loadingText = this.add
         .text(
           width / 2,
-          height / 2 + 76,
+          height / 2 + 86,
           services.i18n.t('core.loading'),
-          textStyle(theme, 16, theme.textMuted),
+          textStyle(theme, 24, theme.textMuted),
         )
         .setOrigin(0.5)
 
-      this.add.rectangle(width / 2, height / 2 + 40, BAR_WIDTH, 8, theme.panelStroke).setOrigin(0.5)
+      this.add
+        .rectangle(width / 2, height / 2 + 42, BAR_WIDTH, 10, theme.panelStroke)
+        .setOrigin(0.5)
 
       const bar = this.add
-        .rectangle(width / 2 - BAR_WIDTH / 2, height / 2 + 40, 0, 8, theme.accent)
+        .rectangle(width / 2 - BAR_WIDTH / 2, height / 2 + 42, 0, 10, theme.accent)
         .setOrigin(0, 0.5)
 
       this.load.on('progress', (value: number) => {
-        bar.setSize(BAR_WIDTH * value, 8)
+        bar.setSize(BAR_WIDTH * value, 10)
       })
     }
 
@@ -69,9 +71,9 @@ export class PreloadScene extends Phaser.Scene {
     const prompt = this.add
       .text(
         width / 2,
-        height / 2 + 76,
+        height / 2 + 86,
         services.i18n.t('core.tapToStart'),
-        textStyle(theme, 20, cssColor(theme.accent), true),
+        textStyle(theme, 30, cssColor(theme.accent), true),
       )
       .setOrigin(0.5)
 

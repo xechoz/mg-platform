@@ -11,10 +11,19 @@ export interface ModalAction {
 
 export interface ModalOptions {
   title: string
+  /** Large accent value between the title and the body, e.g. a final score. */
+  hero?: string
   body?: string
   actions?: ModalAction[]
   width?: number
   height?: number
+  actionsLayout?: 'row' | 'column'
+  actionWidth?: number
+  actionHeight?: number
+  actionFontSize?: number
+  titleFontSize?: number
+  heroFontSize?: number
+  bodyFontSize?: number
 }
 
 export class Modal extends Phaser.GameObjects.Container {
@@ -53,19 +62,32 @@ export class Modal extends Phaser.GameObjects.Container {
       screenWidth / 2,
       top + 34,
       options.title,
-      textStyle(theme, 28, cssColor(theme.accent), true),
+      textStyle(theme, options.titleFontSize ?? 28, cssColor(theme.accent), true),
     ).setOrigin(0.5, 0)
 
     this.add([backdrop, panel, title])
+
+    let contentBottom = title.y + title.height
+    if (options.hero) {
+      const hero = new Phaser.GameObjects.Text(
+        scene,
+        screenWidth / 2,
+        contentBottom + 8,
+        options.hero,
+        textStyle(theme, options.heroFontSize ?? 64, cssColor(theme.accent), true),
+      ).setOrigin(0.5, 0)
+      this.add(hero)
+      contentBottom = hero.y + hero.height
+    }
 
     if (options.body) {
       const body = new Phaser.GameObjects.Text(
         scene,
         screenWidth / 2,
-        title.y + title.height + 18,
+        contentBottom + 16,
         options.body,
         {
-          ...textStyle(theme, 18, theme.text),
+          ...textStyle(theme, options.bodyFontSize ?? 18, theme.text),
           align: 'center',
           lineSpacing: 8,
           wordWrap: { width: width - 72 },
@@ -76,30 +98,64 @@ export class Modal extends Phaser.GameObjects.Container {
 
     const actions = options.actions ?? []
     if (actions.length > 0) {
-      const buttonWidth = actions.length > 2 ? 150 : 180
-      const gap = 14
-      const total = actions.length * buttonWidth + (actions.length - 1) * gap
-      const startX = screenWidth / 2 - total / 2 + buttonWidth / 2
+      const layout = options.actionsLayout ?? 'row'
+      const actionFontSize = options.actionFontSize ?? (layout === 'column' ? 26 : 20)
 
-      actions.forEach((action, index) => {
-        const button = new Button(
-          scene,
-          startX + index * (buttonWidth + gap),
-          top + height - 52,
-          action.label,
-          theme,
-          {
-            width: buttonWidth,
-            height: 50,
-            variant: action.variant ?? 'primary',
-            onClick: () => {
-              this.close()
-              action.onClick()
+      if (layout === 'column') {
+        const actionWidth = options.actionWidth ?? width - 80
+        const actionHeight = options.actionHeight ?? 88
+        const gap = 16
+        const total = actions.length * actionHeight + (actions.length - 1) * gap
+        const startY = top + height - 40 - total + actionHeight / 2
+
+        actions.forEach((action, index) => {
+          const button = new Button(
+            scene,
+            screenWidth / 2,
+            startY + index * (actionHeight + gap),
+            action.label,
+            theme,
+            {
+              width: actionWidth,
+              height: actionHeight,
+              variant: action.variant ?? 'primary',
+              fontSize: actionFontSize,
+              onClick: () => {
+                this.close()
+                action.onClick()
+              },
             },
-          },
-        )
-        this.add(button)
-      })
+          )
+          this.add(button)
+        })
+      } else {
+        const buttonWidth = options.actionWidth ?? (actions.length > 2 ? 150 : 180)
+        const buttonHeight = options.actionHeight ?? 50
+        const gap = 14
+        const total = actions.length * buttonWidth + (actions.length - 1) * gap
+        const startX = screenWidth / 2 - total / 2 + buttonWidth / 2
+
+        actions.forEach((action, index) => {
+          const button = new Button(
+            scene,
+            startX + index * (buttonWidth + gap),
+            top + height - buttonHeight / 2 - 27,
+            action.label,
+            theme,
+            {
+              width: buttonWidth,
+              height: buttonHeight,
+              variant: action.variant ?? 'primary',
+              fontSize: actionFontSize,
+              onClick: () => {
+                this.close()
+                action.onClick()
+              },
+            },
+          )
+          this.add(button)
+        })
+      }
     }
 
     this.setDepth(1000)
