@@ -8,6 +8,8 @@ type OscType = 'sine' | 'square' | 'triangle' | 'sawtooth'
 export interface SfxOptions {
   /** Frequency multiplier for every layer of the effect (1 = as designed). */
   pitch?: number
+  /** Linear volume multiplier for this play only (1 = as designed). */
+  gain?: number
 }
 
 interface ToneOptions {
@@ -90,47 +92,47 @@ export class AudioManager {
     this.loadSamples()
   }
 
-  play(name: SfxName, { pitch = 1 }: SfxOptions = {}): void {
+  play(name: SfxName, { pitch = 1, gain = 1 }: SfxOptions = {}): void {
     if (!this.enabled) return
     if (!this.ctx) return
     if (this.ctx.state === 'suspended') void this.ctx.resume()
 
     const buffers = this.samples.get(name)
     if (buffers) {
-      this.playSample(buffers, pitch)
+      this.playSample(buffers, pitch, gain)
       return
     }
 
     switch (name) {
       case 'click':
-        this.tone(520, 0.05, { type: 'square', gain: 0.04 })
+        this.tone(520, 0.05, { type: 'square', gain: 0.04 * gain })
         break
       case 'turn':
-        this.tone(320, 0.03, { type: 'square', gain: 0.025 })
+        this.tone(320, 0.03, { type: 'square', gain: 0.025 * gain })
         break
       case 'eat':
         // Filtered noise gives the bite its transient; the pop carries the score cue.
-        this.noise(0.05, { gain: 0.05, frequency: 1800 * pitch, q: 1.3 })
-        this.tone(520, 0.07, { type: 'triangle', gain: 0.05, endFrequency: 780, pitch })
-        this.tone(1560, 0.055, { type: 'sine', gain: 0.015, delay: 0.02, pitch })
+        this.noise(0.05, { gain: 0.05 * gain, frequency: 1800 * pitch, q: 1.3 })
+        this.tone(520, 0.07, { type: 'triangle', gain: 0.05 * gain, endFrequency: 780, pitch })
+        this.tone(1560, 0.055, { type: 'sine', gain: 0.015 * gain, delay: 0.02, pitch })
         break
       case 'die':
-        this.tone(250, 0.35, { type: 'sawtooth', gain: 0.08, endFrequency: 60 })
+        this.tone(250, 0.35, { type: 'sawtooth', gain: 0.08 * gain, endFrequency: 60 })
         break
       case 'pause':
-        this.tone(440, 0.08, { type: 'sine', gain: 0.04, endFrequency: 300 })
+        this.tone(440, 0.08, { type: 'sine', gain: 0.04 * gain, endFrequency: 300 })
         break
       case 'start':
-        this.tone(523, 0.08, { type: 'triangle', gain: 0.05, delay: 0 })
-        this.tone(659, 0.08, { type: 'triangle', gain: 0.05, delay: 0.08 })
-        this.tone(784, 0.12, { type: 'triangle', gain: 0.05, delay: 0.16 })
+        this.tone(523, 0.08, { type: 'triangle', gain: 0.05 * gain, delay: 0 })
+        this.tone(659, 0.08, { type: 'triangle', gain: 0.05 * gain, delay: 0.08 })
+        this.tone(784, 0.12, { type: 'triangle', gain: 0.05 * gain, delay: 0.16 })
         break
       case 'boost':
-        this.tone(620, 0.08, { type: 'square', gain: 0.045, endFrequency: 940 })
-        this.tone(940, 0.14, { type: 'triangle', gain: 0.05, delay: 0.07 })
+        this.tone(620, 0.08, { type: 'square', gain: 0.045 * gain, endFrequency: 940 })
+        this.tone(940, 0.14, { type: 'triangle', gain: 0.05 * gain, delay: 0.07 })
         break
       case 'slow':
-        this.tone(430, 0.2, { type: 'sine', gain: 0.05, endFrequency: 190 })
+        this.tone(430, 0.2, { type: 'sine', gain: 0.05 * gain, endFrequency: 190 })
         break
     }
   }
@@ -155,7 +157,7 @@ export class AudioManager {
     }
   }
 
-  private playSample(buffers: readonly AudioBuffer[], pitch: number): void {
+  private playSample(buffers: readonly AudioBuffer[], pitch: number, gainMultiplier: number): void {
     const ctx = this.ctx
     const master = this.master
     if (!ctx || !master) return
@@ -164,7 +166,7 @@ export class AudioManager {
     const gain = ctx.createGain()
     source.buffer = buffers[Math.floor(Math.random() * buffers.length)]
     source.playbackRate.value = pitch
-    gain.gain.value = SAMPLE_GAIN
+    gain.gain.value = SAMPLE_GAIN * gainMultiplier
     source.connect(gain)
     gain.connect(master)
     source.start()
