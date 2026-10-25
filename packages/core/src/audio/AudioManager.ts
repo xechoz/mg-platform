@@ -1,4 +1,4 @@
-export type SfxName = 'click' | 'eat' | 'die' | 'turn' | 'start' | 'pause'
+export type SfxName = 'click' | 'eat' | 'die' | 'turn' | 'start' | 'pause' | 'boost' | 'slow'
 
 type OscType = 'sine' | 'square' | 'triangle' | 'sawtooth'
 
@@ -85,6 +85,13 @@ export class AudioManager {
         this.tone(523, 0.08, { type: 'triangle', gain: 0.05, delay: 0 })
         this.tone(659, 0.08, { type: 'triangle', gain: 0.05, delay: 0.08 })
         this.tone(784, 0.12, { type: 'triangle', gain: 0.05, delay: 0.16 })
+        break
+      case 'boost':
+        this.tone(620, 0.08, { type: 'square', gain: 0.045, endFrequency: 940 })
+        this.tone(940, 0.14, { type: 'triangle', gain: 0.05, delay: 0.07 })
+        break
+      case 'slow':
+        this.tone(430, 0.2, { type: 'sine', gain: 0.05, endFrequency: 190 })
         break
     }
   }
