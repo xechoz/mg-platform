@@ -116,7 +116,10 @@ export class PreloadScene extends Phaser.Scene {
       .text(34, 0, services.i18n.t('core.tapToStart'), textStyle(theme, 28, theme.text, true))
       .setOrigin(0.5)
 
-    card.add([panel, playBase, playIcon, prompt])
+    card.add(panel)
+    const decoration = services.def.tapDecoration?.(this, { width: 284, height: 84 })
+    if (decoration) card.add(decoration)
+    card.add([playBase, playIcon, prompt])
     card.setAlpha(0)
     this.tweens.add({ targets: card, alpha: 1, duration: 260, ease: 'Quad.out' })
     this.tweens.add({

@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { Button, type ButtonVariant } from './Button'
+import { Button, type ButtonDecoration, type ButtonVariant } from './Button'
 import type { IconName } from './icons'
 import { cssColor, displayTextStyle, type Theme, textStyle } from './theme'
 
@@ -7,6 +7,7 @@ export interface ModalAction {
   label: string
   variant?: ButtonVariant
   icon?: IconName
+  decoration?: ButtonDecoration
   /** Per-action height; only used by the column layout. */
   height?: number
   fontSize?: number
@@ -37,6 +38,12 @@ export interface ModalOptions {
 }
 
 export class Modal extends Phaser.GameObjects.Container {
+  /**
+   * The body text, when one was requested. Scenes can anchor decorations to it
+   * (e.g. a record crown on the first line). Coordinates are local to the card.
+   */
+  readonly bodyText?: Phaser.GameObjects.Text
+
   constructor(scene: Phaser.Scene, theme: Theme, options: ModalOptions) {
     super(scene, 0, 0)
 
@@ -127,6 +134,7 @@ export class Modal extends Phaser.GameObjects.Container {
         wordWrap: { width: width - 72 },
       }).setOrigin(0.5, 0)
       card.add(body)
+      this.bodyText = body
     }
 
     const actions = options.actions ?? []
@@ -150,6 +158,7 @@ export class Modal extends Phaser.GameObjects.Container {
             variant: action.variant ?? 'primary',
             fontSize: action.fontSize ?? actionFontSize,
             icon: action.icon,
+            decoration: action.decoration,
             onClick: () => {},
           })
           button.setOnClick(() => this.runAction(button, action))
@@ -179,6 +188,7 @@ export class Modal extends Phaser.GameObjects.Container {
               variant: action.variant ?? 'primary',
               fontSize: action.fontSize ?? actionFontSize,
               icon: action.icon,
+              decoration: action.decoration,
               onClick: () => {},
             },
           )

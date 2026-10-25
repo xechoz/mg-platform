@@ -4,12 +4,23 @@ import { cssColor, mixColor, type Theme, textStyle } from './theme'
 
 export type ButtonVariant = 'primary' | 'soft' | 'ghost' | 'danger'
 
+/**
+ * Optional art layered above the button face and below the label. The factory
+ * receives the button's design size and returns a GameObject added as a child,
+ * so decorations follow hover, press and enable state automatically.
+ */
+export type ButtonDecoration = (
+  scene: Phaser.Scene,
+  size: { readonly width: number; readonly height: number },
+) => Phaser.GameObjects.GameObject
+
 export interface ButtonOptions {
   width?: number
   height?: number
   variant?: ButtonVariant
   fontSize?: number
   icon?: IconName
+  decoration?: ButtonDecoration
   onClick: () => void
 }
 
@@ -91,6 +102,11 @@ export class Button extends Phaser.GameObjects.Container {
 
     const children: Phaser.GameObjects.GameObject[] = [this.background]
     if (this.iconGraphics) children.push(this.iconGraphics)
+    if (options.decoration) {
+      children.push(
+        options.decoration(scene, { width: this.buttonWidth, height: this.buttonHeight }),
+      )
+    }
     children.push(this.label, this.zone)
     this.add(children)
     this.redraw()

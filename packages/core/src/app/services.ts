@@ -7,6 +7,7 @@ import { coreI18n } from '../i18n/core'
 import { type Dictionary, I18n, resolveLang } from '../i18n/I18n'
 import { SaveStore, type SaveStoreOptions } from '../storage/SaveStore'
 import { SettingsStore } from '../storage/settings'
+import type { ButtonDecoration } from '../ui/Button'
 import { defaultTheme, type Theme } from '../ui/theme'
 import type { Viewport } from './layout'
 
@@ -32,6 +33,8 @@ export interface GameDefinition {
     width: number
     height: number
   }
+  /** Optional art layered on the core preload tap card; games supply the drawing. */
+  tapDecoration?: ButtonDecoration
   assets?: {
     images?: Array<{ key: string; url: string }>
     audio?: Array<{ key: string; urls: string | string[] }>

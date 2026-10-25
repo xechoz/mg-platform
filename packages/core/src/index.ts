@@ -47,7 +47,12 @@ export { BootScene } from './scenes/BootScene'
 export { PreloadScene } from './scenes/PreloadScene'
 export { SaveStore, type SaveStoreOptions } from './storage/SaveStore'
 export { type Settings, SettingsStore } from './storage/settings'
-export { Button, type ButtonOptions, type ButtonVariant } from './ui/Button'
+export {
+  Button,
+  type ButtonDecoration,
+  type ButtonOptions,
+  type ButtonVariant,
+} from './ui/Button'
 export { drawIcon, type IconName } from './ui/icons'
 export { Modal, type ModalAction, type ModalOptions } from './ui/Modal'
 export { createPanel } from './ui/panel'
