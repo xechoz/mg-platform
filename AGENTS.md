@@ -7,7 +7,7 @@
 ## 项目定位
 
 - 一个仓库承载多个小游戏，共享游戏基础设施，但每个游戏独立构建、独立发布。
-- 当前版本 **2.0.0**，只有 `games/snake` 可玩。
+- 当前版本 **3.0.0**，只有 `games/snake` 可玩。
 - 路线：自有站优先 → Poki；纯单人 vs AI，不做热座/联机；占位美术 + CC0 素材先跑通。
 - 技术栈：TypeScript 7、Phaser 4.2、Vite 8、npm workspaces、Vitest、Biome。
 

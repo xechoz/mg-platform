@@ -4,7 +4,7 @@
 
 ## 1. 项目状态
 
-- 版本：**2.0.0**
+- 版本：**3.0.0**
 - 已发布：`games/snake`（贪吃蛇）
 - 计划中：`games/lianliankan`（连连看）、`games/ludo`（Ludo）
 - 目标平台：自有网站优先，Poki 随后
