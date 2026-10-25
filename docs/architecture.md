@@ -178,6 +178,7 @@ step(state, rng): { state: State; events: Event[] }
 - 145ms/tick 起，最低 70ms；每 30 分加速 7ms。
 - 六种水果按权重 3/3/3/2/2/1 生成，分别 10/10/10/15/15/20 分；食物槽由 `foodTarget` 控制，默认 1，数组结构支持后续广告奖励增加同屏水果。
 - 水果权重保存在 `SnakeState.fruitWeights`，由 config 初始化；`boostFruitWeights(state, multiplier, kinds)` 可运行时提升指定水果权重，`highValueFruits` 预置葡萄/蓝莓/西瓜。激励广告可对本局立即调用，或对下一局的新 state 调用；同局内重复调用会叠加。
+- 广告超级水果：结算页看广告后把 `pendingSuper` 写入存档 v2，下一局由 `grantSuperItem()` 放到空格；水果本身不变长、不加分。吃掉后清掉普通道具，用当前 `fruitWeights` 铺满所有空格，进入 20 秒水果盛宴。盛宴水果按普通分值计分（辣椒 ×2），只加分、不变长、不新增色带，普通水果/道具生成暂停；时间到清掉剩余水果并恢复正常生成，提前吃完立即结束。计时按每 tick 的 `tickMs` 扣减，暂停停表。速度曲线由 `speedScore` 驱动，盛宴分数不进入该值，因此盛宴结束后回到进入前的速度档位，不会永久卡在最快速度。
 - 每个蛇节记录出生时的水果种类；吃到水果时长出的新头继承该颜色，形成向尾部推移的色带，未吃过的节段保持品牌蓝。
 - 冰淇淋：tick ×1.5，封顶 240ms，持续 24 ticks；辣椒：tick ×0.6，下限 58ms，持续 36 ticks，期间水果得分 ×2。效果不叠加，新道具覆盖旧效果。
 - 道具单槽；吃水果后按 35% 概率生成，连续 4 个水果未出则第 5 个保底；40 ticks 未吃消失。水果生成优先占格，最后一个空格冲突时道具让位。
@@ -293,7 +294,7 @@ const outcome = await services.ads.showRewarded('revive')
 - **配色**：贪吃蛇采用琥珀橙 `#ffb020` 作主题强调色（hover `#f09300`），近白冷天空到暖奶油作背景；色块上的文字/图标用墨紫 `onAccent` `#332b45`，浅底强调文字用深海蓝 `accentInk` `#0369a1`，hover 一律变深。蛇与标题 Logo 走独立的浅蓝 `#7dd3fc` 到深海蓝 `#0369a1` 美术色。选琥珀橙是因为它与蓝色蛇身形成冷暖对比，配墨紫文字的对比度约 7.3:1；不用浅柠檬黄，因为浅黄配深棕文字会发灰、像禁用态。公共 `defaultTheme` 是未定色游戏的通用浅色基线，游戏通过 `colors.ts` 覆盖。
 - 公共 UI token 统一在 `Theme`：`ink`、`borderSoft`、`accent`、`accentHover`、`accentInk`、`onAccent`、`accentAlt`、`accentWarm`、`surface`、`surfaceAlt`、`highlight`、`onDanger`、`shadow`、`radiusLarge`；`borderSoft` 只作 1px 弱边，不承担文字对比。`displayTextStyle()` 提供描边+硬阴影，`drawIcon()` 提供程序化图标；`Button` 统一 primary/soft/ghost/danger 并内置分层几何（soft 无墨线/无厚底），`Modal` 为无墨线卡片，标题可选 accent 丝带（`titleRibbon`，默认开），结算页使用无丝带的普通标题。游戏只覆盖 token，不另造一套控件。
 - **每个游戏的颜色只有一个入口**：`games/<id>/src/colors.ts`，同时包含该游戏的 `theme`（覆盖公共 token）、`art`（蛇身、果实等专属美术色）和 `logo`（品牌标题固定色板）。场景只使用 `getServices().theme` 或 `colors.art`，不写颜色字面量；透明度、`mixColor()` 派生色除外。公共层只保留 `Theme` 类型与通用默认值，不包含任何游戏专属色。**品牌 Logo 不读 `Theme` 颜色**：`logo` 色板独立于主题，换主题不得改变标题；`colors.test.ts` 校验对比度与 `logo.ts` 的主题引用。
-- 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/彩纸）、`snakeArt.ts`（描边蛇身、表情蛇头、六种水果、冰淇淋/辣椒与效果环）、`gameArt.ts`（棋盘、分段色带蛇、水果/道具与效果反馈的每帧绘制）、`logo.ts`（固定品牌色标题 + 方块直角折线蛇身 + 果实）、`menuDemo.ts`（菜单自动演示棋盘，展示吃水果变色）。颜色统一从 `games/snake/src/colors.ts` 读取，这些是表现层实现，不进入公共包。`backdrop.ts` 和 `logo.ts` 同时通过 `GameDefinition.backdrop` / `titleLogo` 交给核心 `PreloadScene` 使用。
+- 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/彩纸）、`snakeArt.ts`（描边蛇身、表情蛇头、六种水果、冰淇淋/辣椒、金色超级水果与效果环）、`gameArt.ts`（棋盘、分段色带蛇、水果/道具绘制；水果层只在 `foods` 或布局变化时重绘，避免铺满水果时每帧重建）、`feedback.ts`（吃水果/吃道具/盛宴/危险反馈）、`logo.ts`（固定品牌色标题 + 方块直角折线蛇身 + 果实）、`menuDemo.ts`（菜单自动演示棋盘，展示吃水果变色）。颜色统一从 `games/snake/src/colors.ts` 读取，这些是表现层实现，不进入公共包。`backdrop.ts` 和 `logo.ts` 同时通过 `GameDefinition.backdrop` / `titleLogo` 交给核心 `PreloadScene` 使用。
 - `index.html`、`manifest.webmanifest`、`game.manifest.json`、`favicon.svg` 无法 import TS，保留静态字面量；`colors.test.ts` 校验它们与 `colors.ts` 的关键颜色一致，防止漂移。贪吃蛇的 favicon 以主题 `accent` 作底色、`onAccent` 作内边框；PWA PNG 由 favicon 重新生成并填实透明角。
 - 图标优先 Lucide 等开源图标，只取实际用到的，记录来源/许可证。当前菜单/按钮图标为程序化 Graphics，不引入图标依赖。
 - 音效目前用 WebAudio 程序化合成，零素材；以后换文件时保持 `AudioManager` 调用点不变。
