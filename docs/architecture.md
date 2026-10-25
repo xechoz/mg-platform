@@ -216,7 +216,7 @@ createGame({
 })
 ```
 
-可选字段：`theme`（覆盖主题 token，贪吃蛇来自 `src/colors.ts`）、`debug`、`assets`（images/audio/json）。
+可选字段：`theme`（覆盖主题 token，贪吃蛇来自 `src/colors.ts`）、`debug`、`assets`（images/audio/json）、`backdrop`（核心 Preload/Menu 共用的程序化背景）、`titleLogo`（Preload 顶部的品牌 Logo，返回容器与自然尺寸）。未提供 `backdrop` 或 `titleLogo` 时，核心回退到简化背景与文字标题。
 
 ### 7.4 Services
 
@@ -281,10 +281,10 @@ services.createSave<MySave>({ name: 'save', version: 1, initial: () => ({ best: 
   - L2 次行动：音效、语言、重开、主菜单、暂停键、摇杆，用 `surface` 面 + 1px `borderSoft` + 轻阴影，无厚底无高光；`Button` 的 `soft` / `ghost` 走这一层。
   - L3 信息容器：分数卡、最高分、Modal 卡片、加载条、教学键帽，0–1px 弱边、无墨线，靠底色差与阴影分层。
   - 文字描边只用于 Logo/大标题；分数、Modal hero、正文不再描边。
-- **配色**：贪吃蛇采用葡萄紫 `#6e45e8` 作主题强调色，近白冷天空到暖奶油作背景，薄荷/黄油作辅助色；`accent` 只作色块，浅底强调文字用 `accentInk`，色块上的文字/图标用 `onAccent`，hover 一律变深。不使用橙色作为主题强调色。公共 `defaultTheme` 是未定色游戏的通用浅色基线，游戏通过 `colors.ts` 覆盖。
+- **配色**：贪吃蛇采用柠檬黄 `#ffe08a` 作主题强调色，近白冷天空到暖奶油作背景，薄荷/黄油作辅助色；`accent` 只作色块，浅底强调文字用 `accentInk`，色块上的文字/图标用 `onAccent`，hover 一律变深。不使用橙色作为主题强调色。公共 `defaultTheme` 是未定色游戏的通用浅色基线，游戏通过 `colors.ts` 覆盖。
 - 公共 UI token 统一在 `Theme`：`ink`、`borderSoft`、`accent`、`accentHover`、`accentInk`、`onAccent`、`accentAlt`、`accentWarm`、`surface`、`surfaceAlt`、`highlight`、`onDanger`、`shadow`、`radiusLarge`；`borderSoft` 只作 1px 弱边，不承担文字对比。`displayTextStyle()` 提供描边+硬阴影，`drawIcon()` 提供程序化图标；`Button` 统一 primary/soft/ghost/danger 并内置分层几何（soft 无墨线/无厚底），`Modal` 为无墨线卡片 + accent 丝带标题。游戏只覆盖 token，不另造一套控件。
-- **每个游戏的颜色只有一个入口**：`games/<id>/src/colors.ts`，同时包含该游戏的 `theme`（覆盖公共 token）和 `art`（蛇身、果实等专属美术色）。场景只使用 `getServices().theme` 或 `colors.art`，不写颜色字面量；透明度、`mixColor()` 派生色除外。公共层只保留 `Theme` 类型与通用默认值，不包含任何游戏专属色。
-- 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/彩纸）、`snakeArt.ts`（描边蛇身、表情蛇头、果实）、`gameArt.ts`（棋盘、蛇与果实的每帧绘制）、`mascot.ts`（菜单盘蛇）。颜色统一从 `games/snake/src/colors.ts` 读取，这些是表现层实现，不进入公共包。`backdrop.ts` 同时通过 `GameDefinition.backdrop` 交给核心 `PreloadScene` 绘制，未提供时核心回退到简化背景。
+- **每个游戏的颜色只有一个入口**：`games/<id>/src/colors.ts`，同时包含该游戏的 `theme`（覆盖公共 token）、`art`（蛇身、果实等专属美术色）和 `logo`（品牌标题固定色板）。场景只使用 `getServices().theme` 或 `colors.art`，不写颜色字面量；透明度、`mixColor()` 派生色除外。公共层只保留 `Theme` 类型与通用默认值，不包含任何游戏专属色。**品牌 Logo 不读 `Theme` 颜色**：`logo` 色板独立于主题，换主题不得改变标题；`colors.test.ts` 校验对比度与 `logo.ts` 的主题引用。
+- 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/彩纸）、`snakeArt.ts`（描边蛇身、表情蛇头、果实）、`gameArt.ts`（棋盘、蛇与果实的每帧绘制）、`logo.ts`（固定品牌色标题 + 蛇形丝带 + 果实）、`menuDemo.ts`（菜单自动演示棋盘）。颜色统一从 `games/snake/src/colors.ts` 读取，这些是表现层实现，不进入公共包。`backdrop.ts` 和 `logo.ts` 同时通过 `GameDefinition.backdrop` / `titleLogo` 交给核心 `PreloadScene` 使用。
 - `index.html`、`manifest.webmanifest`、`game.manifest.json`、`favicon.svg` 无法 import TS，保留静态字面量；`colors.test.ts` 校验它们与 `colors.ts` 的关键颜色一致，防止漂移。贪吃蛇的 favicon 以主题 `accent` 作底色、`onAccent` 作内边框；PWA PNG 由 favicon 重新生成并填实透明角。
 - 图标优先 Lucide 等开源图标，只取实际用到的，记录来源/许可证。当前菜单/按钮图标为程序化 Graphics，不引入图标依赖。
 - 音效目前用 WebAudio 程序化合成，零素材；以后换文件时保持 `AudioManager` 调用点不变。

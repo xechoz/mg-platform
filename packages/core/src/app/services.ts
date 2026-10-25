@@ -22,6 +22,15 @@ export interface GameDefinition {
   debug?: boolean
   /** Procedural backdrop shared by core screens; games keep the drawing code. */
   backdrop?: (graphics: Phaser.GameObjects.Graphics, viewport: Viewport, theme: Theme) => void
+  /**
+   * Optional brand mark for the core preload splash. Preload scales it to fit
+   * and places it above the tap gate; games remain in charge of the artwork.
+   */
+  titleLogo?: (scene: Phaser.Scene) => {
+    container: Phaser.GameObjects.Container
+    width: number
+    height: number
+  }
   assets?: {
     images?: Array<{ key: string; url: string }>
     audio?: Array<{ key: string; urls: string | string[] }>

@@ -33,11 +33,17 @@ export class PreloadScene extends Phaser.Scene {
     if (services.def.backdrop) services.def.backdrop(backdrop, readViewport(this), theme)
     else this.drawFallbackBackdrop(backdrop, width, height)
 
-    const titleStyle = displayTextStyle(theme, 84, cssColor(theme.accent), true, 8, 8)
-    titleStyle.stroke = cssColor(theme.accentInk)
-    this.add
-      .text(width / 2, height / 2 - 110, services.i18n.t('game.title'), titleStyle)
-      .setOrigin(0.5)
+    const titleLogo = services.def.titleLogo?.(this)
+    if (titleLogo) {
+      const scale = Math.min(1, (width * 0.62) / titleLogo.width)
+      titleLogo.container.setPosition(width / 2, height / 2 - 130).setScale(scale)
+    } else {
+      const titleStyle = displayTextStyle(theme, 84, cssColor(theme.accent), true, 8, 8)
+      titleStyle.stroke = cssColor(theme.accentInk)
+      this.add
+        .text(width / 2, height / 2 - 110, services.i18n.t('game.title'), titleStyle)
+        .setOrigin(0.5)
+    }
 
     if (assetCount > 0) {
       this.loadingText = this.add

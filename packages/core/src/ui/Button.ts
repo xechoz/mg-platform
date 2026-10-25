@@ -268,6 +268,12 @@ export class Button extends Phaser.GameObjects.Container {
     }
 
     const iconSize = Math.round(this.fontSize * 1.02)
+    if (this.label.text.length === 0) {
+      icon.setPosition(0, offset)
+      drawIcon(icon, name, iconSize, this.iconColor())
+      return
+    }
+
     const gap = Math.round(this.fontSize * 0.3)
     const groupWidth = iconSize + gap + this.label.width
     const left = -groupWidth / 2
