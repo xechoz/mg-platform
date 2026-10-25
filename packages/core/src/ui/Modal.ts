@@ -19,6 +19,8 @@ export interface ModalAction {
 
 export interface ModalOptions {
   title: string
+  /** Draw the accent pill behind the title. Set false for a plain heading. */
+  titleRibbon?: boolean
   /** Large accent value between the title and the body, e.g. a final score. */
   hero?: string
   body?: string
@@ -68,32 +70,36 @@ export class Modal extends Phaser.GameObjects.Container {
     panel.fillRoundedRect(-width / 2, -height / 2, width, height, radius)
     card.add(panel)
 
+    const showRibbon = options.titleRibbon ?? true
     const titleSize = options.titleFontSize ?? 28
     const title = new Phaser.GameObjects.Text(
       scene,
       0,
       0,
       options.title,
-      textStyle(theme, titleSize, cssColor(theme.onAccent), true),
+      textStyle(theme, titleSize, showRibbon ? cssColor(theme.onAccent) : theme.text, true),
     ).setOrigin(0.5)
-    const ribbonHeight = Math.round(titleSize * 1.55)
-    const ribbonWidth = Math.min(width - 40, title.width + Math.round(titleSize * 1.8))
-    const ribbonY = -height / 2 + 24 + ribbonHeight / 2
+    const titleBlockHeight = Math.round(titleSize * 1.55)
+    const titleY = -height / 2 + 24 + titleBlockHeight / 2
 
-    const ribbon = new Phaser.GameObjects.Graphics(scene)
-    ribbon.fillStyle(theme.accent, 1)
-    ribbon.fillRoundedRect(
-      -ribbonWidth / 2,
-      -ribbonHeight / 2,
-      ribbonWidth,
-      ribbonHeight,
-      ribbonHeight / 2,
-    )
-    ribbon.setPosition(0, ribbonY)
-    title.setPosition(0, ribbonY - 2)
-    card.add([ribbon, title])
+    if (showRibbon) {
+      const ribbonWidth = Math.min(width - 40, title.width + Math.round(titleSize * 1.8))
+      const ribbon = new Phaser.GameObjects.Graphics(scene)
+      ribbon.fillStyle(theme.accent, 1)
+      ribbon.fillRoundedRect(
+        -ribbonWidth / 2,
+        -titleBlockHeight / 2,
+        ribbonWidth,
+        titleBlockHeight,
+        titleBlockHeight / 2,
+      )
+      ribbon.setPosition(0, titleY)
+      card.add(ribbon)
+    }
+    title.setPosition(0, titleY - 2)
+    card.add(title)
 
-    let contentBottom = ribbonY + ribbonHeight / 2
+    let contentBottom = titleY + titleBlockHeight / 2
     if (options.hero) {
       const hero = new Phaser.GameObjects.Text(
         scene,
