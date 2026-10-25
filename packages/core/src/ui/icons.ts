@@ -9,6 +9,7 @@ export type IconName =
   | 'star'
   | 'home'
   | 'restart'
+  | 'video'
 
 /**
  * Tiny procedural icon set. Keeps the bundle asset-free while still giving
@@ -89,6 +90,12 @@ export function drawIcon(
       )
       break
     }
+    case 'video':
+      graphics.lineStyle(line, color, 1)
+      graphics.strokeRoundedRect(-half * 0.74, -half * 0.5, half * 1.48, half * 1.0, half * 0.16)
+      graphics.fillStyle(color, 1)
+      graphics.fillTriangle(-half * 0.12, -half * 0.26, -half * 0.12, half * 0.26, half * 0.34, 0)
+      break
   }
 }
 

@@ -98,6 +98,8 @@ npm run site         # 涉及站点/多游戏时
 - 存档：`services.createSave()`，带 `version`，改字段必须迁移。
 - 文案：全部 `services.i18n.t()`，中英文都写；`game.title` 必填。
 - 平台：`services.platform.gameplayStart()` / `gameplayStop()` / `happyTime()`。
+- 广告：只调 `services.ads.showRewarded(placement)`；渠道实现留在 `@mg/platform`，奖励只在 `rewarded` 时发放。详见 `docs/ads.md`。
+- H5 构建：`VITE_AD_CHANNEL=h5games` + `VITE_ADSENSE_CLIENT`；无 ID 时无广告；test mode 不能进 production；`ads.txt` 由 `npm run site` 生成。
 - UI：`Button`、`Modal`、`createPanel`、`textStyle`；不要另造一套风格。
 - 场景用 `onLayoutChange(scene, fn)` 重排，不重启场景；`GameDefinition.design` 只写 `{ base: 720 }`。
 - HUD（分数、暂停）放在棋盘外的空白区，不压缩游戏区；安全区用 `safeAreaInDesign(scene)` 内缩。
@@ -115,7 +117,12 @@ npm run site         # 涉及站点/多游戏时
 - [ ] 存档版本/迁移正确，旧档可读。
 - [ ] 中英文文案完整，默认中文。
 - [ ] 短边 720 动态设计空间；横竖屏都可玩，转屏自动暂停。
-- [ ] 运行时零外部请求；无 CJK 字体包。
+- [ ] 广告只在死亡/菜单/结算等边界触发；广告期间停表、静音、锁输入。
+- [ ] 奖励只在 `rewardedBreak()` 返回 `true` 时发放；跳过/失败/拦截不发奖。
+- [ ] 奖励按钮有视频图标、不是绿色；标准按钮同时存在、更大、在上/旁边。
+- [ ] 游戏内没有广告冷却/每日次数上限。
+- [ ] H5 构建配置了 publisher ID；production 没有 test mode；`ads.txt` 在域名根。
+- [ ] 运行时零外部请求；无 CJK 字体包；Poki 构建无 Dev 模拟代码。
 - [ ] 新增规则边界有测试。
 - [ ] `npm run check` / `test` / 构建通过。
 - [ ] 文档与 `CHANGELOG.md` 已同步。

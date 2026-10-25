@@ -7,6 +7,8 @@ export const coreI18n: Record<'zh' | 'en', Dictionary> = {
     'core.soundOn': '音效：开',
     'core.soundOff': '音效：关',
     'core.language': '语言',
+    'core.ad.watch': '看广告',
+    'core.ad.loading': '广告加载中…',
   },
   en: {
     'core.tapToStart': 'Start',
@@ -14,5 +16,7 @@ export const coreI18n: Record<'zh' | 'en', Dictionary> = {
     'core.soundOn': 'Sound on',
     'core.soundOff': 'Sound off',
     'core.language': 'Language',
+    'core.ad.watch': 'Watch ad',
+    'core.ad.loading': 'Loading ad…',
   },
 }

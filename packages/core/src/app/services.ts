@@ -1,6 +1,7 @@
-import type { Lang, PlatformAdapter } from '@mg/platform'
-import { createPlatform } from '@mg/platform'
+import type { AdChannelKind, Lang, PlatformAdapter, PlatformKind } from '@mg/platform'
+import { createAdChannel, createPlatform } from '@mg/platform'
 import type Phaser from 'phaser'
+import { AdService } from '../ads/AdService'
 import { AudioManager } from '../audio/AudioManager'
 import { coreI18n } from '../i18n/core'
 import { type Dictionary, I18n, resolveLang } from '../i18n/I18n'
@@ -49,6 +50,7 @@ export interface GameServices {
   readonly settings: SettingsStore
   readonly audio: AudioManager
   readonly platform: PlatformAdapter
+  readonly ads: AdService
   readonly params: URLSearchParams
   readonly debug: boolean
   createSave<T>(config: SaveConfig<T>): SaveStore<T>
@@ -72,8 +74,20 @@ export function createServices(def: GameDefinition): GameServices {
   i18n.setLang(lang)
   if (settings.value.lang !== lang) settings.update({ lang })
 
-  const platformKind = import.meta.env.VITE_PLATFORM === 'poki' ? 'poki' : 'dev'
+  const platformKind: PlatformKind = import.meta.env.VITE_PLATFORM === 'poki' ? 'poki' : 'web'
+  const adChannelKind: AdChannelKind =
+    platformKind === 'poki'
+      ? 'poki'
+      : import.meta.env.VITE_AD_CHANNEL === 'h5games'
+        ? 'h5games'
+        : 'dev'
   const audio = new AudioManager(settings.value.sound)
+  const platform = createPlatform(platformKind)
+  const ads = new AdService(
+    createAdChannel(adChannelKind, { sound: () => audio.soundEnabled }),
+    platform,
+    audio,
+  )
 
   const services: GameServices = {
     def,
@@ -81,7 +95,8 @@ export function createServices(def: GameDefinition): GameServices {
     i18n,
     settings,
     audio,
-    platform: createPlatform(platformKind),
+    platform,
+    ads,
     params,
     debug: def.debug === true || params.has('debug'),
     createSave<T>(config: SaveConfig<T>): SaveStore<T> {

@@ -8,6 +8,8 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { loadEnv } from 'vite'
+import { adsTxtLine, normalizeAdsenseClient } from './adsense.ts'
 
 interface Manifest {
   id: string
@@ -25,6 +27,16 @@ const outGamesDir = join(outDir, 'games')
 
 rmSync(outDir, { recursive: true, force: true })
 mkdirSync(outGamesDir, { recursive: true })
+
+const env = loadEnv('production', root, 'VITE_')
+const adChannel = process.env.VITE_AD_CHANNEL ?? env.VITE_AD_CHANNEL
+const adsenseClient = normalizeAdsenseClient(
+  process.env.VITE_ADSENSE_CLIENT ?? env.VITE_ADSENSE_CLIENT,
+)
+if (adChannel === 'h5games' && adsenseClient && !adsenseClient.includes('X')) {
+  writeFileSync(join(outDir, 'ads.txt'), `${adsTxtLine(adsenseClient)}\n`)
+  console.log(`ads.txt written for ${adsenseClient}`)
+}
 
 const manifests: Manifest[] = []
 for (const entry of readdirSync(gamesDir, { withFileTypes: true })) {

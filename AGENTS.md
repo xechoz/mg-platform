@@ -39,7 +39,7 @@
 ### 代码边界
 
 8. `games/*/src/logic` 不 import Phaser；需要随机数只 import `@mg/core/rng`。
-9. 游戏代码禁止直接使用 `window.PokiSDK`；只能通过 `@mg/platform` 的 `PlatformAdapter`。
+9. 游戏代码禁止直接使用任何广告 SDK（`window.PokiSDK`、AdMob 等）；只能通过 `@mg/core` 的 `services.ads`。渠道实现只在 `@mg/platform`。
 10. 游戏/UI 代码禁止直接使用 `localStorage`；一律通过 `services.createSave()` / `SaveStore`。
 11. 纯逻辑只接受输入、返回新状态和事件；渲染层只读状态，不回写规则。
 
@@ -67,7 +67,7 @@
 25. 中文使用系统字体栈；**不打包 CJK 字体**。西文可用 OFL 字体。
 26. 占位阶段优先用 Phaser Graphics 程序化绘制；正式素材优先 CC0。
 27. 图标优先 Lucide 等开源图标，只引入实际用到的，确认许可证。
-28. 运行时零外部请求：不使用 CDN、外部字体、统计脚本、远程图片/音频。
+28. 运行时零外部请求：不使用 CDN、外部字体、统计脚本、远程图片/音频；广告渠道 SDK 只允许由 `@mg/platform` 的渠道实现和构建插件按渠道注入。
 29. 单游戏首包目标 ≤ 1.5MB gzip；Phaser 本身约 370KB gzip。
 
 ### 存档、语言、平台
@@ -77,15 +77,23 @@
 32. 语言优先级：URL `?lang=` > 已存选择 > 游戏 `defaultLang`。**不做 navigator 嗅探**；默认中文。
 33. 每个游戏必须提供 i18n key `game.title`（Preload 依赖）；所有用户可见文案中英文都要有。
 34. 进入实际玩法调用 `platform.gameplayStart()`；菜单/暂停/结算调用 `gameplayStop()`；胜利或新纪录调用 `happyTime()`。
-35. Poki 构建必须单游戏独立、`index.html` 在 zip 根、资源相对路径、无外部请求。适配器未完成前不要提审。
+35. Poki 构建必须单游戏独立、`index.html` 在 zip 根、资源相对路径、无外部请求；未在 Poki Inspector 验证前不要提审。
+
+### 广告
+
+36. 广告渠道只在 `@mg/platform` 实现；游戏只通过 `@mg/core` 的 `services.ads.showRewarded(placement)`，不直接接触任何广告 SDK。
+37. 激励广告只在死亡/菜单/结算等边界由玩家主动触发；广告期间停表、静音、锁输入，且不得触发 SDK 事件。
+38. 奖励只在 `rewardedBreak()` 返回 `true` 时发放；跳过、失败、广告拦截都不发奖励，也不显示自定义“广告被拦截”提示。
+39. 不要在游戏内实现广告冷却或每日次数上限（渠道管理频率）；玩法上限（例如每局 1 次复活）可以。
+40. 奖励按钮必须有视频图标、不能使用绿色；标准按钮必须同时出现、尺寸不小于奖励按钮、位于其上方或旁边；一次奖励只对应一条广告。
 
 ### 工程与协作
 
-36. 本项目约定只写在本仓库；不要改全局 OpenCode 配置、全局 AGENTS.md 或全局 skills。
-37. 不为了“以后可能用到”提前抽象；不为单个游戏增加公共层开关。
-38. 改动必须同步测试和文档；行为变化更新 `CHANGELOG.md`。
-39. 不要擅自升级 Phaser/Vite/TypeScript 大版本；先说明影响并单独提交。
-40. 不要提交 `node_modules`、`dist`、`dist-site` 或密钥。
+41. 本项目约定只写在本仓库；不要改全局 OpenCode 配置、全局 AGENTS.md 或全局 skills。
+42. 不为了“以后可能用到”提前抽象；不为单个游戏增加公共层开关。
+43. 改动必须同步测试和文档；行为变化更新 `CHANGELOG.md`。
+44. 不要擅自升级 Phaser/Vite/TypeScript 大版本；先说明影响并单独提交。
+45. 不要提交 `node_modules`、`dist`、`dist-site` 或密钥。
 
 ## 常用命令
 

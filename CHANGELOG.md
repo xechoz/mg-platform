@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### 部署
+
+- 新增 GitHub Pages 自动发布：`.github/workflows/ci.yml` 在 main 分支 push 且 `check` 通过后构建 `dist-site` 并部署到 `https://xechoz.github.io/mini-games/`；产物走 artifact，不提交到分支。
+- CI 的构建步骤从 `build:games` 改为 `npm run site`，确保测试过的产物就是部署的产物；artifact 名同步改为 `dist-site`。
+
+### 广告
+
+- 拆分平台与广告渠道：`PlatformAdapter` 只负责宿主生命周期，新增 `AdChannel`；游戏只通过 `@mg/core` 的 `AdService` 调用激励广告。
+- 新增 `AdService`：单飞、静音、`gameplayStop`、结果映射（`rewarded` / `skipped` / `failed`）与按 placement 的调试统计；不做广告冷却或每日上限。
+- 新增 Poki 宿主/广告渠道：SDK 初始化、`gameLoadingFinished`、`gameplayStart/Stop` 去重、广告期间屏蔽宿主事件、异常收敛为不发奖。
+- 新增 Google H5 Games Ads 渠道：`adConfig`/`adBreak` 回调、`beforeReward` 即同意、`adViewed`/`viewed` 发奖、no-fill/关闭不发奖；`rewardedAvailable` 只表示 SDK ready。
+- H5 SDK 只在 `VITE_AD_CHANNEL=h5games` 构建注入；publisher ID 来自 `VITE_ADSENSE_CLIENT`，缺失时无广告；test mode 禁止进入 production；`npm run site` 生成 `ads.txt`。
+- `AdChannel.rewardedBreak` 接收 placement（H5 用作 `adBreak.name`）；`AdChannelOptions.sound` 让广告跟随玩家静音偏好。
+- 新增 Dev 激励广告模拟器（`?ads=reward|skip|fail`）；只在 DEV 启用，生产构建会被 tree shaking 移除。
+- Poki SDK 脚本改为 Vite 插件按构建注入；自有站构建保持零外部请求。
+- 新增 `VITE_AD_CHANNEL`；`VITE_PLATFORM=poki` 强制使用 Poki 渠道，自有站默认无渠道并隐藏奖励入口。
+- 新增合规 UI 原语：`video` 图标、`ModalAction` 的图标/尺寸/异步 loading、`RewardedButton`、`rewardOfferActions`。
+- 新增 `docs/ads.md`；同步更新架构、发布、AGENTS 与项目 skill。
+
 ### 菜单与品牌
 
 - 标题从“主题色文本 + 下划线”改为独立品牌 Logo：奶油字面 + 深森林绿描边/厚度 + 薄荷硬阴影，底部下划线换成带蛇头、吐信与果实的蛇形丝带；三字/五字母轻微错位，配薄荷光晕、入场弹跳与待机眨眼/吐信。

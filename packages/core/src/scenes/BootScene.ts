@@ -11,10 +11,11 @@ export class BootScene extends Phaser.Scene {
     const services = getServices()
 
     void (async () => {
-      try {
-        await services.platform.init()
-      } catch (error) {
-        console.warn('[platform] init failed, continuing without SDK', error)
+      const results = await Promise.allSettled([services.platform.init(), services.ads.init()])
+      for (const result of results) {
+        if (result.status === 'rejected') {
+          console.warn('[boot] SDK init failed, continuing without it', result.reason)
+        }
       }
       this.scene.start('Preload')
     })()

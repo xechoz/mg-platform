@@ -1,5 +1,12 @@
 import type { Lang } from '@mg/platform'
 
+export {
+  type AdActiveListener,
+  type AdAudio,
+  AdService,
+  type AdStats,
+  type RewardedOutcome,
+} from './ads/AdService'
 export { createGame } from './app/createGame'
 export { computeDesignSize, type DesignSize } from './app/designSize'
 export {
@@ -39,6 +46,8 @@ export { Button, type ButtonOptions, type ButtonVariant } from './ui/Button'
 export { drawIcon, type IconName } from './ui/icons'
 export { Modal, type ModalAction, type ModalOptions } from './ui/Modal'
 export { createPanel } from './ui/panel'
+export { RewardedButton, type RewardedButtonOptions } from './ui/RewardedButton'
+export { type RewardOfferOptions, rewardOfferActions } from './ui/rewardOfferActions'
 export {
   cssColor,
   defaultTheme,

@@ -1,8 +1,8 @@
 export type Lang = 'zh' | 'en'
 
 /**
- * Every external SDK (Poki, CrazyGames, itch.io, ...) is hidden behind this
- * interface. Game code must never touch `window.PokiSDK` directly.
+ * Host platform: the page/app that owns the game and its lifecycle events.
+ * Advertising is a separate concern; see `AdChannel`.
  */
 export interface PlatformAdapter {
   readonly name: string
@@ -11,17 +11,37 @@ export interface PlatformAdapter {
   loadingFinished(): void
   gameplayStart(): void
   gameplayStop(): void
-  commercialBreak(): Promise<void>
-  rewardedBreak(): Promise<boolean>
   happyTime(): void
   lang(): Lang | null
   haptic(ms: number): void
 }
 
-export type PlatformKind = 'dev' | 'poki'
+/**
+ * One advertising provider. Game code never touches this interface directly:
+ * `@mg/core` wraps it in `AdService`, which owns muting, input locking and
+ * result handling. Implementations live only in `@mg/platform`.
+ */
+export interface AdChannel {
+  readonly name: string
+  readonly rewardedAvailable: boolean
 
-export class DevPlatform implements PlatformAdapter {
-  readonly name = 'dev'
+  init(): Promise<void>
+  rewardedBreak(placement: string, onStart?: () => void): Promise<boolean>
+  interstitialBreak?(onStart?: () => void): Promise<void>
+}
+
+/** Optional configuration supplied by the game host to an ad channel. */
+export interface AdChannelOptions {
+  /** Whether the player has game sound enabled; channels use it for ad audio. */
+  readonly sound?: () => boolean
+}
+
+export type PlatformKind = 'web' | 'poki'
+export type AdChannelKind = 'dev' | 'poki' | 'h5games'
+
+/** No-op host used by the self-hosted site and local development. */
+export class WebPlatform implements PlatformAdapter {
+  readonly name = 'web'
 
   init(): Promise<void> {
     return Promise.resolve()
@@ -33,14 +53,6 @@ export class DevPlatform implements PlatformAdapter {
 
   gameplayStop(): void {}
 
-  commercialBreak(): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, 250))
-  }
-
-  rewardedBreak(): Promise<boolean> {
-    return new Promise((resolve) => setTimeout(() => resolve(true), 250))
-  }
-
   happyTime(): void {}
 
   lang(): Lang | null {
@@ -48,17 +60,30 @@ export class DevPlatform implements PlatformAdapter {
   }
 
   haptic(ms: number): void {
-    navigator.vibrate?.(ms)
+    if (typeof navigator !== 'undefined') navigator.vibrate?.(ms)
   }
 }
 
-export function createPlatform(kind: PlatformKind = 'dev'): PlatformAdapter {
-  switch (kind) {
-    case 'dev':
-      return new DevPlatform()
-    case 'poki':
-      // The Poki adapter is added when the first build is submitted to Poki.
-      // Keeping the switch here means game code never changes.
-      return new DevPlatform()
+/**
+ * Development-only rewarded ad simulator. It is compiled out of production
+ * builds: Vite replaces `import.meta.env.DEV` with `false`, so the dynamic
+ * import of the DOM overlay is removed by tree shaking.
+ */
+export class DevAdChannel implements AdChannel {
+  readonly name = 'dev'
+
+  get rewardedAvailable(): boolean {
+    return import.meta.env.DEV
+  }
+
+  init(): Promise<void> {
+    return Promise.resolve()
+  }
+
+  async rewardedBreak(_placement: string, onStart?: () => void): Promise<boolean> {
+    if (!import.meta.env.DEV) return false
+    const { showFakeRewardedAd } = await import('./fakeAd')
+    onStart?.()
+    return showFakeRewardedAd()
   }
 }

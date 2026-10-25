@@ -50,8 +50,8 @@
 mini-games/
 ├─ AGENTS.md                     # AI 硬规则（项目级）
 ├─ packages/
-│  ├─ core/                      # Phaser 外壳、UI、音频、存档、i18n、调试
-│  └─ platform/                  # dev / Poki SDK 适配
+│  ├─ core/                      # Phaser 外壳、UI、音频、存档、i18n、广告编排、调试
+│  └─ platform/                  # 宿主 / 广告渠道适配（Web、Poki、H5）
 ├─ games/
 │  ├─ snake/
 │  │  ├─ game.manifest.json      # 站点与打包共用的元数据
@@ -230,10 +230,14 @@ services.platform.gameplayStart()
 services.setSound(false)
 services.setLang('en')
 services.createSave<MySave>({ name: 'save', version: 1, initial: () => ({ best: 0 }) })
+
+// 激励广告只走 AdService；渠道实现留在 @mg/platform
+const outcome = await services.ads.showRewarded('revive')
 ```
 
 - 不要自己 new AudioContext、写 localStorage、读 `navigator.language`。
 - 平台事件只在玩法边界调用，不要每帧调用。
+- 广告只在死亡/菜单/结算等边界触发；游戏不接触任何广告 SDK。
 
 ### 7.5 表现层
 
@@ -331,9 +335,9 @@ const save = services.createSave<MySave>({
 - 参数用 `{name}` 占位；缺失 key 回退中文，再回退 key 本身。
 - 语言切换后重建/刷新当前场景，确保所有文本更新。
 
-## 12. 平台适配
+## 12. 平台与广告渠道
 
-`PlatformAdapter` 接口：
+宿主 `PlatformAdapter` 只负责页面/平台生命周期：
 
 ```ts
 readonly name: string
@@ -342,19 +346,34 @@ init(): Promise<void>
 loadingFinished(): void
 gameplayStart(): void
 gameplayStop(): void
-commercialBreak(): Promise<void>
-rewardedBreak(): Promise<boolean>
 happyTime(): void
 lang(): Lang | null
 haptic(ms: number): void
 ```
 
-- 游戏代码只依赖接口，不碰 `window.PokiSDK`。
-- 当前只有 `DevPlatform`。
-- 进入实际玩法 `gameplayStart()`；菜单/暂停/结算 `gameplayStop()`；胜利/新纪录 `happyTime()`。
-- 广告只在局间/重开触发，不在操作中打断；广告期间停表、静音、加输入锁。
-- Poki 构建：单游戏 zip、`index.html` 在根、资源相对路径、运行时无外部请求。
-- `VITE_PLATFORM=poki` 目前会回退 Dev，适配器完成前不要提审。
+广告渠道 `AdChannel` 独立存在：
+
+```ts
+readonly name: string
+readonly rewardedAvailable: boolean
+
+init(): Promise<void>
+rewardedBreak(placement: string, onStart?: () => void): Promise<boolean>
+interstitialBreak?(onStart?: () => void): Promise<void>
+```
+
+`AdChannelOptions` 提供 `sound?: () => boolean`，渠道用它决定广告是否出声；游戏只传 `AudioManager.soundEnabled`，不直接接触渠道。
+- `@mg/platform` 是唯一允许接触广告 SDK 的地方；Poki 宿主与 Poki 广告共享同一个 SDK 运行时。
+- 游戏只通过 `@mg/core` 的 `AdService`；它负责单飞、静音、`gameplayStop`、结果映射和调试统计。
+- `VITE_PLATFORM=poki` 强制 `adChannel=poki`；自有站默认无广告渠道（奖励入口隐藏）。
+- 自有站 H5 Games Ads 已实现：`VITE_AD_CHANNEL=h5games` + `VITE_ADSENSE_CLIENT`；缺少 publisher ID 时构建无广告。真实广告还需要 AdSense/H5 审核、`ads.txt`、隐私政策和 CMP。
+- H5 的 `rewardedAvailable` 只表示 SDK ready，不表示库存；no-fill 按未奖励处理。
+- 广告只在死亡/菜单/结算等边界触发；广告期间停表、静音、锁输入，且不触发 SDK 事件。
+- 奖励只在 `rewardedBreak()` 返回 `true` 时发放；不在游戏内做广告冷却或每日上限。
+- `commercialBreak()` 暂未使用；调用点必须遵守 Poki 的“退出暂停回到玩法”规则。
+- Poki 构建：单游戏 zip、`index.html` 在根、资源相对路径、运行时无外部请求；Poki/H5 SDK 由 Vite 插件按渠道注入。
+- Poki 渠道已实现，但没有账号/Inspector 验证前不要提审；H5 真实广告也需要账号/审核验证。
+- 详见 `docs/ads.md`。
 
 ## 13. 代码规范
 
@@ -382,6 +401,7 @@ npm run site         # 涉及站点/多游戏时
 
 - 规则层：移动、碰撞、吃子、胜负、非法输入、随机复现、速度曲线。
 - 核心：SaveStore 初始/持久化/迁移/损坏回退；i18n 回退与语言解析。
+- 广告：AdService 结果映射、单飞、静音、`gameplayStop`、无冷却、placement 透传；Poki 运行时事件去重与广告期间事件屏蔽；H5 渠道 onReady/viewed/dismissed/no-fill/异常。
 - 每个新游戏至少覆盖：初始状态、正常推进、边界失败、胜利条件、种子确定性。
 
 ### 浏览器 smoke
@@ -434,7 +454,8 @@ npm run site         # 涉及站点/多游戏时
 
 ### 已知取舍
 
-- 只有 `DevPlatform`；Poki 适配器未实现。
+- Poki 宿主/广告渠道已实现，但未在真实账号/Inspector 验证；自有站 H5 Games Ads 已实现，未通过 AdSense/H5 审核，真实广告未验证。
+- 广告渠道抽象已就位；AdMob/Pangle/Meta、mediation、同意管理 UI 未实现。
 - iPhone Safari 不支持网页内全屏，只能通过 A2HS/PWA 获得无浏览器 UI；Android/iPad 用 Fullscreen API。
 - 没有 `packages/assets`；共享素材出现前不建。
 - 没有 `packages/grid` / `packages/turn`；规则留在游戏内。
@@ -448,7 +469,7 @@ npm run site         # 涉及站点/多游戏时
 | ---- | ------------------------------------------------- | ---------------------------------------------------- |
 | M2   | 连连看：10×8、≤2 拐点、绕边界、死局洗牌、种子可解 | 寻路单测、洗牌、种子复现                             |
 | M3   | Ludo：1 玩家 + 3 AI、掷骰/吃子/进家、动画队列     | 完整一局无死锁、规则测试、AI <100ms                  |
-| M4   | 打磨、Poki 适配、SDK 注入、提审                   | Poki Inspector 通过、单游戏 zip 独立可跑、无外部请求 |
+| M4   | Poki Inspector 验证、H5 生产验证、提审            | Poki Inspector 通过、单游戏 zip 独立可跑、无外部请求 |
 
 ## 17. 相关文档
 

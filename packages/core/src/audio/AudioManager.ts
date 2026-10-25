@@ -22,11 +22,28 @@ export class AudioManager {
     this.enabled = enabled
   }
 
+  /** The player's saved sound preference, unaffected by temporary ad muting. */
+  get soundEnabled(): boolean {
+    return this.enabled
+  }
+
   setEnabled(enabled: boolean): void {
     this.enabled = enabled
     if (this.master && this.ctx) {
       this.master.gain.setTargetAtTime(enabled ? 0.9 : 0, this.ctx.currentTime, 0.02)
     }
+  }
+
+  /** Mutes without touching the player's sound preference (ads, focus loss). */
+  suspend(): void {
+    if (!this.master || !this.ctx) return
+    this.master.gain.setTargetAtTime(0, this.ctx.currentTime, 0.02)
+  }
+
+  /** Restores the master gain according to the saved sound preference. */
+  resume(): void {
+    if (!this.master || !this.ctx) return
+    this.master.gain.setTargetAtTime(this.enabled ? 0.9 : 0, this.ctx.currentTime, 0.02)
   }
 
   /** Must be called from a user gesture at least once (iOS/Safari). */
