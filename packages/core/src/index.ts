@@ -33,7 +33,12 @@ export {
   type SaveConfig,
 } from './app/services'
 export { installResponsiveViewport } from './app/viewport'
-export { AudioManager, type SfxName } from './audio/AudioManager'
+export {
+  AudioManager,
+  type SfxName,
+  type SfxOptions,
+  type SfxSampleUrls,
+} from './audio/AudioManager'
 export { DebugOverlay } from './debug/DebugOverlay'
 export { coreI18n } from './i18n/core'
 export { type Dictionary, I18n, resolveLang } from './i18n/I18n'

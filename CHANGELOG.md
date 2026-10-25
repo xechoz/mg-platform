@@ -15,6 +15,11 @@
 - 存档升级到 v2，新增 `pendingSuper` 并保留 v1 的 `best` / `plays` 迁移；盛宴倒计时显示在分数卡底部。
 - 修复盛宴分数永久拉高速度曲线的问题：新增 `speedScore` 只累计普通水果得分；盛宴结束后速度回到进入盛宴前的档位，不会因为盛宴高分卡在最快速度。
 
+### 音效
+
+- 吃水果改用真实咬合采样（OpenGameArt「7 Eating Crunches」的 5/6 号，作者 StarNinjas，CC0），替换此前的合成噪声与木琴层；连续吃水果按大调五声音阶（0/2/4/7/9/12/14/16 半音）升调，暂停恢复、重开、死亡时重置。
+- 新增 `GameDefinition.audioSamples` 与 `AudioManager` 采样加载：首次用户手势后 `fetch + decodeAudioData` 缓存，随机选择 take，`pitch` 通过 `playbackRate` 生效，仍走 master 静音与广告 suspend；无采样或加载失败时回退到合成音效。
+
 ### 部署
 
 - 新增 GitHub Pages 自动发布：`.github/workflows/ci.yml` 在 main 分支 push 且 `check` 通过后构建 `dist-site` 并部署到 `https://xechoz.github.io/mini-games/`；产物走 artifact，不提交到分支。

@@ -297,7 +297,7 @@ const outcome = await services.ads.showRewarded('revive')
 - 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/彩纸）、`snakeArt.ts`（描边蛇身、表情蛇头、六种水果、冰淇淋/辣椒、金色超级水果与效果环）、`gameArt.ts`（棋盘、分段色带蛇、水果/道具绘制；水果层只在 `foods` 或布局变化时重绘，避免铺满水果时每帧重建）、`feedback.ts`（吃水果/吃道具/盛宴/危险反馈）、`logo.ts`（固定品牌色标题 + 方块直角折线蛇身 + 果实）、`menuDemo.ts`（菜单自动演示棋盘，展示吃水果变色）。颜色统一从 `games/snake/src/colors.ts` 读取，这些是表现层实现，不进入公共包。`backdrop.ts` 和 `logo.ts` 同时通过 `GameDefinition.backdrop` / `titleLogo` 交给核心 `PreloadScene` 使用。
 - `index.html`、`manifest.webmanifest`、`game.manifest.json`、`favicon.svg` 无法 import TS，保留静态字面量；`colors.test.ts` 校验它们与 `colors.ts` 的关键颜色一致，防止漂移。贪吃蛇的 favicon 以主题 `accent` 作底色、`onAccent` 作内边框；PWA PNG 由 favicon 重新生成并填实透明角。
 - 图标优先 Lucide 等开源图标，只取实际用到的，记录来源/许可证。当前菜单/按钮图标为程序化 Graphics，不引入图标依赖。
-- 音效目前用 WebAudio 程序化合成，零素材；以后换文件时保持 `AudioManager` 调用点不变。
+- 音效以 WebAudio 合成兜底；`eat` 使用打包的 CC0 咬合采样（`games/snake/src/assets/audio/eat-1.wav`/`eat-2.wav`，来自 OpenGameArt「7 Eating Crunches」/ StarNinjas，CC0），经 `GameDefinition.audioSamples` 注册，在首次用户手势后 `fetch + decodeAudioData` 缓存；`play()` 的 `pitch` 对采样走 `playbackRate`，连吃按五声音阶升调。
 - 运行时零外部请求：无 CDN、外部字体、统计脚本、远程图片/音频。
 - 首包目标 ≤ 1.5MB gzip；Phaser 本身约 370KB gzip。贪吃蛇 2.0 约 375KB gzip。
 

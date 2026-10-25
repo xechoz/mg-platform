@@ -2,7 +2,7 @@ import type { AdChannelKind, Lang, PlatformAdapter, PlatformKind } from '@mg/pla
 import { createAdChannel, createPlatform } from '@mg/platform'
 import type Phaser from 'phaser'
 import { AdService } from '../ads/AdService'
-import { AudioManager } from '../audio/AudioManager'
+import { AudioManager, type SfxSampleUrls } from '../audio/AudioManager'
 import { coreI18n } from '../i18n/core'
 import { type Dictionary, I18n, resolveLang } from '../i18n/I18n'
 import { SaveStore, type SaveStoreOptions } from '../storage/SaveStore'
@@ -37,6 +37,11 @@ export interface GameDefinition {
     audio?: Array<{ key: string; urls: string | string[] }>
     json?: Array<{ key: string; url: string }>
   }
+  /**
+   * Bundled sample files per effect. Samples are decoded on the first user
+   * gesture and take over from the built-in synthesis for those effects.
+   */
+  audioSamples?: SfxSampleUrls
 }
 
 export interface SaveConfig<T> extends Omit<SaveStoreOptions<T>, 'key'> {
@@ -81,7 +86,7 @@ export function createServices(def: GameDefinition): GameServices {
       : import.meta.env.VITE_AD_CHANNEL === 'h5games'
         ? 'h5games'
         : 'dev'
-  const audio = new AudioManager(settings.value.sound)
+  const audio = new AudioManager(settings.value.sound, def.audioSamples)
   const platform = createPlatform(platformKind)
   const ads = new AdService(
     createAdChannel(adChannelKind, { sound: () => audio.soundEnabled }),

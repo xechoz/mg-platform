@@ -1,13 +1,33 @@
 export type SfxName = 'click' | 'eat' | 'die' | 'turn' | 'start' | 'pause' | 'boost' | 'slow'
 
+/** Bundled sample URLs per effect; effects without samples stay fully synthesised. */
+export type SfxSampleUrls = Partial<Record<SfxName, string | readonly string[]>>
+
 type OscType = 'sine' | 'square' | 'triangle' | 'sawtooth'
+
+export interface SfxOptions {
+  /** Frequency multiplier for every layer of the effect (1 = as designed). */
+  pitch?: number
+}
 
 interface ToneOptions {
   type?: OscType
   gain?: number
   delay?: number
   endFrequency?: number
+  pitch?: number
 }
+
+interface NoiseOptions {
+  gain?: number
+  delay?: number
+  frequency?: number
+  q?: number
+}
+
+const NOISE_SECONDS = 0.12
+/** Peak of a bundled sample is normalised to -6 dBFS, so this lands near the synth SFX. */
+const SAMPLE_GAIN = 0.25
 
 /**
  * Zero-asset sound effects generated with Web Audio. Real sound files can be
@@ -16,10 +36,19 @@ interface ToneOptions {
 export class AudioManager {
   private ctx: AudioContext | null = null
   private master: GainNode | null = null
+  private noiseBuffer: AudioBuffer | null = null
+  private readonly sampleUrls = new Map<SfxName, readonly string[]>()
+  private readonly samples = new Map<SfxName, AudioBuffer[]>()
+  private samplesLoading = false
   private enabled: boolean
 
-  constructor(enabled: boolean) {
+  constructor(enabled: boolean, sampleUrls: SfxSampleUrls = {}) {
     this.enabled = enabled
+    for (const [name, urls] of Object.entries(sampleUrls) as Array<
+      [SfxName, string | readonly string[]]
+    >) {
+      this.sampleUrls.set(name, typeof urls === 'string' ? [urls] : urls)
+    }
   }
 
   /** The player's saved sound preference, unaffected by temporary ad muting. */
@@ -58,12 +87,19 @@ export class AudioManager {
       this.master.connect(this.ctx.destination)
     }
     if (this.ctx.state === 'suspended') void this.ctx.resume()
+    this.loadSamples()
   }
 
-  play(name: SfxName): void {
+  play(name: SfxName, { pitch = 1 }: SfxOptions = {}): void {
     if (!this.enabled) return
     if (!this.ctx) return
     if (this.ctx.state === 'suspended') void this.ctx.resume()
+
+    const buffers = this.samples.get(name)
+    if (buffers) {
+      this.playSample(buffers, pitch)
+      return
+    }
 
     switch (name) {
       case 'click':
@@ -73,7 +109,10 @@ export class AudioManager {
         this.tone(320, 0.03, { type: 'square', gain: 0.025 })
         break
       case 'eat':
-        this.tone(660, 0.09, { type: 'sine', gain: 0.07, endFrequency: 990 })
+        // Filtered noise gives the bite its transient; the pop carries the score cue.
+        this.noise(0.05, { gain: 0.05, frequency: 1800 * pitch, q: 1.3 })
+        this.tone(520, 0.07, { type: 'triangle', gain: 0.05, endFrequency: 780, pitch })
+        this.tone(1560, 0.055, { type: 'sine', gain: 0.015, delay: 0.02, pitch })
         break
       case 'die':
         this.tone(250, 0.35, { type: 'sawtooth', gain: 0.08, endFrequency: 60 })
@@ -96,10 +135,45 @@ export class AudioManager {
     }
   }
 
+  /** Fetches and decodes bundled samples once the audio context exists. */
+  private loadSamples(): void {
+    const ctx = this.ctx
+    if (!ctx || this.samplesLoading) return
+    this.samplesLoading = true
+    for (const [name, urls] of this.sampleUrls) {
+      for (const url of urls) {
+        void fetch(url)
+          .then((response) => response.arrayBuffer())
+          .then((data) => ctx.decodeAudioData(data))
+          .then((buffer) => {
+            const buffers = this.samples.get(name) ?? []
+            buffers.push(buffer)
+            this.samples.set(name, buffers)
+          })
+          .catch(() => undefined)
+      }
+    }
+  }
+
+  private playSample(buffers: readonly AudioBuffer[], pitch: number): void {
+    const ctx = this.ctx
+    const master = this.master
+    if (!ctx || !master) return
+
+    const source = ctx.createBufferSource()
+    const gain = ctx.createGain()
+    source.buffer = buffers[Math.floor(Math.random() * buffers.length)]
+    source.playbackRate.value = pitch
+    gain.gain.value = SAMPLE_GAIN
+    source.connect(gain)
+    gain.connect(master)
+    source.start()
+  }
+
   private tone(
     frequency: number,
     duration: number,
-    { type = 'sine', gain = 0.05, delay = 0, endFrequency }: ToneOptions,
+    { type = 'sine', gain = 0.05, delay = 0, endFrequency, pitch = 1 }: ToneOptions,
   ): void {
     const ctx = this.ctx
     const master = this.master
@@ -110,9 +184,12 @@ export class AudioManager {
     const envelope = ctx.createGain()
 
     osc.type = type
-    osc.frequency.setValueAtTime(frequency, start)
+    osc.frequency.setValueAtTime(frequency * pitch, start)
     if (endFrequency !== undefined) {
-      osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFrequency), start + duration)
+      osc.frequency.exponentialRampToValueAtTime(
+        Math.max(1, endFrequency * pitch),
+        start + duration,
+      )
     }
 
     envelope.gain.setValueAtTime(0.0001, start)
@@ -123,5 +200,48 @@ export class AudioManager {
     envelope.connect(master)
     osc.start(start)
     osc.stop(start + duration + 0.02)
+  }
+
+  /** Band-passed noise burst: the "bite" texture oscillators cannot produce. */
+  private noise(
+    duration: number,
+    { gain = 0.05, delay = 0, frequency = 1800, q = 1.1 }: NoiseOptions,
+  ): void {
+    const ctx = this.ctx
+    const master = this.master
+    if (!ctx || !master) return
+
+    const start = ctx.currentTime + delay
+    const source = ctx.createBufferSource()
+    const filter = ctx.createBiquadFilter()
+    const envelope = ctx.createGain()
+
+    source.buffer = this.getNoiseBuffer(ctx)
+    filter.type = 'bandpass'
+    filter.frequency.setValueAtTime(frequency, start)
+    filter.Q.value = q
+
+    envelope.gain.setValueAtTime(0.0001, start)
+    envelope.gain.exponentialRampToValueAtTime(gain, start + 0.004)
+    envelope.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+
+    source.connect(filter)
+    filter.connect(envelope)
+    envelope.connect(master)
+    source.start(start)
+    source.stop(start + duration + 0.02)
+  }
+
+  private getNoiseBuffer(ctx: AudioContext): AudioBuffer {
+    if (!this.noiseBuffer) {
+      const frames = Math.ceil(ctx.sampleRate * NOISE_SECONDS)
+      const buffer = ctx.createBuffer(1, frames, ctx.sampleRate)
+      const data = buffer.getChannelData(0)
+      for (let index = 0; index < frames; index += 1) {
+        data[index] = Math.random() * 2 - 1
+      }
+      this.noiseBuffer = buffer
+    }
+    return this.noiseBuffer
   }
 }
