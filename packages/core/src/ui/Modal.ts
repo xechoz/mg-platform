@@ -32,6 +32,8 @@ export interface ModalOptions {
   actionWidth?: number
   actionHeight?: number
   actionFontSize?: number
+  /** Space between actions in a row or column layout. Defaults to 20. */
+  actionGap?: number
   titleFontSize?: number
   heroFontSize?: number
   bodyFontSize?: number
@@ -144,7 +146,7 @@ export class Modal extends Phaser.GameObjects.Container {
 
       if (layout === 'column') {
         const actionWidth = Math.min(options.actionWidth ?? width - 80, width - 48)
-        const gap = 14
+        const gap = options.actionGap ?? 20
         const heights = actions.map((action) => action.height ?? options.actionHeight ?? 84)
         const total =
           heights.reduce((sum, actionHeight) => sum + actionHeight, 0) + (actions.length - 1) * gap
@@ -166,7 +168,7 @@ export class Modal extends Phaser.GameObjects.Container {
           top += actionHeight + gap
         })
       } else {
-        const gap = 14
+        const gap = options.actionGap ?? 20
         const buttonWidth = Math.min(
           options.actionWidth ?? (actions.length > 2 ? 150 : 180),
           Math.floor((width - 48 - (actions.length - 1) * gap) / actions.length),

@@ -262,13 +262,15 @@ const outcome = await services.ads.showRewarded('revive')
 - **确定性**：种子 RNG 驱动食物/关卡/洗牌；测试可复现。
 - **难度可解释**：速度曲线、AI 难度、生成概率写在 config，不散落在渲染代码。
 - **状态可恢复**：v1 至少持久化最高分/进度；state 设计保持可序列化，为以后云存档留路。
-- **结算完整**：显示分数/最高分/失败原因；提供重开和回菜单。
+- **结算单行**：标题表达结果（游戏结束/新纪录/通关），hero 显示分数，标题下只留一行 meta（死因 · 最高分）；结算页不写规则说明，广告奖励只体现在按钮文案上。
 - **新手可读**：菜单写清操作方式；首次进入不要求读长说明。
-- **移动端优先验证**：横竖屏都可玩，按钮触控区域足够大，滑动不与页面滚动冲突。
-- **触控尺寸**：触控目标 ≥ 44 CSS px；短边 720 设计单位在手机上约 0.54 缩放，主按钮 ≥ 92px、正文 ≥ 30px、标签 ≥ 26px。
+- **移动端优先验证**：横竖屏都可玩，按钮触控区域足够大，滑动不与页面滚动冲突；竖屏主行动锚定在底部拇指区，单手可够到。
+- **触控尺寸**：触控目标 ≥ 44 CSS px；短边 720 设计单位在手机上约 0.54 缩放，主按钮 ≥ 92px、次图标按钮视觉 ≥ 84px 且命中区 ≥ 96px、正文 ≥ 30px、标签 ≥ 26px。
 - **转屏公平**：朝向变化必须停表并自动暂停，玩家点继续后才走 3-2-1，不能边转屏边计时。
 - **HUD 不占棋盘**：分数与暂停放在棋盘外的空白区（横屏左侧、竖屏顶部），不压缩游戏区，也不覆盖盘面。
-- **浮动摇杆**：作为游戏内输入组件实现（如贪吃蛇 `src/ui`），不进公共层；按住任意位置才出现，不常驻屏幕；桌面鼠标拖动同样可用，键盘保留。HUD 区域不响应摇杆按下。
+- **浮动摇杆**：作为游戏内输入组件实现（如贪吃蛇 `src/ui`），不进公共层；按住任意位置才出现，不常驻屏幕；底座空心低对比，按下只显示摇杆帽，拖动超过阈值才淡入方向环；桌面鼠标拖动同样可用，键盘保留。HUD 区域不响应摇杆按下。
+- **触觉克制**：只在死亡/新纪录给一次短振动，吃子不振动。
+- **暂停即静音**：暂停弹窗提供音效开关，避免回主菜单丢失当前局。
 - **操作说明只放菜单**：游戏页不显示操作提示，避免遮挡盘面。
 
 ## 9. 视觉与资源
@@ -288,11 +290,11 @@ const outcome = await services.ads.showRewarded('revive')
 - **视觉语言**：阳光糖果街机（sunny candy arcade），但**描边分级**，不把所有表面都做成贴纸。三层规则：
   - L0 游戏世界与品牌：蛇、果实、Logo 标题、倒计时数字保留 2–3px 墨线与硬阴影；**棋盘例外**：不再套墨色相框，只保留白衬（接住蛇头与效果环的溢出）和原有 2px 薄荷绿场地边线。
   - L1 主行动：每屏最多一个（开始游戏、继续、再来一局、Preload 点击），墨线 + 厚底 + 硬阴影；`Button` 的 `primary` / `danger` 走这一层。贪吃蛇的主行动统一在按钮面散落六颗旋转果实（`ButtonDecoration`），Preload 点击卡片通过 `GameDefinition.tapDecoration` 复用同一套装饰。
-  - L2 次行动：音效、语言、重开、主菜单、暂停键、摇杆，用 `surface` 面 + 1px `borderSoft` + 轻阴影，无厚底无高光；`Button` 的 `soft` / `ghost` 走这一层。菜单里的音效/语言固定在右上角（安全区内），用 `soft` 白色圆面与暂停键统一，不与 L1 主行动同列竞争。
+  - L2 次行动：音效、语言、重开、主菜单、暂停键、摇杆，用 `surface` 面 + 1px `borderSoft` + 轻阴影，无厚底无高光；`Button` 的 `soft` / `ghost` 走这一层。菜单里的音效/语言固定在右上角（安全区内），桌面视觉 64、触控视觉 84 且命中区 96，用 `soft` 白色圆面与暂停键统一，不与 L1 主行动同列竞争；暂停弹窗左上角复用同一音效开关。
   - L3 信息容器：分数云朵、最高分、Modal 卡片、加载条、教学键帽，0–1px 弱边或无描线、无墨线，靠底色差与阴影分层。
   - 文字描边只用于 Logo/大标题；分数、Modal hero、正文不再描边。
 - **配色**：贪吃蛇采用琥珀橙 `#ffb020` 作主题强调色（hover `#f09300`），近白冷天空到暖奶油作背景；色块上的文字/图标用墨紫 `onAccent` `#332b45`，浅底强调文字用深海蓝 `accentInk` `#0369a1`，hover 一律变深。蛇与标题 Logo 走独立的浅蓝 `#7dd3fc` 到深海蓝 `#0369a1` 美术色。选琥珀橙是因为它与蓝色蛇身形成冷暖对比，配墨紫文字的对比度约 7.3:1；不用浅柠檬黄，因为浅黄配深棕文字会发灰、像禁用态。公共 `defaultTheme` 是未定色游戏的通用浅色基线，游戏通过 `colors.ts` 覆盖。
-- 公共 UI token 统一在 `Theme`：`ink`、`borderSoft`、`accent`、`accentHover`、`accentInk`、`onAccent`、`accentAlt`、`accentWarm`、`surface`、`surfaceAlt`、`highlight`、`onDanger`、`shadow`、`radiusLarge`；`borderSoft` 只作 1px 弱边，不承担文字对比。`displayTextStyle()` 提供描边+硬阴影，`drawIcon()` 提供程序化图标；`Button` 统一 primary/soft/ghost/danger 并内置分层几何（soft 无墨线/无厚底），并通过 `ButtonDecoration` 在按钮面与文字之间留出游戏美术插槽（`ModalAction.decoration` 透传）；`Modal` 为无墨线卡片，标题可选 accent 丝带（`titleRibbon`，默认开），结算页使用无丝带的普通标题。游戏只覆盖 token，不另造一套控件。
+- 公共 UI token 统一在 `Theme`：`ink`、`borderSoft`、`accent`、`accentHover`、`accentInk`、`onAccent`、`accentAlt`、`accentWarm`、`surface`、`surfaceAlt`、`highlight`、`onDanger`、`shadow`、`radiusLarge`；`borderSoft` 只作 1px 弱边，不承担文字对比。`displayTextStyle()` 提供描边+硬阴影，`drawIcon()` 提供程序化图标；`Button` 统一 primary/soft/ghost/danger 并内置分层几何（soft 无墨线/无厚底），支持 `minHitSize` 在不放大视觉尺寸的前提下扩大触控命中区，并通过 `ButtonDecoration` 在按钮面与文字之间留出游戏美术插槽（`ModalAction.decoration` 透传）；`Modal` 为无墨线卡片，标题可选 accent 丝带（`titleRibbon`，默认开），结算页使用无丝带的普通标题。游戏只覆盖 token，不另造一套控件。
 - **每个游戏的颜色只有一个入口**：`games/<id>/src/colors.ts`，同时包含该游戏的 `theme`（覆盖公共 token）、`art`（蛇身、果实等专属美术色）和 `logo`（品牌标题固定色板）。场景只使用 `getServices().theme` 或 `colors.art`，不写颜色字面量；透明度、`mixColor()` 派生色除外。公共层只保留 `Theme` 类型与通用默认值，不包含任何游戏专属色。**品牌 Logo 不读 `Theme` 颜色**：`logo` 色板独立于主题，换主题不得改变标题；`colors.test.ts` 校验对比度与 `logo.ts` 的主题引用。
 - 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/叶片散点）、`foliage.ts`（程序化叶片与画框角饰：只画叶，不画圆果体/光晕/呼吸，确保背景读作生境而不是可吃的东西）、`snakeArt.ts`（描边蛇身、表情蛇头、六种水果、冰淇淋/辣椒、金色超级水果与效果环）、`gameArt.ts`（棋盘与四角枝叶、分段色带蛇、水果/道具绘制；水果层只在 `foods` 或布局变化时重绘，避免铺满水果时每帧重建）、`feedback.ts`（吃水果/吃道具/盛宴/危险反馈）、`celebration.ts`（结算彩纸、烟花与新纪录皇冠）、`CloseButton.ts`（结算弹窗右上角关闭按钮）、`logo.ts`（固定品牌色标题 + 方块直角折线蛇身 + 果实）、`menuDemo.ts`（菜单自动演示棋盘，展示吃水果变色）、`fruitDecoration.ts`（主行动按钮与 Preload 点击卡片的散落果实）。颜色统一从 `games/snake/src/colors.ts` 读取，这些是表现层实现，不进入公共包。`backdrop.ts`、`logo.ts` 和 `fruitDecoration.ts` 同时通过 `GameDefinition.backdrop` / `titleLogo` / `tapDecoration` 交给核心 `PreloadScene` 使用。
 - `index.html`、`manifest.webmanifest`、`game.manifest.json`、`favicon.svg` 无法 import TS，保留静态字面量；`colors.test.ts` 校验它们与 `colors.ts` 的关键颜色一致，防止漂移。贪吃蛇的 favicon 以主题 `accent` 作底色、`onAccent` 作内边框；PWA PNG 由 favicon 重新生成并填实透明角。

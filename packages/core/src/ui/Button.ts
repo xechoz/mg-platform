@@ -17,6 +17,11 @@ export type ButtonDecoration = (
 export interface ButtonOptions {
   width?: number
   height?: number
+  /**
+   * Minimum side of the invisible touch target. Visual size stays unchanged,
+   * so a compact secondary control can still meet mobile tap-target sizing.
+   */
+  minHitSize?: number
   variant?: ButtonVariant
   fontSize?: number
   icon?: IconName
@@ -97,7 +102,13 @@ export class Button extends Phaser.GameObjects.Container {
       this.iconGraphics = new Phaser.GameObjects.Graphics(scene)
     }
 
-    this.zone = new Phaser.GameObjects.Zone(scene, 0, 8, this.buttonWidth, this.buttonHeight + 12)
+    const faceHitHeight = this.buttonHeight + 12
+    const minHitSize = Math.max(0, options.minHitSize ?? 0)
+    const hitWidth = Math.max(this.buttonWidth, minHitSize)
+    const hitHeight = Math.max(faceHitHeight, minHitSize)
+    // Keep the extra lip reachable when no oversized target is requested.
+    const hitOffsetY = hitHeight > faceHitHeight ? 0 : 8
+    this.zone = new Phaser.GameObjects.Zone(scene, 0, hitOffsetY, hitWidth, hitHeight)
     this.zone.setInteractive({ useHandCursor: true })
 
     const children: Phaser.GameObjects.GameObject[] = [this.background]
