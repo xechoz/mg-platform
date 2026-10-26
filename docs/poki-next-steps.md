@@ -17,7 +17,6 @@ VITE_PLATFORM=poki npm run build -w @mg/snake
 ```
 
 在 <https://inspector.poki.dev> 检查：
-
 - Event Log：启动 `gameLoadingFinished → gameplayStart`。
 - 暂停恢复：`gameplayStop → commercialBreak → gameplayStart`。
 - 结算重开：`gameplayStop → commercialBreak → gameplayStart`。

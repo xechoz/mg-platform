@@ -379,7 +379,7 @@ interstitialBreak?(onStart?: () => void): Promise<void>
 - H5 的 `rewardedAvailable` 只表示 SDK ready，不表示库存；no-fill 按未奖励处理。
 - 广告只在死亡/菜单/结算等边界触发；广告期间停表、静音、锁输入，且不触发 SDK 事件。
 - 奖励只在 `rewardedBreak()` 返回 `true` 时发放；不在游戏内做广告冷却或每日上限。
-- `commercialBreak()` 暂未使用；调用点必须遵守 Poki 的“退出暂停回到玩法”规则。
+- `commercialBreak()` 已通过 `AdService.showInterstitial()` 接入：只在暂停恢复、结算重开等自然断点调用；广告结束后由游戏自己调用 `gameplayStart()`，奖励广告后的重开传 `commercial:false`，避免连续两条广告。
 - Poki 构建：单游戏 zip、`index.html` 在根、资源相对路径、运行时无外部请求；Poki/H5 SDK 由 Vite 插件按渠道注入。
 - Poki 渠道已实现，但没有账号/Inspector 验证前不要提审；H5 真实广告也需要账号/审核验证。
 - 详见 `docs/ads.md`。
