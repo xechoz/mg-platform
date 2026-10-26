@@ -30,6 +30,7 @@ export function gameConfig({ port = 5173 }: GameConfigOptions = {}): UserConfig 
     esbuild: {},
     server: {
       port,
+      strictPort: true,
       host: true,
       open: false,
     },

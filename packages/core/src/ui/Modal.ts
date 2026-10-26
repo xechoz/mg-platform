@@ -230,13 +230,18 @@ export class Modal extends Phaser.GameObjects.Container {
       return
     }
 
+    // The action may close this modal (and destroy its buttons) before
+    // returning its promise, e.g. resuming a game closes the pause dialog
+    // synchronously before waiting for an interstitial.
+    if (!this.active || !button.active) return
+
     const originalLabel = action.label
     button.setEnabled(false)
     if (action.loadingLabel) button.setText(action.loadingLabel)
     if (closeOnClick) this.close()
 
     const restore = (): void => {
-      if (!this.active) return
+      if (!this.active || !button.active) return
       button.setEnabled(true)
       button.setText(originalLabel)
     }

@@ -25,7 +25,9 @@ npm run site             # 构建全部游戏 + 汇总成 dist-site
 npm run new:game -- foo  # 从模板创建 games/foo
 ```
 
-开发服务器默认监听所有网卡（`tooling/vite.game.ts` 的 `host: true`）。启动后终端会打印 `Network: http://<你的局域网 IP>:5173/`，手机与电脑连同一 Wi-Fi 后直接用浏览器打开该地址即可调试。5173 被占用时 Vite 会自动换端口，以终端打印为准。
+开发服务器默认监听所有网卡（`tooling/vite.game.ts` 的 `host: true`）。启动后终端会打印 `Network: http://<你的局域网 IP>:5173/`，手机与电脑连同一 Wi-Fi 后直接用浏览器打开该地址即可调试。
+
+dev 端口固定为各游戏配置的端口（贪吃蛇是 5173），不会自动换端口。启动前 `tooling/free-dev-port.ts` 会检查端口：旧的 Vite 进程会被结束；被其他程序占用时直接报错退出，不误杀也不漂移。
 
 本地查看构建产物：
 
