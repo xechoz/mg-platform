@@ -42,7 +42,24 @@ function interactive(): Promise<boolean> {
       'font-family:system-ui,-apple-system,"Segoe UI",sans-serif',
       'color:#fff',
       'padding:24px',
+      'touch-action:manipulation',
     ].join(';')
+
+    // Phaser listens for pointer events on window as well as on the canvas.
+    // Stop ad interactions before they reach those listeners or the click
+    // that claims the reward also presses the scene button underneath.
+    for (const type of [
+      'pointerdown',
+      'pointerup',
+      'pointercancel',
+      'mousedown',
+      'mouseup',
+      'touchstart',
+      'touchend',
+      'click',
+    ]) {
+      overlay.addEventListener(type, (event) => event.stopPropagation())
+    }
 
     const card = document.createElement('div')
     card.style.cssText = [
@@ -99,7 +116,7 @@ function interactive(): Promise<boolean> {
     actions.append(claim, skip)
     card.append(badge, title, subtitle, countdown, actions)
     overlay.append(card)
-    document.body.append(overlay)
+    adHost().append(overlay)
 
     let remaining = 3
     const timer = window.setInterval(() => {
@@ -127,6 +144,22 @@ function interactive(): Promise<boolean> {
     })
     skip.addEventListener('click', () => finish(false))
   })
+}
+
+/**
+ * A body-level overlay is not rendered while `#game` is the fullscreen
+ * element, which is exactly how mobile starts a run. Keep the ad inside the
+ * active fullscreen tree so it is visible and receives the taps.
+ */
+function adHost(): Element {
+  const webkitFullscreen = (document as Document & { webkitFullscreenElement?: Element | null })
+    .webkitFullscreenElement
+  return (
+    document.fullscreenElement ??
+    webkitFullscreen ??
+    document.getElementById('game') ??
+    document.body
+  )
 }
 
 function buttonStyle(primary: boolean): string {

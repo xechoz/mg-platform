@@ -98,7 +98,7 @@ await services.ads.showInterstitial()
 - 同时只跑一个广告；重复点击返回 `failed`，不会重复发奖。
 - 广告前 `platform.gameplayStop()`、`audio.suspend()`，结束后 `audio.resume()`。
 - 渠道异常收敛为 `failed`，不向游戏抛错。
-- `active` / `onChange()` 供场景做输入锁。
+- `active` / `onChange()` 供 `createGame` 做全局输入锁；游戏不需要自己处理。
 - `available` 委托渠道；为 `false` 时不要渲染奖励入口。
 - `stats()` 返回按 placement 的内存计数，供 debug overlay 使用。
 - **不做冷却、不做每日上限**：频率由渠道管理。
@@ -137,6 +137,9 @@ await services.ads.showInterstitial()
 
 - 只在 `import.meta.env.DEV` 下启用；生产构建会被 tree shaking 移除。
 - 默认弹出 3 秒倒计时的覆盖层，提供「领取奖励」和「跳过（无奖励）」。
+- 覆盖层挂到当前全屏元素；没有全屏时挂到 `#game`，再退回 `body`。手机全屏后广告仍然可见。
+- 覆盖层阻止指针/鼠标/触摸事件冒泡，避免 Phaser 的 window 监听把广告点击当成游戏输入。
+- `createGame` 通过 `bindAdInputLock` 订阅 `ads.onChange`，广告 `active` 时把 `game.input.enabled` 设为 `false`，结束后恢复。
 - URL 强制结果，便于 QA：
   - `?ads=reward`：延迟后返回 `true`
   - `?ads=skip`：延迟后返回 `false`

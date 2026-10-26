@@ -281,7 +281,7 @@ const outcome = await services.ads.showRewarded('revive')
 - 设计稿按手机最小约 0.54 缩放校验（720 设计单位 ≈ 390 CSS px 宽）：30px 正文 ≈ 16 CSS px，26px 标签 ≈ 14 CSS px，24px 辅助提示 ≈ 13 CSS px；倍率只提升清晰度，不改变这些 CSS 尺寸。
 - 横竖屏都必须可玩，不再注入旋转遮罩；朝向变化由游戏场景自动暂停。
 - 加载流程只有两步：`Boot` 并行初始化平台 SDK 与加载资源，完成后直接进主菜单；没有单独的点击门槛。
-- 移动端全屏：菜单点「开始」（`pointerup`）时请求 Fullscreen API；仅触屏、非 iframe、非 standalone 时自动请求。`#game` 是全屏目标，进入/退出触发 resize 与重排，不重启、不丢局。桌面不自动全屏，保留 F11；Poki 等 iframe 环境交给平台播放器。
+- 移动端全屏：菜单点「开始」（`pointerup`）时请求 Fullscreen API；仅触屏、非 iframe、非 standalone 时自动请求。`#game` 是全屏目标，进入/退出触发 resize 与重排，不重启、不丢局。桌面不自动全屏，保留 F11；Poki 等 iframe 环境交给平台播放器。Dev 模拟广告覆盖层挂到当前全屏元素（无全屏则 `#game`/`body`），避免手机全屏后广告被全屏元素遮住。
 - 音频默认开启；菜单首次点击或按键即 `audio.unlock()`，之后菜单、弹窗和游戏内音效都可用。玩家保存的音效关闭偏好与宿主静音优先。
 - iPhone Safari 不支持任意 DOM 元素全屏（iOS 26/27 仍只开放给 iPad）；通过 `apple-mobile-web-app-capable` + 「添加到主屏幕」以 standalone 启动，并在不支持的移动浏览器菜单里提示 A2HS。
 - 安全区：`safeAreaInDesign(scene)` 把 `env(safe-area-inset-*)` 换算成设计单位，HUD、按钮与页面边缘必须内缩，不能压到刘海或手势条。
@@ -388,7 +388,7 @@ interstitialBreak?(onStart?: () => void): Promise<void>
 - 不提供 TrackKit 式的通用自定义事件层；需要分析时走平台后台、平台原生事件或以后单独设计的渠道，避免与生命周期重复上报。
 - 自有站 H5 Games Ads 已实现：`VITE_AD_CHANNEL=h5games` + `VITE_ADSENSE_CLIENT`；缺少 publisher ID 时构建无广告。真实广告还需要 AdSense/H5 审核、`ads.txt`、隐私政策和 CMP。
 - H5 的 `rewardedAvailable` 只表示 SDK ready，不表示库存；no-fill 按未奖励处理。
-- 广告只在死亡/菜单/结算等边界触发；广告期间停表、静音、锁输入，且不触发 SDK 事件。
+- 广告只在死亡/菜单/结算等边界触发；广告期间停表、静音、锁输入，且不触发 SDK 事件。`createGame` 在创建 Phaser.Game 后调用 `bindAdInputLock(game.input, services.ads)`：广告 `active` 时 `game.input.enabled=false`，结束后恢复，覆盖所有广告 surface，而不仅是 Dev 模拟器。
 - 奖励只在 `rewardedBreak()` 返回 `true` 时发放；不在游戏内做广告冷却或每日上限。
 - `commercialBreak()` / `midgame` 已通过 `AdService.showInterstitial()` 接入：只在死亡、结算重开等自然断点调用；CrazyGames 宿主下暂停恢复和暂停菜单重开不弹；广告结束后由游戏自己调用 `gameplayStart()`，奖励广告后的重开传 `commercial:false`，避免连续两条广告。
 - Poki/CrazyGames 构建：单游戏 zip、`index.html` 在根、资源相对路径、运行时除平台 SDK 外无外部请求；平台 SDK 由 Vite 插件按渠道注入。

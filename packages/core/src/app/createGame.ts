@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { BootScene } from '../scenes/BootScene'
 import { cssColor } from '../ui/theme'
+import { bindAdInputLock } from './adInputLock'
 import { computeDesignSize } from './designSize'
 import { KEYBOARD_CAPTURE } from './keyboardCapture'
 import { computeRenderMetrics, setRenderMetrics } from './renderMetrics'
@@ -51,6 +52,7 @@ export function createGame(def: GameDefinition): Phaser.Game {
     scene: [BootScene, ...def.scenes],
   })
 
+  bindAdInputLock(game.input, services.ads)
   installResponsiveViewport(game, def.design.base)
   return game
 }
