@@ -29,15 +29,15 @@ games/my-game/
 ## 2. 必须改的地方
 
 - `game.manifest.json`：`id`、中英文标题/描述、主题色、排序。
-- `src/i18n.ts`：至少保留 `game.title`，Preload 场景依赖它。
-- `src/main.ts`：`design: { base: 720 }`（短边 720 设计单位，长边随屏幕比例）；`scenes` 注册所有场景；`menuScene` 默认 `Menu`；通过 `theme: colors.theme` 注入游戏主题，不再单独写 `backgroundColor`。可选 `titleLogo` 让 Preload 使用游戏自己的品牌标题，而不是主题色文字。
+- `src/i18n.ts`：至少保留 `game.title`，Boot 加载页依赖它。
+- `src/main.ts`：`design: { base: 720 }`（短边 720 设计单位，长边随屏幕比例）；`scenes` 注册所有场景；`menuScene` 默认 `Menu`；通过 `theme: colors.theme` 注入游戏主题，不再单独写 `backgroundColor`。可选 `titleLogo` 让 Boot 加载页使用游戏自己的品牌标题，而不是主题色文字。
 - `src/colors.ts`：该游戏唯一的颜色配置，包含 `theme`（覆盖公共 token）和 `art`（游戏专属美术色）。浅底强调文字用 `accentInk`，色块上的文字/图标用 `onAccent`；如需独立品牌标题，增加固定 `logo` 色板，不让它跟随主题。
 - `PlaceholderScene`：改成真正的菜单场景（场景键保持 `Menu`）。
 - `public/manifest.webmanifest`：同步标题、描述、`theme_color`；`public/icons/` 放 180、192、512 的 PNG，正式上线前替换模板图标。
 
 ## 3. 场景约定
 
-- `Boot`、`Preload` 是 core 保留键，不要使用。
+- `Boot` 是 core 保留键，不要使用。
 - 推荐 `Menu` → `Game` + `Hud` 并行。
 - 进入实际玩法时调用 `services.platform.gameplayStart()`；菜单、暂停、结算调用 `gameplayStop()`。
 - 失焦/切标签页必须暂停，恢复时给 3-2-1 倒计时。
@@ -70,6 +70,7 @@ const save = services.createSave<MySave>({
 ## 6. UI
 
 - 按钮用 `Button`，弹窗用 `Modal`，面板用 `createPanel`，文字样式用 `textStyle`。
+- 布局从 `readViewport(scene)` / `onLayoutChange` 取设计尺寸与安全区，**不要用 `scene.scale.width/height` 做布局**（那是物理像素画布）；相机缩放与文字分辨率由核心同步，场景不要自己改相机 zoom。
 - 描边分级：墨线只给主行动和游戏世界；次行动/信息容器用 1px `borderSoft` + 轻阴影，不要给每个卡片都套墨线。
 - 颜色只从 `src/colors.ts` 读取：UI 用 `getServices().theme`，专属美术用 `colors.art`；场景里不写颜色字面量。浅底强调文字用 `accentInk`，色块上的文字/图标用 `onAccent`。
 - 所有文案走 `services.i18n.t('key')`，中英文都写。

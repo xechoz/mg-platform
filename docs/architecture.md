@@ -79,7 +79,7 @@ games/*  ──>  packages/core  ──>  packages/platform
    └──> packages/platform
 ```
 
-- `@mg/core`：Boot/Preload、缩放、场景生命周期、UI、音频、SaveStore、Settings、i18n、RNG、调试。
+- `@mg/core`：Boot（平台初始化 + 资源加载）、缩放、场景生命周期、UI、音频、SaveStore、Settings、i18n、RNG、调试。
 - `@mg/platform`：唯一允许接触外部 SDK 的地方。
 - `games/*/src/logic`：纯函数 + 不可变 state，零 Phaser 依赖，Vitest 覆盖。
 - `games/*/src/scenes`：编排输入、渲染、动画、场景切换。
@@ -189,15 +189,14 @@ step(state, rng): { state: State; events: Event[] }
 ### 7.2 场景流
 
 ```
-Boot（初始化平台）
-  → Preload（加载资源 + 点击解锁音频）
+Boot（并行初始化平台 + 加载资源）
   → Menu（游戏自己的菜单）
   → Game + Hud（并行）
        ├─ 暂停弹窗
        └─ 结算弹窗
 ```
 
-- `Boot`、`Preload` 是 core 保留键，游戏不要占用。
+- `Boot` 是 core 保留键，游戏不要占用。
 - 菜单默认键 `Menu`。
 - `GameScene` 拥有游戏循环、输入、渲染和平台事件。
 - `HudScene` 负责分数、暂停按钮、暂停/结算弹窗；结算页右上角关闭按钮直接回主菜单；通过场景方法调用 `GameScene`。
@@ -222,7 +221,7 @@ createGame({
 })
 ```
 
-可选字段：`theme`（覆盖主题 token，贪吃蛇来自 `src/colors.ts`）、`debug`、`assets`（images/audio/json）、`backdrop`（核心 Preload/Menu 共用的程序化背景）、`titleLogo`（Preload 顶部的品牌 Logo，返回容器与自然尺寸）。未提供 `backdrop` 或 `titleLogo` 时，核心回退到简化背景与文字标题。
+可选字段：`theme`（覆盖主题 token，贪吃蛇来自 `src/colors.ts`）、`debug`、`assets`（images/audio/json）、`backdrop`（核心 Boot/Menu 共用的程序化背景）、`titleLogo`（Boot 加载页顶部的品牌 Logo，返回容器与自然尺寸）。未提供 `backdrop` 或 `titleLogo` 时，核心回退到简化背景与文字标题。
 
 ### 7.4 Services
 
@@ -276,11 +275,14 @@ const outcome = await services.ads.showRewarded('revive')
 ## 9. 视觉与资源
 
 - 设计空间短边固定 **720** 设计单位，长边 = 720 × 视口比例；`Scale.FIT` + `CENTER_BOTH`，比例在 0.38–2.6 内铺满无黑边。
-- `GameDefinition.design` 只声明 `{ base: 720 }`。`installResponsiveViewport` 在视口变化时调用 `setGameSize`；场景用 `onLayoutChange(scene, fn)` 重排，不重启、不丢局。
-- 设计稿按手机最小约 0.54 缩放校验（720 设计单位 ≈ 390 CSS px 宽）：30px 正文 ≈ 16 CSS px，26px 标签 ≈ 14 CSS px，24px 辅助提示 ≈ 13 CSS px。
+- `GameDefinition.design` 只声明 `{ base: 720 }`。`installResponsiveViewport` 在视口变化时重算设计尺寸与渲染倍率，再以**物理像素尺寸**调用 `setGameSize`；场景用 `onLayoutChange(scene, fn)` 重排，不重启、不丢局。
+- **画布按物理像素渲染**：渲染倍率 = 父容器 CSS 尺寸 × DPR ÷ 设计尺寸，夹在 1–3 倍，并限制单边 ≤ 4096 像素（4K 3840 不受影响）。相机按同一倍率 `setZoom` 并反向偏移 `scroll`，设计坐标仍以 720 短边为原点，规则、动画和布局不需要感知倍率。手机 DPR 3、1080p、4K 桌面都按设备像素出图，不再把 720 画布放大后发虚；监听 `(resolution: Xdppx)` 处理跨屏/缩放变化。
+- **设计尺寸只从 `readViewport(scene)` 读取**，不要在布局里直接用 `scene.scale.width/height`（那是画布物理像素）。`readViewport` 同时同步当前场景相机与文字分辨率，场景重建后也会生效。`Text` 的 `resolution` 由 `textStyle()` 按渲染倍率写入，视口变化时已有文字会自动重设。
+- 设计稿按手机最小约 0.54 缩放校验（720 设计单位 ≈ 390 CSS px 宽）：30px 正文 ≈ 16 CSS px，26px 标签 ≈ 14 CSS px，24px 辅助提示 ≈ 13 CSS px；倍率只提升清晰度，不改变这些 CSS 尺寸。
 - 横竖屏都必须可玩，不再注入旋转遮罩；朝向变化由游戏场景自动暂停。
-- 移动端全屏：Preload 首次点击（`pointerup`）请求 Fullscreen API，进入主菜单时已经是全屏；仅触屏、非 iframe、非 standalone 时自动请求。`#game` 是全屏目标，进入/退出触发 resize 与重排，不重启、不丢局。
-- 主菜单内如果仍未全屏，首次点击任意位置会补一次请求；点「开始游戏」也会补一次。桌面不自动全屏，保留 F11；Poki 等 iframe 环境交给平台播放器。
+- 加载流程只有两步：`Boot` 并行初始化平台 SDK 与加载资源，完成后直接进主菜单；没有单独的点击门槛。
+- 移动端全屏：菜单点「开始」（`pointerup`）时请求 Fullscreen API；仅触屏、非 iframe、非 standalone 时自动请求。`#game` 是全屏目标，进入/退出触发 resize 与重排，不重启、不丢局。桌面不自动全屏，保留 F11；Poki 等 iframe 环境交给平台播放器。
+- 音频默认开启；菜单首次点击或按键即 `audio.unlock()`，之后菜单、弹窗和游戏内音效都可用。玩家保存的音效关闭偏好与宿主静音优先。
 - iPhone Safari 不支持任意 DOM 元素全屏（iOS 26/27 仍只开放给 iPad）；通过 `apple-mobile-web-app-capable` + 「添加到主屏幕」以 standalone 启动，并在不支持的移动浏览器菜单里提示 A2HS。
 - 安全区：`safeAreaInDesign(scene)` 把 `env(safe-area-inset-*)` 换算成设计单位，HUD、按钮与页面边缘必须内缩，不能压到刘海或手势条。
 - 中文使用系统字体栈：Noto Sans SC / PingFang SC / Microsoft YaHei / system-ui。
@@ -289,14 +291,14 @@ const outcome = await services.ads.showRewarded('revive')
 - 占位阶段用 Phaser Graphics 程序化绘制；正式素材优先 CC0（如 Kenney）。
 - **视觉语言**：阳光糖果街机（sunny candy arcade），但**描边分级**，不把所有表面都做成贴纸。三层规则：
   - L0 游戏世界与品牌：蛇、果实、Logo 标题、倒计时数字保留 2–3px 墨线与硬阴影；**棋盘例外**：不再套墨色相框，只保留白衬（接住蛇头与效果环的溢出）和原有 2px 薄荷绿场地边线。
-  - L1 主行动：每屏最多一个（开始游戏、继续、再来一局、Preload 点击），墨线 + 厚底 + 硬阴影；`Button` 的 `primary` / `danger` 走这一层。贪吃蛇的主行动统一在按钮面散落六颗旋转果实（`ButtonDecoration`），Preload 点击卡片通过 `GameDefinition.tapDecoration` 复用同一套装饰。
+  - L1 主行动：每屏最多一个（开始游戏、继续、再来一局），墨线 + 厚底 + 硬阴影；`Button` 的 `primary` / `danger` 走这一层。贪吃蛇的主行动统一在按钮面散落六颗旋转果实（`ButtonDecoration`）。
   - L2 次行动：音效、语言、重开、主菜单、暂停键、摇杆，用 `surface` 面 + 1px `borderSoft` + 轻阴影，无厚底无高光；`Button` 的 `soft` / `ghost` 走这一层。菜单里的音效/语言固定在右上角（安全区内），桌面视觉 64、触控视觉 84 且命中区 96，用 `soft` 白色圆面与暂停键统一，不与 L1 主行动同列竞争；暂停弹窗左上角复用同一音效开关。
   - L3 信息容器：分数云朵、最高分、Modal 卡片、加载条、教学键帽，0–1px 弱边或无描线、无墨线，靠底色差与阴影分层。
   - 文字描边只用于 Logo/大标题；分数、Modal hero、正文不再描边。
 - **配色**：贪吃蛇采用琥珀橙 `#ffb020` 作主题强调色（hover `#f09300`），近白冷天空到暖奶油作背景；色块上的文字/图标用墨紫 `onAccent` `#332b45`，浅底强调文字用深海蓝 `accentInk` `#0369a1`，hover 一律变深。蛇与标题 Logo 走独立的浅蓝 `#7dd3fc` 到深海蓝 `#0369a1` 美术色。选琥珀橙是因为它与蓝色蛇身形成冷暖对比，配墨紫文字的对比度约 7.3:1；不用浅柠檬黄，因为浅黄配深棕文字会发灰、像禁用态。公共 `defaultTheme` 是未定色游戏的通用浅色基线，游戏通过 `colors.ts` 覆盖。
 - 公共 UI token 统一在 `Theme`：`ink`、`borderSoft`、`accent`、`accentHover`、`accentInk`、`onAccent`、`accentAlt`、`accentWarm`、`surface`、`surfaceAlt`、`highlight`、`onDanger`、`shadow`、`radiusLarge`；`borderSoft` 只作 1px 弱边，不承担文字对比。`displayTextStyle()` 提供描边+硬阴影，`drawIcon()` 提供程序化图标；`Button` 统一 primary/soft/ghost/danger 并内置分层几何（soft 无墨线/无厚底），支持 `minHitSize` 在不放大视觉尺寸的前提下扩大触控命中区，并通过 `ButtonDecoration` 在按钮面与文字之间留出游戏美术插槽（`ModalAction.decoration` 透传）；`Modal` 为无墨线卡片，标题可选 accent 丝带（`titleRibbon`，默认开），结算页使用无丝带的普通标题。游戏只覆盖 token，不另造一套控件。
 - **每个游戏的颜色只有一个入口**：`games/<id>/src/colors.ts`，同时包含该游戏的 `theme`（覆盖公共 token）、`art`（蛇身、果实等专属美术色）和 `logo`（品牌标题固定色板）。场景只使用 `getServices().theme` 或 `colors.art`，不写颜色字面量；透明度、`mixColor()` 派生色除外。公共层只保留 `Theme` 类型与通用默认值，不包含任何游戏专属色。**品牌 Logo 不读 `Theme` 颜色**：`logo` 色板独立于主题，换主题不得改变标题；`colors.test.ts` 校验对比度与 `logo.ts` 的主题引用。
-- 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/叶片散点）、`foliage.ts`（程序化叶片与画框角饰：只画叶，不画圆果体/光晕/呼吸，确保背景读作生境而不是可吃的东西）、`snakeArt.ts`（描边蛇身、表情蛇头、六种水果、冰淇淋/辣椒、金色超级水果与效果环）、`gameArt.ts`（棋盘与四角枝叶、分段色带蛇、水果/道具绘制；水果层只在 `foods` 或布局变化时重绘，避免铺满水果时每帧重建）、`feedback.ts`（吃水果/吃道具/盛宴/危险反馈）、`celebration.ts`（结算彩纸、烟花与新纪录皇冠）、`CloseButton.ts`（结算弹窗右上角关闭按钮）、`logo.ts`（固定品牌色标题 + 方块直角折线蛇身 + 果实）、`menuDemo.ts`（菜单自动演示棋盘，展示吃水果变色）、`fruitDecoration.ts`（主行动按钮与 Preload 点击卡片的散落果实）。颜色统一从 `games/snake/src/colors.ts` 读取，这些是表现层实现，不进入公共包。`backdrop.ts`、`logo.ts` 和 `fruitDecoration.ts` 同时通过 `GameDefinition.backdrop` / `titleLogo` / `tapDecoration` 交给核心 `PreloadScene` 使用。
+- 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/叶片散点）、`foliage.ts`（程序化叶片与画框角饰：只画叶，不画圆果体/光晕/呼吸，确保背景读作生境而不是可吃的东西）、`snakeArt.ts`（描边蛇身、表情蛇头、六种水果、冰淇淋/辣椒、金色超级水果与效果环）、`gameArt.ts`（棋盘与四角枝叶、分段色带蛇、水果/道具绘制；水果层只在 `foods` 或布局变化时重绘，避免铺满水果时每帧重建）、`feedback.ts`（吃水果/吃道具/盛宴/危险反馈）、`celebration.ts`（结算彩纸、烟花与新纪录皇冠）、`CloseButton.ts`（结算弹窗右上角关闭按钮）、`logo.ts`（固定品牌色标题 + 方块直角折线蛇身 + 果实）、`menuDemo.ts`（菜单自动演示棋盘，展示吃水果变色）、`fruitDecoration.ts`（菜单主行动按钮的散落果实）。颜色统一从 `games/snake/src/colors.ts` 读取，这些是表现层实现，不进入公共包。`backdrop.ts` 与 `logo.ts` 通过 `GameDefinition.backdrop` / `titleLogo` 交给核心 `Boot` 使用。
 - `index.html`、`manifest.webmanifest`、`game.manifest.json`、`favicon.svg` 无法 import TS，保留静态字面量；`colors.test.ts` 校验它们与 `colors.ts` 的关键颜色一致，防止漂移。贪吃蛇的 favicon 以主题 `accent` 作底色、`onAccent` 作内边框；PWA PNG 由 favicon 重新生成并填实透明角。
 - 图标优先 Lucide 等开源图标，只取实际用到的，记录来源/许可证。当前菜单/按钮图标为程序化 Graphics，不引入图标依赖。
 - 音效以 WebAudio 合成兜底；`eat` 使用打包的 CC0 咬合采样（`games/snake/src/assets/audio/eat-1.wav`/`eat-2.wav`，来自 OpenGameArt「7 Eating Crunches」/ StarNinjas，CC0），经 `GameDefinition.audioSamples` 注册，在首次用户手势后 `fetch + decodeAudioData` 缓存；`play()` 的 `pitch` 对采样走 `playbackRate`，连吃按五声音阶升调。
@@ -338,7 +340,7 @@ const save = services.createSave<MySave>({
 - 默认中文；英文同步准备。
 - 解析顺序：URL `?lang=` > 已存选择 > 游戏 `defaultLang`。
 - **不做 navigator 嗅探**：中文站不应因为浏览器是英文就自动变英文。
-- 每个游戏必须提供 `game.title`；Preload 依赖它。
+- 每个游戏必须提供 `game.title`；Boot 加载页依赖它。
 - 玩家可见文案全部走 `services.i18n.t(key, params)`；中英文词典都要有。
 - key 命名：`game.*`、`menu.*`、`hud.*`、`pause.*`、`over.*`；core 用 `core.*`。
 - 参数用 `{name}` 占位；缺失 key 回退中文，再回退 key 本身。
@@ -381,7 +383,7 @@ interstitialBreak?(onStart?: () => void): Promise<void>
 - `VITE_AD_CHANNEL=crazygames` 启用 Full Launch 广告渠道；不设置时是 Basic 构建，游戏完整可玩但无广告。
 - CrazyGames 广告：`rewarded` 只在 `adFinished` 发奖，`adError` 不发奖；`midgame` 只用于死亡/结算重开等自然断点；`adblock`/`adsDisabled` 后隐藏奖励入口；`unfilled`/`adCooldown` 允许重试。
 - CrazyGames `muteAudio` 通过 `hostMuted()` / `onHostMutedChange()` 传给 `AudioManager`，优先级高于玩家音效偏好，不写入存档。
-- CrazyGames 构建跳过 Preload 点击门槛，加载后直接进菜单；新用户到可玩只需菜单「开始」1 次点击。
+- 所有构建统一在 Boot 加载完成后直接进菜单；新用户到可玩只需菜单「开始」1 次点击。
 - CrazyGames 构建不加载 H5 Ads 或其他外部广告；平台 SDK 只由 Vite 插件注入，游戏代码不接触 `window.CrazyGames`。
 - 不提供 TrackKit 式的通用自定义事件层；需要分析时走平台后台、平台原生事件或以后单独设计的渠道，避免与生命周期重复上报。
 - 自有站 H5 Games Ads 已实现：`VITE_AD_CHANNEL=h5games` + `VITE_ADSENSE_CLIENT`；缺少 publisher ID 时构建无广告。真实广告还需要 AdSense/H5 审核、`ads.txt`、隐私政策和 CMP。

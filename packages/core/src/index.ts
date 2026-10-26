@@ -25,6 +25,7 @@ export {
   type Viewport,
 } from './app/layout'
 export { onAppHidden } from './app/lifecycle'
+export { getTextResolution } from './app/renderMetrics'
 export { type Insets, NO_INSETS, readSafeAreaInsets, safeAreaInDesign } from './app/safeArea'
 export {
   createServices,
@@ -46,7 +47,6 @@ export { type Dictionary, I18n, resolveLang } from './i18n/I18n'
 export { htmlLang, LANG_LABELS, LANG_SHORT } from './i18n/languages'
 export { createRng, type Rng, randomSeed } from './rng'
 export { BootScene } from './scenes/BootScene'
-export { PreloadScene } from './scenes/PreloadScene'
 export { SaveStore, type SaveStoreOptions } from './storage/SaveStore'
 export { type Settings, SettingsStore } from './storage/settings'
 export {

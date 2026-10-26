@@ -8,7 +8,6 @@ import { type Dictionary, I18n, resolveLang } from '../i18n/I18n'
 import { htmlLang } from '../i18n/languages'
 import { SaveStore, type SaveStoreOptions } from '../storage/SaveStore'
 import { SettingsStore } from '../storage/settings'
-import type { ButtonDecoration } from '../ui/Button'
 import { defaultTheme, type Theme } from '../ui/theme'
 import type { Viewport } from './layout'
 
@@ -26,16 +25,14 @@ export interface GameDefinition {
   /** Procedural backdrop shared by core screens; games keep the drawing code. */
   backdrop?: (graphics: Phaser.GameObjects.Graphics, viewport: Viewport, theme: Theme) => void
   /**
-   * Optional brand mark for the core preload splash. Preload scales it to fit
-   * and places it above the tap gate; games remain in charge of the artwork.
+   * Optional brand mark for the core boot splash. Boot scales it to fit and
+   * places it above the loading bar; games remain in charge of the artwork.
    */
   titleLogo?: (scene: Phaser.Scene) => {
     container: Phaser.GameObjects.Container
     width: number
     height: number
   }
-  /** Optional art layered on the core preload tap card; games supply the drawing. */
-  tapDecoration?: ButtonDecoration
   assets?: {
     images?: Array<{ key: string; url: string }>
     audio?: Array<{ key: string; urls: string | string[] }>

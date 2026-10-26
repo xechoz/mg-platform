@@ -79,7 +79,7 @@ cd games/snake/dist && zip -r ../../snake-poki.zip .
 
 1. 用 Poki Inspector 跑 iframe、弱网、移动端模拟。
 2. 确认 SDK 事件不连续触发，广告期间没有事件。
-3. 确认 `gameLoadingFinished` 在 Preload 后触发。
+3. 确认 `gameLoadingFinished` 在 Boot 资源加载完成后触发。
 4. 确认暂停恢复/重开的顺序为 `gameplayStop → commercialBreak → gameplayStart`，奖励复活为 `gameplayStop → rewardedBreak → gameplayStart`。
 5. 确认广告拦截时不发奖，且没有自定义提示。
 6. 确认 zip 根目录有 `index.html`，资源相对路径，运行时除 Poki SDK 外无外部请求。
@@ -124,7 +124,7 @@ cd games/snake/dist && zip -r ../snake-crazygames-full.zip .
   - `adblock` / `adsDisabled` 后本次会话隐藏奖励入口；`unfilled` / `adCooldown` 保持可重试。
   - 初始化后调用 `ad.hasAdblock()` 预检，避免广告拦截用户看到无效奖励按钮。
 - `muteAudio`：读取 `SDK.game.settings.muteAudio`，监听 `addSettingsChangeListener`；宿主静音优先于游戏内音效开关，且不写入玩家存档。
-- 入口：CrazyGames 构建跳过 Preload 点击门槛，加载后直接进菜单，新用户从进入到可玩只需「开始」1 次点击。
+- 入口：CrazyGames 构建同样在 Boot 加载完成后直接进菜单，新用户从进入到可玩只需「开始」1 次点击。
 - 语言：SDK init 后重新同步 locale；优先级为 URL `?lang=` > 玩家显式选择 > SDK locale > 英文，自动检测不写 `langChosen`。
 - 广告落点：
   - 结算页超级水果奖励（rewarded）；

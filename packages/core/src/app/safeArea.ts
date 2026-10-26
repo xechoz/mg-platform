@@ -1,4 +1,5 @@
 import type Phaser from 'phaser'
+import { getRenderMetrics } from './renderMetrics'
 
 export interface Insets {
   top: number
@@ -45,12 +46,17 @@ export function readSafeAreaInsets(): Insets {
 /** Converts the CSS pixel insets into the scene's current design units. */
 export function safeAreaInDesign(scene: Phaser.Scene): Insets {
   const insets = readSafeAreaInsets()
-  const scale = scene.scale.displayScale
+  const display = scene.scale.displayScale
+  const render = getRenderMetrics()
+  // displayScale is backing pixels per CSS pixel; remove the native render
+  // scale to get design units per CSS pixel.
+  const x = display.x / render.scaleX
+  const y = display.y / render.scaleY
 
   return {
-    top: Math.round(insets.top * scale.y),
-    right: Math.round(insets.right * scale.x),
-    bottom: Math.round(insets.bottom * scale.y),
-    left: Math.round(insets.left * scale.x),
+    top: Math.round(insets.top * y),
+    right: Math.round(insets.right * x),
+    bottom: Math.round(insets.bottom * y),
+    left: Math.round(insets.left * x),
   }
 }

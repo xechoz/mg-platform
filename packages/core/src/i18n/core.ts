@@ -3,7 +3,6 @@ import type { Dictionary } from './I18n'
 
 export const coreI18n: Record<Lang, Dictionary> = {
   en: {
-    'core.tapToStart': 'Start',
     'core.loading': 'Loading…',
     'core.soundOn': 'Sound on',
     'core.soundOff': 'Sound off',
@@ -12,7 +11,6 @@ export const coreI18n: Record<Lang, Dictionary> = {
     'core.ad.loading': 'Loading ad…',
   },
   fr: {
-    'core.tapToStart': 'Commencer',
     'core.loading': 'Chargement…',
     'core.soundOn': 'Son : activé',
     'core.soundOff': 'Son : désactivé',
@@ -21,7 +19,6 @@ export const coreI18n: Record<Lang, Dictionary> = {
     'core.ad.loading': 'Chargement de la pub…',
   },
   it: {
-    'core.tapToStart': 'Inizia',
     'core.loading': 'Caricamento…',
     'core.soundOn': 'Audio: attivo',
     'core.soundOff': 'Audio: disattivato',
@@ -30,7 +27,6 @@ export const coreI18n: Record<Lang, Dictionary> = {
     'core.ad.loading': 'Caricamento annuncio…',
   },
   de: {
-    'core.tapToStart': 'Starten',
     'core.loading': 'Wird geladen…',
     'core.soundOn': 'Ton: an',
     'core.soundOff': 'Ton: aus',
@@ -39,7 +35,6 @@ export const coreI18n: Record<Lang, Dictionary> = {
     'core.ad.loading': 'Werbung wird geladen…',
   },
   es: {
-    'core.tapToStart': 'Empezar',
     'core.loading': 'Cargando…',
     'core.soundOn': 'Sonido: activado',
     'core.soundOff': 'Sonido: desactivado',
@@ -48,7 +43,6 @@ export const coreI18n: Record<Lang, Dictionary> = {
     'core.ad.loading': 'Cargando anuncio…',
   },
   tr: {
-    'core.tapToStart': 'Başla',
     'core.loading': 'Yükleniyor…',
     'core.soundOn': 'Ses: açık',
     'core.soundOff': 'Ses: kapalı',
@@ -57,7 +51,6 @@ export const coreI18n: Record<Lang, Dictionary> = {
     'core.ad.loading': 'Reklam yükleniyor…',
   },
   zh: {
-    'core.tapToStart': '开始',
     'core.loading': '加载中…',
     'core.soundOn': '音效：开',
     'core.soundOff': '音效：关',
@@ -66,7 +59,6 @@ export const coreI18n: Record<Lang, Dictionary> = {
     'core.ad.loading': '广告加载中…',
   },
   ja: {
-    'core.tapToStart': 'スタート',
     'core.loading': '読み込み中…',
     'core.soundOn': 'サウンド：オン',
     'core.soundOff': 'サウンド：オフ',
@@ -75,7 +67,6 @@ export const coreI18n: Record<Lang, Dictionary> = {
     'core.ad.loading': '広告を読み込み中…',
   },
   ko: {
-    'core.tapToStart': '시작',
     'core.loading': '불러오는 중…',
     'core.soundOn': '소리: 켜짐',
     'core.soundOff': '소리: 꺼짐',
@@ -84,7 +75,6 @@ export const coreI18n: Record<Lang, Dictionary> = {
     'core.ad.loading': '광고 불러오는 중…',
   },
   pt: {
-    'core.tapToStart': 'Começar',
     'core.loading': 'Carregando…',
     'core.soundOn': 'Som: ativado',
     'core.soundOff': 'Som: desativado',
@@ -93,7 +83,6 @@ export const coreI18n: Record<Lang, Dictionary> = {
     'core.ad.loading': 'Carregando anúncio…',
   },
   ru: {
-    'core.tapToStart': 'Начать',
     'core.loading': 'Загрузка…',
     'core.soundOn': 'Звук: вкл.',
     'core.soundOff': 'Звук: выкл.',

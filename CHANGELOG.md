@@ -4,6 +4,8 @@
 
 ### 加载体验
 
+- 启动流程简化为两步：`Boot` 并行初始化平台 SDK 与加载资源，完成后直接进菜单；删除 `PreloadScene`、点击门槛和 `GameDefinition.tapDecoration`，所有构建（含 CrazyGames）走同一条路径。
+- 音频默认开启，菜单首次点击或按键即解锁音频；全屏改为手机点「开始」时请求，不再在加载页请求。iframe 内、PWA 已安装或已全屏时自动跳过。
 - 首屏新增内联 HTML/CSS splash：Phaser 下载和启动前立即显示主题背景、标题与加载动画，首个 canvas 出现后淡出；自托管、Poki、CrazyGames 构建共用。
 - Poki/CrazyGames 外部 SDK 脚本移到 `<body>` 内，避免阻塞首屏 HTML 解析和 splash 绘制；SDK 仍在游戏模块启动前加载。
 
@@ -24,10 +26,16 @@
 - 新增 `CrazyGamesAdChannel`：`rewarded` 只在 `adFinished` 发奖，`adError` 不发奖；`midgame` 只用于死亡/结算等自然断点。`adblock`/`adsDisabled` 后本次会话隐藏奖励入口，`unfilled`/`adCooldown` 保持可重试。
 - 修复 CrazyGames 广告错误按字符串判断导致 `adblock`/`adsDisabled` 不生效：按 SDK v3 的 `{ code, message }` 对象读取错误码，错误日志保留 code 与详情。
 - 接入 CrazyGames `muteAudio`：宿主静音优先于游戏内音效开关，广告期间也不会因为解除宿主静音而中途出声；不写入玩家存档。
-- CrazyGames 构建跳过 Preload 点击门槛，加载完成直接进菜单，从新用户到可玩只需菜单「开始」1 次点击。
+- CrazyGames 与其它构建一样在 Boot 加载完成后直接进菜单，从新用户到可玩只需菜单「开始」1 次点击。
 - 平台语言在 SDK 初始化后再次同步：URL `?lang=` > 玩家显式选择 > SDK locale > 英文，自动检测不写入 `langChosen`。
 - CrazyGames 宿主下暂停恢复、暂停菜单重开不弹 midgame；死亡结算重开仍保留自然断点插屏，避免在导航操作上弹广告。
 - 移除未发布的 TrackKit 自定义统计抽象；平台生命周期统一由 `PlatformAdapter` 负责，不再保留 `services.track` 与游戏侧事件 facade。
+
+### 画面清晰度
+
+- 画布改为按物理像素渲染：按父容器 CSS 尺寸 × DPR 计算 1–3 倍渲染倍率（单边上限 4096），手机 DPR 3、1080p、4K 桌面不再把 720 设计画布放大后发虚；相机同步缩放与偏移，设计坐标和玩法逻辑保持不变。
+- 文字按当前渲染倍率生成字形纹理，`textStyle()`、Logo 与视口变化后的已有文字都会自动重设分辨率，菜单、HUD、弹窗与结算正文边缘更清晰。
+- 统一偏小的字号：`Button` 默认 26，`Modal` 正文 30、操作按钮 26，语言选择按钮 26，全屏/A2HS 提示 24；布局跟随新字高，不改变 720 设计空间与触控尺寸。
 
 ### 移动端菜单
 

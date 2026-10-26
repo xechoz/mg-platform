@@ -115,7 +115,7 @@ await services.ads.showInterstitial()
 
 - 构建时注入 `https://game-cdn.poki.com/scripts/v2/poki-sdk.js`。
 - `init()` 调用 `PokiSDK.init()`；失败也继续加载游戏。
-- `gameLoadingFinished()` 在 Preload 完成后调用。
+- `gameLoadingFinished()` 在 Boot 资源加载完成后调用。
 - `gameplayStart()` / `gameplayStop()` 去重；广告期间忽略所有宿主事件。
 - `rewardedBreak(placement, onStart)` 返回 `true` 才发奖；placement 仅用于渠道报表，Poki 忽略。
 - `commercialBreak(onStart)` 已接入：暂停恢复、暂停/结算重开时由 `AdService.showInterstitial()` 调用；广告期间屏蔽宿主事件，奖励广告后的重开传 `commercial:false`，避免连续两条广告。
@@ -239,7 +239,7 @@ H5 / 自有站额外要求：
 
 Poki 真实广告验收（需要账号/Inspector）：
 - SDK 事件顺序：`gameplayStart` 不连续、`gameplayStop` 不连续、广告期间无事件。
-- `gameLoadingFinished` 在 Preload 后触发。
+- `gameLoadingFinished` 在 Boot 资源加载完成后触发。
 - 广告拦截时不发奖。
 - 奖励按钮层级/颜色/图标符合审核要求。
 

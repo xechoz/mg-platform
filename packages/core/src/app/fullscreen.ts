@@ -36,8 +36,8 @@ export function isMobileDevice(): boolean {
 }
 
 /**
- * Must run inside a user gesture. The first tap of the Preload gate is the
- * earliest point the browser will accept a fullscreen request.
+ * Must run inside a user gesture. The menu's Start button is the earliest
+ * deliberate gesture for entering fullscreen; audio unlocks on any first tap.
  */
 export function maybeEnterFullscreen(scale: Phaser.Scale.ScaleManager): void {
   if (document.fullscreenElement) return

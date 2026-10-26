@@ -68,7 +68,7 @@
 
 ### 视觉与资源
 
-24. 设计空间短边固定 **720** 设计单位，长边随视口比例，`Scale.FIT + CENTER_BOTH` 全屏铺满；横竖屏都必须可玩，不再注入旋转提示。手机首次交互（Preload 点击）后请求全屏，主菜单即全屏，不等到开始游戏；iframe 内不自动请求；iPhone 通过 A2HS/PWA；不锁定方向。
+24. 设计空间短边固定 **720** 设计单位，长边随视口比例，`Scale.FIT + CENTER_BOTH` 全屏铺满；横竖屏都必须可玩，不再注入旋转提示。手机在菜单点「开始」后请求全屏（iframe 内不自动请求）；iPhone 通过 A2HS/PWA；不锁定方向。
 25. 中文使用系统字体栈；**不打包 CJK 字体**。西文可用 OFL 字体。
 26. 占位阶段优先用 Phaser Graphics 程序化绘制；正式素材优先 CC0。
 27. 图标优先 Lucide 等开源图标，只引入实际用到的，确认许可证。
@@ -80,7 +80,7 @@
 30. 存档必须带 `version`；改字段要提升版本并提供 `migrate`，不能直接破坏旧存档。
 31. 存档键：`mg:<gameId>:<name>`；全局设置键：`mg:settings:v1`。
 32. 语言优先级：URL `?lang=` > 已存选择 > 游戏 `defaultLang`。**不做 navigator 嗅探**；默认中文。
-33. 每个游戏必须提供 i18n key `game.title`（Preload 依赖）；所有用户可见文案中英文都要有。
+33. 每个游戏必须提供 i18n key `game.title`（Boot 加载页依赖）；所有用户可见文案中英文都要有。
 34. 进入实际玩法调用 `platform.gameplayStart()`；菜单/暂停/结算调用 `gameplayStop()`；胜利或新纪录调用 `happyTime()`。
 35. Poki 构建必须单游戏独立、`index.html` 在 zip 根、资源相对路径、无外部请求；未在 Poki Inspector 验证前不要提审。
 

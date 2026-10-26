@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { readViewport } from '../app/layout'
 import { Button, type ButtonDecoration, type ButtonVariant } from './Button'
 import type { IconName } from './icons'
 import { cssColor, displayTextStyle, type Theme, textStyle } from './theme'
@@ -49,8 +50,9 @@ export class Modal extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, theme: Theme, options: ModalOptions) {
     super(scene, 0, 0)
 
-    const screenWidth = scene.scale.width
-    const screenHeight = scene.scale.height
+    const viewport = readViewport(scene)
+    const screenWidth = viewport.width
+    const screenHeight = viewport.height
     const width = Math.min(options.width ?? 520, screenWidth - 48)
     const height = Math.min(options.height ?? 300, screenHeight - 48)
     const radius = theme.radiusLarge
@@ -130,7 +132,7 @@ export class Modal extends Phaser.GameObjects.Container {
 
     if (options.body) {
       const body = new Phaser.GameObjects.Text(scene, 0, contentBottom + 14, options.body, {
-        ...textStyle(theme, options.bodyFontSize ?? 18, theme.text),
+        ...textStyle(theme, options.bodyFontSize ?? 30, theme.text),
         align: 'center',
         lineSpacing: 8,
         wordWrap: { width: width - 72 },
@@ -142,7 +144,7 @@ export class Modal extends Phaser.GameObjects.Container {
     const actions = options.actions ?? []
     if (actions.length > 0) {
       const layout = options.actionsLayout ?? 'row'
-      const actionFontSize = options.actionFontSize ?? (layout === 'column' ? 26 : 20)
+      const actionFontSize = options.actionFontSize ?? 26
 
       if (layout === 'column') {
         const actionWidth = Math.min(options.actionWidth ?? width - 80, width - 48)

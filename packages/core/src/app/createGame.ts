@@ -1,9 +1,9 @@
 import Phaser from 'phaser'
 import { BootScene } from '../scenes/BootScene'
-import { PreloadScene } from '../scenes/PreloadScene'
 import { cssColor } from '../ui/theme'
 import { computeDesignSize } from './designSize'
 import { KEYBOARD_CAPTURE } from './keyboardCapture'
+import { computeRenderMetrics, setRenderMetrics } from './renderMetrics'
 import { createServices, type GameDefinition, type GameServices } from './services'
 import { installResponsiveViewport } from './viewport'
 
@@ -11,20 +11,29 @@ export function createGame(def: GameDefinition): Phaser.Game {
   const services = createServices(def)
   installPageStyles(services)
   installPageScrollGuard()
+  installAudioUnlock(services)
 
   const initial = computeDesignSize(window.innerWidth, window.innerHeight, def.design.base)
+  const initialMetrics = computeRenderMetrics(
+    window.innerWidth,
+    window.innerHeight,
+    initial.width,
+    initial.height,
+    window.devicePixelRatio || 1,
+  )
+  setRenderMetrics(initialMetrics)
 
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
-    width: initial.width,
-    height: initial.height,
+    width: initialMetrics.canvasWidth,
+    height: initialMetrics.canvasHeight,
     backgroundColor: cssColor(services.theme.bg),
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: initial.width,
-      height: initial.height,
+      width: initialMetrics.canvasWidth,
+      height: initialMetrics.canvasHeight,
       fullscreenTarget: 'game',
     },
     render: {
@@ -39,7 +48,7 @@ export function createGame(def: GameDefinition): Phaser.Game {
     disableContextMenu: true,
     banner: false,
     autoFocus: true,
-    scene: [BootScene, PreloadScene, ...def.scenes],
+    scene: [BootScene, ...def.scenes],
   })
 
   installResponsiveViewport(game, def.design.base)
@@ -70,6 +79,25 @@ function installPageStyles(services: GameServices): void {
     #game canvas { display: block; }
   `
   document.head.appendChild(style)
+}
+
+let audioUnlockInstalled = false
+
+/**
+ * Browsers only start audio inside a user gesture. The first tap or key press
+ * unlocks the context, so menu feedback works without a dedicated start gate.
+ */
+function installAudioUnlock(services: GameServices): void {
+  if (audioUnlockInstalled) return
+  audioUnlockInstalled = true
+
+  const unlock = (): void => {
+    services.audio.unlock()
+    window.removeEventListener('pointerdown', unlock)
+    window.removeEventListener('keydown', unlock)
+  }
+  window.addEventListener('pointerdown', unlock)
+  window.addEventListener('keydown', unlock)
 }
 
 let pageScrollGuardInstalled = false

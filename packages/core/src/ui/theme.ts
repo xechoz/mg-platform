@@ -1,3 +1,5 @@
+import { getTextResolution } from '../app/renderMetrics'
+
 export interface Theme {
   font: string
   bg: number
@@ -89,6 +91,7 @@ export function textStyle(
     fontSize: `${size}px`,
     color,
     fontStyle: bold ? 'bold' : 'normal',
+    resolution: getTextResolution(),
   }
 }
 

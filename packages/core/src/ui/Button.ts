@@ -84,7 +84,7 @@ export class Button extends Phaser.GameObjects.Container {
     this.theme = theme
     this.buttonWidth = options.width ?? 220
     this.buttonHeight = options.height ?? 54
-    this.fontSize = options.fontSize ?? 20
+    this.fontSize = options.fontSize ?? 26
     this.variant = options.variant ?? 'primary'
     this.iconName = options.icon
     this.onClickHandler = options.onClick
