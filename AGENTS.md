@@ -2,7 +2,7 @@
 
 本文件只适用于本仓库，OpenCode 仅在当前项目加载。**不要把这里的规则、skill 或文档写入 `~/.config/opencode` 或任何全局配置。**
 
-本项目是 TypeScript + Phaser 4 的 Web 游戏工程，不是 Kotlin/Android 项目；全局 AGENTS.md 中的 Kotlin/Compose 编码规则不适用于这里。
+本项目是 TypeScript + Phaser 4 的 Web 游戏工程，不是 Kotlin/Android 项目；不要在本仓库加载 `kotlin-android` skill。
 
 ## 项目定位
 
@@ -11,14 +11,19 @@
 - 路线：自有站优先 → Poki；纯单人 vs AI，不做热座/联机；占位美术 + CC0 素材先跑通。
 - 技术栈：TypeScript 7、Phaser 4.2、Vite 8、npm workspaces、Vitest、Biome。
 
-## 开始前先读
+## 任务分级
 
-1. `docs/architecture.md` — 设计、分层、原则、技术要点（唯一事实来源）。
-2. `docs/new-game-checklist.md` — 新增游戏的操作清单。
-3. `docs/publishing.md` — 站点与 Poki 发布。
-4. 目标游戏的 `game.manifest.json`、`src/main.ts`、`src/logic`、`src/scenes`。
+- **轻量任务**（改文案、颜色、单文件样式/布局、配置值，不涉及规则）：直接读目标文件并修改；不加载 skill，不读 `docs/`，不跑 `npm run site` 和浏览器 smoke；只跑 `npm run check` 和相关测试。行为变化仍更新 `CHANGELOG.md`。
+- **非平凡任务**（新增游戏、改 `games/*/src/logic` 规则、动 `@mg/core`/`@mg/platform`、跨多文件功能）：先加载项目 skill `.opencode/skills/mini-games-dev/SKILL.md`。
 
-非平凡改动先加载项目 skill：`.opencode/skills/mini-games-dev/SKILL.md`。
+## 先读什么
+
+只在任务需要时读，不要预读整个仓库：
+- 新增游戏：`docs/new-game-checklist.md`。
+- 改分层/公共层/架构：`docs/architecture.md`，先看标题，只读相关章节，不要整篇读（31KB）。
+- 发布：`docs/publishing.md`。
+- 广告：`docs/ads.md`。
+- 其余情况直接读目标文件（`game.manifest.json`、`src/main.ts`、`src/logic`、`src/scenes`）。
 
 ## 不可违反的硬规则
 
@@ -95,22 +100,9 @@
 44. 不要擅自升级 Phaser/Vite/TypeScript 大版本；先说明影响并单独提交。
 45. 不要提交 `node_modules`、`dist`、`dist-site` 或密钥。
 
-## 常用命令
-
-```bash
-npm install
-npm run dev:snake
-npm run check        # tsc + Biome + 依赖边界
-npm run test         # Vitest
-npm run build:snake
-npm run site         # 构建全部游戏 + dist-site 汇总页
-npm run new:game -- <name>
-```
-
-新增游戏后记得执行一次 `npm install`，让 npm workspace 链接新包。
-
 ## 完成定义（DoD）
 
+轻量任务只要求 `npm run check` 和相关测试；以下完整 DoD 针对非平凡改动。
 - `npm run check` 通过。
 - `npm run test` 通过；新增规则边界有测试。
 - 目标游戏构建通过；涉及站点时 `npm run site` 通过。
@@ -119,20 +111,6 @@ npm run new:game -- <name>
 - 中英文切换无缺失文案；无 console 报错。
 - 运行时无外部请求；首包体积没有明显回退。
 - 相关文档、`CHANGELOG.md`、存档版本已同步。
-
-## 反模式（看到就拒绝）
-
-- 把回合/棋盘/计分/寻路抽象进 `packages/core`。
-- 为一个游戏在 core 加 `if (gameId === ...)` 或游戏专属开关。
-- 在 `src/logic` import Phaser、Scene、Texture、Audio。
-- 在场景里直接操作 `localStorage` 或 `PokiSDK`。
-- 用 `setInterval` 驱动玩法，或让速度依赖帧率。
-- 用 `Math.random()` 生成可影响胜负的随机结果。
-- 暂停只停渲染不停计时；恢复不倒数。
-- 把中文打进 5MB 字体包，或从 CDN 拉字体。
-- 为了“复用”提前建空包、空抽象、空接口。
-- 改旧存档字段却不升版本、不写迁移。
-- 没跑检查就声称完成。
 
 ## 发布
 

@@ -1,23 +1,24 @@
 ---
 name: Mini Games Development
-description: Develop, review, or release the mini-games monorepo (TypeScript + Phaser 4 + Vite): add a game, change shared core/platform code, fix gameplay or UI bugs, run quality gates, or prepare a release. Use for any non-trivial change in this repository.
+description: Use when adding a game, changing gameplay rules, touching @mg/core or @mg/platform, or making a multi-file feature/fix in the mini-games monorepo. Do not load for single-file copy, color, or layout tweaks; follow the lightweight-task path in AGENTS.md instead.
 ---
 
 # Mini Games Development
 
 ## 适用范围
 
-用于本仓库 `mini-games` 的任何非平凡改动：新增游戏、改玩法、改 UI、动 `@mg/core` / `@mg/platform`、审查边界、修 bug、发布。
+用于本仓库 `mini-games` 的任何非平凡改动：新增游戏、改玩法、动 `@mg/core` / `@mg/platform`、跨多文件功能、审查边界、修 bug、发布。
+
+轻量改动（文案、颜色、单文件样式/布局，不涉及规则）不要加载本 skill，按 AGENTS.md 的轻量任务路径直接修改并跑检查。
 
 所有约定只写在本仓库。**不要修改 `~/.config/opencode`、全局 AGENTS.md 或全局 skills。**
 
 ## 开始前
 
-1. 读 `AGENTS.md`（硬规则）。
-2. 读 `docs/architecture.md`（设计/原则/技术要点）。
-3. 新游戏读 `docs/new-game-checklist.md`；发布读 `docs/publishing.md`。
-4. 读目标游戏的 `game.manifest.json`、`src/main.ts`、`src/logic`、`src/scenes`。
-5. 用 `git status` 确认工作区，不要覆盖用户未提交的改动。
+1. `AGENTS.md` 已由 OpenCode 自动注入，不要重复读。
+2. 只在需要时读文档：改分层/公共层 → `docs/architecture.md`（先看标题，只读相关章节，不要整篇读）；新游戏 → `docs/new-game-checklist.md`；发布 → `docs/publishing.md`；广告 → `docs/ads.md`。
+3. 读目标游戏的 `game.manifest.json`、`src/main.ts`、`src/logic`、`src/scenes`。
+4. 用 `git status` 确认工作区，不要覆盖用户未提交的改动。
 
 ## 第一步：判断改动层级
 
@@ -70,7 +71,7 @@ description: Develop, review, or release the mini-games monorepo (TypeScript + P
 1. 版本号保持一致：根、游戏、`@mg/core`、`@mg/platform`。
 2. 更新 `CHANGELOG.md`。
 3. 跑完整质量门。
-4. commit → push → tag → GitHub Release（附单游戏 zip）。
+4. 仅当用户明确要求发布时：commit → push → tag → GitHub Release（附单游戏 zip）。
 5. 确认 CI 在 `main` 和 tag 上都通过。
 
 ## 质量门
