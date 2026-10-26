@@ -3,6 +3,7 @@ import { BootScene } from '../scenes/BootScene'
 import { PreloadScene } from '../scenes/PreloadScene'
 import { cssColor } from '../ui/theme'
 import { computeDesignSize } from './designSize'
+import { KEYBOARD_CAPTURE } from './keyboardCapture'
 import { createServices, type GameDefinition, type GameServices } from './services'
 import { installResponsiveViewport } from './viewport'
 
@@ -31,7 +32,10 @@ export function createGame(def: GameDefinition): Phaser.Game {
       pixelArt: false,
       roundPixels: false,
     },
-    input: { activePointers: 2 },
+    input: {
+      activePointers: 2,
+      keyboard: { capture: [...KEYBOARD_CAPTURE] },
+    },
     disableContextMenu: true,
     banner: false,
     autoFocus: true,
@@ -71,33 +75,15 @@ function installPageStyles(services: GameServices): void {
 let pageScrollGuardInstalled = false
 
 /**
- * Poki embeds games in an iframe: arrow keys, space and wheel must never scroll
- * the host page. Capture phase also covers Phaser's canvas listeners.
+ * Poki embeds games in an iframe, so the wheel must never scroll the host page.
+ * Keyboard scrolling is suppressed by Phaser itself through
+ * `input.keyboard.capture` (see KEYBOARD_CAPTURE): a capture-phase listener
+ * here would mark arrow keys as `defaultPrevented` before Phaser processes
+ * them, which disables directional input entirely.
  */
 function installPageScrollGuard(): void {
   if (pageScrollGuardInstalled) return
   pageScrollGuardInstalled = true
-
-  window.addEventListener(
-    'keydown',
-    (event) => {
-      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return
-      const target = event.target
-      if (
-        target instanceof HTMLElement &&
-        (target.isContentEditable ||
-          target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.tagName === 'SELECT')
-      ) {
-        return
-      }
-      if (event.key === ' ' || event.key === 'Spacebar' || event.key.startsWith('Arrow')) {
-        event.preventDefault()
-      }
-    },
-    { capture: true },
-  )
 
   window.addEventListener(
     'wheel',

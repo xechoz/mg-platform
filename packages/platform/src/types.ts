@@ -33,6 +33,14 @@ export interface PlatformAdapter {
   happyTime(): void
   lang(): Lang | null
   haptic(ms: number): void
+
+  /**
+   * Host-level audio mute (for example CrazyGames' `muteAudio` setting).
+   * It takes priority over the player's saved sound preference.
+   */
+  hostMuted?(): boolean
+  /** Subscribes to host mute changes and returns an unsubscribe function. */
+  onHostMutedChange?(listener: (muted: boolean) => void): () => void
 }
 
 /**
@@ -56,7 +64,7 @@ export interface AdChannelOptions {
 }
 
 export type PlatformKind = 'web' | 'poki' | 'crazygames'
-export type AdChannelKind = 'dev' | 'poki' | 'h5games'
+export type AdChannelKind = 'dev' | 'poki' | 'h5games' | 'crazygames'
 
 /** No-op host used by the self-hosted site and local development. */
 export class WebPlatform implements PlatformAdapter {

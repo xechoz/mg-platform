@@ -358,6 +358,8 @@ gameplayStop(): void
 happyTime(): void
 lang(): Lang | null
 haptic(ms: number): void
+hostMuted?(): boolean
+onHostMutedChange?(listener: (muted: boolean) => void): () => void
 ```
 
 广告渠道 `AdChannel` 独立存在：
@@ -372,19 +374,23 @@ interstitialBreak?(onStart?: () => void): Promise<void>
 ```
 
 `AdChannelOptions` 提供 `sound?: () => boolean`，渠道用它决定广告是否出声；游戏只传 `AudioManager.soundEnabled`，不直接接触渠道。
-- `@mg/platform` 是唯一允许接触广告 SDK 的地方；Poki 宿主与 Poki 广告共享同一个 SDK 运行时。
+- `@mg/platform` 是唯一允许接触广告 SDK 的地方；Poki、CrazyGames 的宿主与广告渠道分别共享同一个 SDK 运行时。
 - 游戏只通过 `@mg/core` 的 `AdService`；它负责单飞、静音、`gameplayStop`、结果映射和调试统计。
 - `VITE_PLATFORM=poki` 强制 `adChannel=poki`；自有站默认无广告渠道（奖励入口隐藏）。
-- `VITE_PLATFORM=crazygames` 注入 CrazyGames SDK v3，并把 `loadingStart/Stop`、`gameplayStart/Stop`、`happytime`、locale 映射到 `PlatformAdapter`；CrazyGames 广告渠道尚未接入。
+- `VITE_PLATFORM=crazygames` 注入 CrazyGames SDK v3，并把 `loadingStart/Stop`、`gameplayStart/Stop`、`happytime`、locale 映射到 `PlatformAdapter`。
+- `VITE_AD_CHANNEL=crazygames` 启用 Full Launch 广告渠道；不设置时是 Basic 构建，游戏完整可玩但无广告。
+- CrazyGames 广告：`rewarded` 只在 `adFinished` 发奖，`adError` 不发奖；`midgame` 只用于死亡/结算重开等自然断点；`adblock`/`adsDisabled` 后隐藏奖励入口；`unfilled`/`adCooldown` 允许重试。
+- CrazyGames `muteAudio` 通过 `hostMuted()` / `onHostMutedChange()` 传给 `AudioManager`，优先级高于玩家音效偏好，不写入存档。
+- CrazyGames 构建跳过 Preload 点击门槛，加载后直接进菜单；新用户到可玩只需菜单「开始」1 次点击。
 - CrazyGames 构建不加载 H5 Ads 或其他外部广告；平台 SDK 只由 Vite 插件注入，游戏代码不接触 `window.CrazyGames`。
 - 不提供 TrackKit 式的通用自定义事件层；需要分析时走平台后台、平台原生事件或以后单独设计的渠道，避免与生命周期重复上报。
 - 自有站 H5 Games Ads 已实现：`VITE_AD_CHANNEL=h5games` + `VITE_ADSENSE_CLIENT`；缺少 publisher ID 时构建无广告。真实广告还需要 AdSense/H5 审核、`ads.txt`、隐私政策和 CMP。
 - H5 的 `rewardedAvailable` 只表示 SDK ready，不表示库存；no-fill 按未奖励处理。
 - 广告只在死亡/菜单/结算等边界触发；广告期间停表、静音、锁输入，且不触发 SDK 事件。
 - 奖励只在 `rewardedBreak()` 返回 `true` 时发放；不在游戏内做广告冷却或每日上限。
-- `commercialBreak()` 已通过 `AdService.showInterstitial()` 接入：只在暂停恢复、结算重开等自然断点调用；广告结束后由游戏自己调用 `gameplayStart()`，奖励广告后的重开传 `commercial:false`，避免连续两条广告。
-- Poki 构建：单游戏 zip、`index.html` 在根、资源相对路径、运行时无外部请求；Poki/H5 SDK 由 Vite 插件按渠道注入。
-- Poki 渠道已实现，但没有账号/Inspector 验证前不要提审；H5 真实广告也需要账号/审核验证。
+- `commercialBreak()` / `midgame` 已通过 `AdService.showInterstitial()` 接入：只在死亡、结算重开等自然断点调用；CrazyGames 宿主下暂停恢复和暂停菜单重开不弹；广告结束后由游戏自己调用 `gameplayStart()`，奖励广告后的重开传 `commercial:false`，避免连续两条广告。
+- Poki/CrazyGames 构建：单游戏 zip、`index.html` 在根、资源相对路径、运行时除平台 SDK 外无外部请求；平台 SDK 由 Vite 插件按渠道注入。
+- Poki 渠道已实现，但没有账号/Inspector 验证前不要提审；CrazyGames 已具备账号，门户 QA 待跑；H5 真实广告也需要账号/审核验证。
 - 详见 `docs/ads.md`。
 
 ## 13. 代码规范
@@ -413,7 +419,7 @@ npm run site         # 涉及站点/多游戏时
 
 - 规则层：移动、碰撞、吃子、胜负、非法输入、随机复现、速度曲线。
 - 核心：SaveStore 初始/持久化/迁移/损坏回退；i18n 回退与语言解析。
-- 广告：AdService 结果映射、单飞、静音、`gameplayStop`、无冷却、placement 透传；Poki 运行时事件去重与广告期间事件屏蔽；H5 渠道 onReady/viewed/dismissed/no-fill/异常。
+- 广告：AdService 结果映射、单飞、静音、`gameplayStop`、无冷却、placement 透传；Poki/CrazyGames 运行时事件去重与广告期间事件屏蔽；CrazyGames rewarded/midgame/adblock/muteAudio；H5 渠道 onReady/viewed/dismissed/no-fill/异常。
 - 每个新游戏至少覆盖：初始状态、正常推进、边界失败、胜利条件、种子确定性。
 
 ### 浏览器 smoke
@@ -466,7 +472,7 @@ npm run site         # 涉及站点/多游戏时
 
 ### 已知取舍
 
-- Poki 宿主/广告渠道已实现，但未在真实账号/Inspector 验证；自有站 H5 Games Ads 已实现，未通过 AdSense/H5 审核，真实广告未验证。
+- Poki 宿主/广告渠道已实现，但未在真实账号/Inspector 验证；CrazyGames 宿主/广告渠道已实现，账号已具备但门户 QA 待跑；自有站 H5 Games Ads 已实现，未通过 AdSense/H5 审核，真实广告未验证。
 - 广告渠道抽象已就位；AdMob/Pangle/Meta、mediation、同意管理 UI 未实现。
 - iPhone Safari 不支持网页内全屏，只能通过 A2HS/PWA 获得无浏览器 UI；Android/iPad 用 Fullscreen API。
 - 没有 `packages/assets`；共享素材出现前不建。
@@ -477,16 +483,16 @@ npm run site         # 涉及站点/多游戏时
 
 ### 路线图
 
-| 阶段 | 内容                                              | 验收                                                 |
-| ---- | ------------------------------------------------- | ---------------------------------------------------- |
-| M2   | 连连看：10×8、≤2 拐点、绕边界、死局洗牌、种子可解 | 寻路单测、洗牌、种子复现                             |
-| M3   | Ludo：1 玩家 + 3 AI、掷骰/吃子/进家、动画队列     | 完整一局无死锁、规则测试、AI <100ms                  |
-| M4   | Poki Inspector 验证、H5 生产验证、提审            | Poki Inspector 通过、单游戏 zip 独立可跑、无外部请求 |
+| 阶段 | 内容                                                    | 验收                                          |
+| ---- | ------------------------------------------------------- | --------------------------------------------- |
+| M2   | 连连看：10×8、≤2 拐点、绕边界、死局洗牌、种子可解       | 寻路单测、洗牌、种子复现                      |
+| M3   | Ludo：1 玩家 + 3 AI、掷骰/吃子/进家、动画队列           | 完整一局无死锁、规则测试、AI <100ms           |
+| M4   | Poki Inspector / CrazyGames 门户验证、H5 生产验证、提审 | 平台 QA 通过、单游戏 zip 独立可跑、无外部请求 |
 
 ## 17. 相关文档
 
 - `AGENTS.md` — AI 必须遵守的硬规则
 - `docs/new-game-checklist.md` — 新游戏操作清单
-- `docs/publishing.md` — 自有站与 Poki 发布
+- `docs/publishing.md` — 自有站、Poki 与 CrazyGames 发布
 - `README.md` — 快速开始与命令
 - `.opencode/skills/mini-games-dev/SKILL.md` — 项目开发 skill

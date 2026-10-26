@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest'
-import { CrazyGamesRuntime } from './crazygames'
+import {
+  type CrazyGamesAdCallbacks,
+  type CrazyGamesAdType,
+  CrazyGamesRuntime,
+  type CrazyGamesSettings,
+} from './crazygames'
 
 interface FakeSdk {
   init: Mock<() => Promise<void>>
@@ -9,6 +14,13 @@ interface FakeSdk {
     gameplayStart: Mock<() => void>
     gameplayStop: Mock<() => void>
     happytime: Mock<() => void>
+    settings: CrazyGamesSettings
+    addSettingsChangeListener: Mock<(listener: (settings: CrazyGamesSettings) => void) => void>
+    removeSettingsChangeListener: Mock<(listener: (settings: CrazyGamesSettings) => void) => void>
+  }
+  ad?: {
+    requestAd: Mock<(type: CrazyGamesAdType, callbacks: CrazyGamesAdCallbacks) => void>
+    hasAdblock?: Mock<() => boolean | Promise<boolean>>
   }
   user?: {
     systemInfo?: {
@@ -26,8 +38,19 @@ function fakeSdk(): FakeSdk {
       gameplayStart: vi.fn<() => void>(),
       gameplayStop: vi.fn<() => void>(),
       happytime: vi.fn<() => void>(),
+      settings: { muteAudio: false },
+      addSettingsChangeListener: vi.fn(),
+      removeSettingsChangeListener: vi.fn(),
+    },
+    ad: {
+      requestAd: vi.fn(),
     },
   }
+}
+
+function adOf(sdk: FakeSdk): NonNullable<FakeSdk['ad']> {
+  if (!sdk.ad) throw new Error('fake SDK has no ad module')
+  return sdk.ad
 }
 
 afterEach(() => {
@@ -55,6 +78,7 @@ describe('CrazyGamesRuntime', () => {
     runtime.happyTime()
 
     expect(runtime.lang()).toBeNull()
+    expect(runtime.rewardedAvailable).toBe(false)
   })
 
   it('stays usable when init fails', async () => {
@@ -70,6 +94,7 @@ describe('CrazyGamesRuntime', () => {
     expect(sdk.game.loadingStart).not.toHaveBeenCalled()
     expect(sdk.game.gameplayStart).not.toHaveBeenCalled()
     expect(sdk.game.loadingStop).not.toHaveBeenCalled()
+    expect(runtime.rewardedAvailable).toBe(false)
   })
 
   it('normalizes the host locale', () => {
@@ -113,5 +138,160 @@ describe('CrazyGamesRuntime', () => {
 
     expect(sdk.game.loadingStop).toHaveBeenCalledTimes(1)
     expect(sdk.game.happytime).toHaveBeenCalledTimes(1)
+  })
+
+  it('applies the host mute setting and follows changes', async () => {
+    const sdk = fakeSdk()
+    const runtime = new CrazyGamesRuntime(() => sdk)
+    sdk.game.settings.muteAudio = true
+
+    await runtime.init()
+
+    expect(runtime.hostMuted()).toBe(true)
+    const listener = vi.fn<(muted: boolean) => void>()
+    const unsubscribe = runtime.onHostMutedChange(listener)
+    expect(listener).toHaveBeenCalledWith(true)
+
+    const settingsListener = sdk.game.addSettingsChangeListener.mock.calls[0]?.[0]
+    settingsListener?.({ muteAudio: false })
+    expect(runtime.hostMuted()).toBe(false)
+    expect(listener).toHaveBeenLastCalledWith(false)
+
+    unsubscribe()
+    settingsListener?.({ muteAudio: true })
+    expect(listener).toHaveBeenCalledTimes(2)
+  })
+
+  it('reports rewarded ads as available only after SDK init', async () => {
+    const sdk = fakeSdk()
+    const runtime = new CrazyGamesRuntime(() => sdk)
+
+    expect(runtime.rewardedAvailable).toBe(false)
+    await runtime.init()
+    expect(runtime.rewardedAvailable).toBe(true)
+  })
+
+  it('resolves rewarded ads only after adFinished', async () => {
+    const sdk = fakeSdk()
+    const runtime = new CrazyGamesRuntime(() => sdk)
+    await runtime.init()
+    const ad = adOf(sdk)
+    ad.requestAd.mockImplementation((_type, callbacks) => {
+      callbacks.adStarted?.()
+      callbacks.adFinished?.()
+    })
+    const onStart = vi.fn()
+
+    await expect(runtime.rewardedBreak(onStart)).resolves.toBe(true)
+    expect(ad.requestAd).toHaveBeenCalledWith('rewarded', expect.any(Object))
+    expect(onStart).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not reward ad errors and keeps the channel available for transient failures', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const sdk = fakeSdk()
+    const runtime = new CrazyGamesRuntime(() => sdk)
+    await runtime.init()
+    const ad = adOf(sdk)
+    ad.requestAd.mockImplementation((_type, callbacks) => {
+      callbacks.adError?.('unfilled')
+    })
+
+    await expect(runtime.rewardedBreak()).resolves.toBe(false)
+    expect(runtime.rewardedAvailable).toBe(true)
+  })
+
+  it('disables the channel after an adblock error', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const sdk = fakeSdk()
+    const runtime = new CrazyGamesRuntime(() => sdk)
+    await runtime.init()
+    const ad = adOf(sdk)
+    ad.requestAd.mockImplementation((_type, callbacks) => {
+      callbacks.adError?.('adblock')
+    })
+
+    await expect(runtime.rewardedBreak()).resolves.toBe(false)
+    expect(runtime.rewardedAvailable).toBe(false)
+  })
+
+  it('disables the channel after adsDisabled', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const sdk = fakeSdk()
+    const runtime = new CrazyGamesRuntime(() => sdk)
+    await runtime.init()
+    const ad = adOf(sdk)
+    ad.requestAd.mockImplementation((_type, callbacks) => {
+      callbacks.adError?.('adsDisabled')
+    })
+
+    await expect(runtime.rewardedBreak()).resolves.toBe(false)
+    expect(runtime.rewardedAvailable).toBe(false)
+  })
+
+  it('detects an ad blocker before offering a reward', async () => {
+    const sdk = fakeSdk()
+    const ad = adOf(sdk)
+    ad.hasAdblock = vi.fn<() => boolean | Promise<boolean>>().mockResolvedValue(true)
+    const runtime = new CrazyGamesRuntime(() => sdk)
+
+    await runtime.init()
+
+    expect(runtime.rewardedAvailable).toBe(false)
+    await expect(runtime.rewardedBreak()).resolves.toBe(false)
+    expect(ad.requestAd).not.toHaveBeenCalled()
+  })
+
+  it('resolves midgame ads on finish without a reward', async () => {
+    const sdk = fakeSdk()
+    const runtime = new CrazyGamesRuntime(() => sdk)
+    await runtime.init()
+    const ad = adOf(sdk)
+    ad.requestAd.mockImplementation((_type, callbacks) => {
+      callbacks.adStarted?.()
+      callbacks.adFinished?.()
+    })
+    const onStart = vi.fn()
+
+    await expect(runtime.midgameBreak(onStart)).resolves.toBeUndefined()
+    expect(ad.requestAd).toHaveBeenCalledWith('midgame', expect.any(Object))
+    expect(onStart).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores a second ad request while one is active', async () => {
+    const sdk = fakeSdk()
+    const runtime = new CrazyGamesRuntime(() => sdk)
+    await runtime.init()
+    const ad = adOf(sdk)
+    let callbacks: CrazyGamesAdCallbacks | undefined
+    ad.requestAd.mockImplementation((_type, next) => {
+      callbacks = next
+    })
+
+    const first = runtime.rewardedBreak()
+    await expect(runtime.rewardedBreak()).resolves.toBe(false)
+    callbacks?.adFinished?.()
+
+    await expect(first).resolves.toBe(true)
+  })
+
+  it('does not start gameplay while an ad is active', async () => {
+    const sdk = fakeSdk()
+    const runtime = new CrazyGamesRuntime(() => sdk)
+    await runtime.init()
+    const ad = adOf(sdk)
+    let callbacks: CrazyGamesAdCallbacks | undefined
+    ad.requestAd.mockImplementation((_type, next) => {
+      callbacks = next
+    })
+
+    const adPromise = runtime.midgameBreak()
+    runtime.gameplayStart()
+    expect(sdk.game.gameplayStart).not.toHaveBeenCalled()
+
+    callbacks?.adFinished?.()
+    await adPromise
+    runtime.gameplayStart()
+    expect(sdk.game.gameplayStart).toHaveBeenCalledTimes(1)
   })
 })

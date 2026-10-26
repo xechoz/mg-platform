@@ -2,6 +2,10 @@
 
 ## 未发布
 
+### 输入
+
+- 修复方向键与空格无法操作：页面滚动守卫在捕获阶段对方向键调用 `preventDefault`，Phaser 会忽略 `defaultPrevented` 的按键事件，导致方向控制与空格暂停全部失效。改为通过 Phaser `input.keyboard.capture` 在游戏处理后再阻止页面滚动，WASD/方向键/空格全部恢复。
+
 ### 音效
 
 - 修复手机外放音效整体过小、发闷：合成音效峰值从 −32…−18 dBFS 提升到 −9…−1 dBFS；咬合采样解码后按峰值自动归一化到 −1 dBFS（最多 +18 dB），不再固定乘 0.25。
@@ -11,7 +15,12 @@
 
 ### 平台接入
 
-- 新增 `VITE_PLATFORM=crazygames` 构建：注入 CrazyGames SDK v3，`PlatformAdapter` 映射 loading、gameplay、happy time 和语言；CrazyGames 广告渠道暂未接入。
+- 新增 `VITE_PLATFORM=crazygames` 构建：注入 CrazyGames SDK v3，`PlatformAdapter` 映射 loading、gameplay、happy time 和语言；`VITE_AD_CHANNEL=crazygames` 启用 Full Launch 广告渠道，Basic Launch 构建默认无广告。
+- 新增 `CrazyGamesAdChannel`：`rewarded` 只在 `adFinished` 发奖，`adError` 不发奖；`midgame` 只用于死亡/结算等自然断点。`adblock`/`adsDisabled` 后本次会话隐藏奖励入口，`unfilled`/`adCooldown` 保持可重试。
+- 接入 CrazyGames `muteAudio`：宿主静音优先于游戏内音效开关，广告期间也不会因为解除宿主静音而中途出声；不写入玩家存档。
+- CrazyGames 构建跳过 Preload 点击门槛，加载完成直接进菜单，从新用户到可玩只需菜单「开始」1 次点击。
+- 平台语言在 SDK 初始化后再次同步：URL `?lang=` > 玩家显式选择 > SDK locale > 英文，自动检测不写入 `langChosen`。
+- CrazyGames 宿主下暂停恢复、暂停菜单重开不弹 midgame；死亡结算重开仍保留自然断点插屏，避免在导航操作上弹广告。
 - 移除未发布的 TrackKit 自定义统计抽象；平台生命周期统一由 `PlatformAdapter` 负责，不再保留 `services.track` 与游戏侧事件 facade。
 
 ### 移动端菜单

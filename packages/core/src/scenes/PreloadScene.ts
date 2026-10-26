@@ -91,6 +91,13 @@ export class PreloadScene extends Phaser.Scene {
     this.loadingBar?.destroy()
     services.platform.loadingFinished()
 
+    // The portal requires new players to reach gameplay in at most one click.
+    // The menu's Play button is that click; the host owns fullscreen.
+    if (services.platform.name === 'crazygames') {
+      this.scene.start(services.def.menuScene ?? 'Menu')
+      return
+    }
+
     const card = this.add.container(width / 2, height / 2 + 80)
     const panel = this.add.graphics()
     panel.fillStyle(theme.shadow, 0.18)

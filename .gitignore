@@ -8,3 +8,4 @@ dist-site/
 .env.*.local
 coverage/
 .vite/
+games/*/store/

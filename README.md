@@ -50,7 +50,7 @@ AGENTS.md      # 项目级 AI 硬规则
 
 packages/
 ├─ core/        # 游戏外壳：场景、UI、音频、存档、i18n、调试
-└─ platform/    # 平台适配：dev（Poki 接口已预留）
+└─ platform/    # 平台适配：Web / Poki / CrazyGames
 
 games/
 └─ snake/
@@ -79,13 +79,25 @@ docs/          # 架构、开发清单、发布说明
 - [AGENTS.md](AGENTS.md) — AI 协作硬规则（项目级，仅本仓库）
 - [docs/architecture.md](docs/architecture.md) — 完整设计、原则、技术要点
 - [docs/new-game-checklist.md](docs/new-game-checklist.md) — 新增游戏清单
-- [docs/publishing.md](docs/publishing.md) — 自有站与 Poki 发布
+- [docs/publishing.md](docs/publishing.md) — 自有站、Poki 与 CrazyGames 发布
+- [docs/crazygames-next-steps.md](docs/crazygames-next-steps.md) — CrazyGames 提审与发布后清单
 - [.opencode/skills/mini-games-dev/SKILL.md](.opencode/skills/mini-games-dev/SKILL.md) — 项目开发 skill
 
 ## 发布
 
 - 自有站：`npm run site` → 部署 `dist-site/`（Cloudflare Pages / GitHub Pages 均可）。
-- Poki：`VITE_PLATFORM=poki npm run build:snake`，将 `games/snake/dist` 打成 zip（`index.html` 在根目录）。Poki 适配器与 SDK 注入在提交前接入。
-- CrazyGames：`VITE_PLATFORM=crazygames npm run build:snake`，构建时注入 CrazyGames SDK v3；广告渠道尚未接入。
+- Poki：`VITE_PLATFORM=poki npm run build:snake`，将 `games/snake/dist` 打成 zip（`index.html` 在根目录）。
+- CrazyGames Basic Launch（无广告）：
 
-详见 [docs/publishing.md](docs/publishing.md)。
+  ```bash
+  VITE_PLATFORM=crazygames npm run build:snake
+  ```
+- CrazyGames Full Launch（启用 CrazyGames 广告）：
+
+  ```bash
+  VITE_PLATFORM=crazygames VITE_AD_CHANNEL=crazygames npm run build:snake
+  ```
+
+  两种构建都会注入 CrazyGames SDK v3；把 `games/snake/dist` 打成 zip，确保 `index.html` 在 zip 根目录。
+
+详见 [docs/publishing.md](docs/publishing.md)；提审步骤见 [docs/crazygames-next-steps.md](docs/crazygames-next-steps.md)。

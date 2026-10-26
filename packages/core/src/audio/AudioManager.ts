@@ -92,6 +92,8 @@ export class AudioManager {
   private readonly samples = new Map<SfxName, AudioSample[]>()
   private samplesLoading = false
   private enabled: boolean
+  private mutedByHost = false
+  private suspended = false
 
   constructor(enabled: boolean, sampleUrls: SfxSampleUrls = {}) {
     this.enabled = enabled
@@ -107,23 +109,32 @@ export class AudioManager {
     return this.enabled
   }
 
+  /** The host portal currently forces audio off. */
+  get hostMuted(): boolean {
+    return this.mutedByHost
+  }
+
   setEnabled(enabled: boolean): void {
     this.enabled = enabled
-    if (this.master && this.ctx) {
-      this.master.gain.setTargetAtTime(enabled ? MASTER_GAIN : 0, this.ctx.currentTime, 0.02)
-    }
+    this.applyMasterGain()
+  }
+
+  /** Host mute takes priority over the player's saved preference. */
+  setHostMuted(muted: boolean): void {
+    this.mutedByHost = muted
+    this.applyMasterGain()
   }
 
   /** Mutes without touching the player's sound preference (ads, focus loss). */
   suspend(): void {
-    if (!this.master || !this.ctx) return
-    this.master.gain.setTargetAtTime(0, this.ctx.currentTime, 0.02)
+    this.suspended = true
+    this.applyMasterGain()
   }
 
-  /** Restores the master gain according to the saved sound preference. */
+  /** Restores the master gain according to the saved preference and host mute. */
   resume(): void {
-    if (!this.master || !this.ctx) return
-    this.master.gain.setTargetAtTime(this.enabled ? MASTER_GAIN : 0, this.ctx.currentTime, 0.02)
+    this.suspended = false
+    this.applyMasterGain()
   }
 
   /** Must be called from a user gesture at least once (iOS/Safari). */
@@ -134,7 +145,7 @@ export class AudioManager {
       if (!Ctor) return
       this.ctx = new Ctor()
       this.master = this.ctx.createGain()
-      this.master.gain.value = MASTER_GAIN
+      this.master.gain.value = this.effectiveEnabled ? MASTER_GAIN : 0
       const limiter = this.ctx.createWaveShaper()
       limiter.curve = softClipCurve()
       limiter.oversample = '2x'
@@ -146,7 +157,7 @@ export class AudioManager {
   }
 
   play(name: SfxName, { pitch = 1, gain = 1 }: SfxOptions = {}): void {
-    if (!this.enabled) return
+    if (!this.effectiveEnabled) return
     if (!this.ctx) return
     if (this.ctx.state !== 'running' && this.ctx.state !== 'closed') void this.ctx.resume()
 
@@ -195,6 +206,19 @@ export class AudioManager {
         this.tone(220, 0.2, { type: 'sine', gain: level * 0.35, endFrequency: 150 })
         break
     }
+  }
+
+  private get effectiveEnabled(): boolean {
+    return this.enabled && !this.mutedByHost && !this.suspended
+  }
+
+  private applyMasterGain(): void {
+    if (!this.master || !this.ctx) return
+    this.master.gain.setTargetAtTime(
+      this.effectiveEnabled ? MASTER_GAIN : 0,
+      this.ctx.currentTime,
+      0.02,
+    )
   }
 
   /** Fetches and decodes bundled samples once the audio context exists. */

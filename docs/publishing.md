@@ -88,7 +88,81 @@ cd games/snake/dist && zip -r ../../snake-poki.zip .
 
 当前仍没有 Poki 开发者账号/Inspector 权限；本地代码、构建和事件顺序已准备，但真实广告行为与 Inspector 提审尚未验证。拿到账号后先跑 Inspector，再更新本节并提交。
 
-### 自有站
+## CrazyGames
+
+CrazyGames 分两个阶段：
+- **Basic Launch**：SDK 可选，无广告、无分成；审核较基础，可以先把游戏跑通。
+- **Full Launch**：必须接入 SDK 和 CrazyGames 广告，接受完整 QA，之后参与广告分成。
+
+代码已按 Full Launch 准备，同时保留 Basic 构建：先提 Basic 不影响之后转 Full。
+
+### 构建与提交包
+
+```bash
+# Basic：不启用 CrazyGames 广告，奖励入口隐藏
+VITE_PLATFORM=crazygames npm run build -w @mg/snake
+cd games/snake/dist && zip -r ../snake-crazygames-basic.zip .
+
+# Full：启用 CrazyGames 激励 + midgame 广告
+VITE_PLATFORM=crazygames VITE_AD_CHANNEL=crazygames npm run build -w @mg/snake
+cd games/snake/dist && zip -r ../snake-crazygames-full.zip .
+```
+
+两种构建都会由 `tooling/vite.game.ts` 在 `index.html` 的 head 注入 `https://sdk.crazygames.com/crazygames-sdk-v3.js`。提交包必须：
+- `index.html` 在 zip 根目录；
+- 资源使用相对路径（项目已用 `base: './'`）；
+- 运行时除 CrazyGames SDK 外没有外部请求；
+- 没有 Dev 模拟广告代码：`grep -RIn "模拟激励广告\|__mgGame" games/snake/dist` 应为空；
+- 总大小、文件数、初始下载满足 CrazyGames 限制（当前构建远低于上限）。
+
+### 已实现
+
+- `CrazyGamesPlatform`：`SDK.init()`、`loadingStart/Stop`、`gameplayStart/Stop`（去重）、`happytime`、locale、触觉。
+- `CrazyGamesAdChannel`：
+  - `rewardedBreak` 只在 `adFinished` 返回 `true`；`adError` 返回 `false`，不发奖。
+  - `interstitialBreak` 使用 `requestAd('midgame')`，结束或失败都继续游戏。
+  - `adblock` / `adsDisabled` 后本次会话隐藏奖励入口；`unfilled` / `adCooldown` 保持可重试。
+  - 初始化后调用 `ad.hasAdblock()` 预检，避免广告拦截用户看到无效奖励按钮。
+- `muteAudio`：读取 `SDK.game.settings.muteAudio`，监听 `addSettingsChangeListener`；宿主静音优先于游戏内音效开关，且不写入玩家存档。
+- 入口：CrazyGames 构建跳过 Preload 点击门槛，加载后直接进菜单，新用户从进入到可玩只需「开始」1 次点击。
+- 语言：SDK init 后重新同步 locale；优先级为 URL `?lang=` > 玩家显式选择 > SDK locale > 英文，自动检测不写 `langChosen`。
+- 广告落点：
+  - 结算页超级水果奖励（rewarded）；
+  - 死亡结算后的重开（midgame，自然断点）；
+  - 暂停恢复、暂停菜单重开不弹 midgame，避免在导航操作上打断。
+- 全屏：iframe 内不自动请求全屏，由 CrazyGames 播放器控制，不添加自定义全屏按钮。
+
+### 提交前验证
+
+1. 在 CrazyGames 开发者门户上传 build，用其 preview / QA 工具运行。
+2. Event Log：`loadingStart → loadingStop → gameplayStart`；暂停/广告期间无重复或错误事件。
+3. 暂停恢复：只 `gameplayStop → gameplayStart`，不出现 midgame。
+4. 死亡结算重开：`gameplayStop → midgame → gameplayStart`；奖励广告：`gameplayStop → rewarded → gameplayStart`。
+5. 广告拦截：`adblock` 后奖励入口消失，标准重开始终可用；不显示自定义“广告被拦截”提示。
+6. `muteAudio`：在门户设置或 `?muteAudio=true` 下，游戏内音效开关不能重新打开声音；关闭宿主静音后恢复玩家偏好。
+7. 移动端横屏/竖屏、桌面 16:9 与门户列出的 iframe 尺寸都可玩；转屏自动暂停并倒计时恢复。
+8. 11 种语言在菜单、暂停、结算中无缺失；英文必须完整。
+9. Network 面板除 CrazyGames SDK 外无外部请求；刷新后最高分/待领取奖励仍在。
+10. 首次进入到可玩不超过 1 次点击。
+
+### 发布素材
+
+需要 3 张风格一致的封面和 2 个预览视频：
+- 横版封面 1920×1080（16:9）；
+- 竖版封面 800×1200（2:3）；
+- 方形封面 800×800（1:1）；
+- 横版预览视频 1080p 16:9；
+- 竖版预览视频 1080p 2:3。
+
+封面规则：无边框；除游戏标题外不要写任何文字（不能写 New/Play/Play now）；不要放图标、商店 logo 或版权素材；不要模糊/像素化；不要只截一张游戏画面，要设计过。
+
+视频规则：15–20 秒、≤50MB、无声音；第一帧使用对应比例的静态封面；不能有黑屏、logo 转场、上下黑边、默认鼠标指针、Play Now 或推广文字；不要快进。
+
+竖版/方形素材必须用移动端仿真采集（touch + coarse pointer），不能把桌面截图硬裁。素材放在 `games/snake/store/crazygames/`，默认不提交 git。
+
+CrazyGames 账号已具备；门户 QA 与最终提审由用户完成。详细步骤见 [`crazygames-next-steps.md`](./crazygames-next-steps.md)。
+
+## 自有站构建
 
 ```bash
 npm run build -w @mg/snake
@@ -119,4 +193,5 @@ npm run build -w @mg/snake
 
 ## 下一步
 
-Poki 账号、Inspector 验证、发布素材、提审与发布后事项见 [`poki-next-steps.md`](./poki-next-steps.md)。
+- Poki 账号、Inspector 验证、发布素材、提审与发布后事项见 [`poki-next-steps.md`](./poki-next-steps.md)。
+- CrazyGames 账号、门户 QA、发布素材、Basic → Full 提审与发布后事项见 [`crazygames-next-steps.md`](./crazygames-next-steps.md)。

@@ -1,4 +1,4 @@
-import { CrazyGamesPlatform, CrazyGamesRuntime } from './crazygames'
+import { CrazyGamesAdChannel, CrazyGamesPlatform, CrazyGamesRuntime } from './crazygames'
 import { H5GamesAdChannel } from './h5games'
 import { PokiAdChannel, PokiPlatform, PokiRuntime } from './poki'
 import {
@@ -12,9 +12,13 @@ import {
 } from './types'
 
 export {
+  type CrazyGamesAdCallbacks,
+  CrazyGamesAdChannel,
+  type CrazyGamesAdType,
   CrazyGamesPlatform,
   CrazyGamesRuntime,
   type CrazyGamesSdk,
+  type CrazyGamesSettings,
 } from './crazygames'
 export {
   type H5AdApi,
@@ -71,5 +75,7 @@ export function createAdChannel(
       return new PokiAdChannel(pokiRuntime())
     case 'h5games':
       return new H5GamesAdChannel(options)
+    case 'crazygames':
+      return new CrazyGamesAdChannel(crazyGamesRuntime())
   }
 }

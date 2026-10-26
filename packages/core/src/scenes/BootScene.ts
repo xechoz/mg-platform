@@ -17,6 +17,7 @@ export class BootScene extends Phaser.Scene {
           console.warn('[boot] SDK init failed, continuing without it', result.reason)
         }
       }
+      services.syncPlatformLang()
       this.scene.start('Preload')
     })()
   }

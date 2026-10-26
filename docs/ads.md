@@ -17,6 +17,8 @@ packages/platform
   AdChannelOptions  渠道选项：sound() 读取玩家静音偏好
   PokiPlatform      Poki 宿主
   PokiAdChannel     Poki 广告
+  CrazyGamesPlatform  CrazyGames 宿主
+  CrazyGamesAdChannel CrazyGames 广告（Full Launch）
   H5GamesAdChannel  Google H5 Games Ads（自有站）
   DevAdChannel      DEV 模拟器；生产非 Poki 不可用
   WebPlatform       自有站宿主（无 SDK）
@@ -38,6 +40,12 @@ games/<id>/src/ads.ts
 # Poki：宿主和广告都用 Poki，强制忽略 VITE_AD_CHANNEL
 VITE_PLATFORM=poki npm run build -w @mg/snake
 
+# CrazyGames Basic：只接生命周期，不启用广告
+VITE_PLATFORM=crazygames npm run build -w @mg/snake
+
+# CrazyGames Full：显式启用 CrazyGames 激励 + midgame 广告
+VITE_PLATFORM=crazygames VITE_AD_CHANNEL=crazygames npm run build -w @mg/snake
+
 # 自有站：默认无广告渠道，奖励入口隐藏
 npm run build -w @mg/snake
 
@@ -54,13 +62,14 @@ VITE_ADSENSE_TEST=on npm run dev:snake
 VITE_AD_CHANNEL=h5games VITE_ADSENSE_CLIENT=ca-pub-... npm run site
 ```
 
-| 变量                  | 取值                          | 默认  | 说明                                                 |
-| --------------------- | ----------------------------- | ----- | ---------------------------------------------------- |
-| `VITE_PLATFORM`       | `web` / `poki` / `crazygames` | `web` | 宿主；Poki 强制 `poki` 渠道；CrazyGames 暂无广告渠道 |
-| `VITE_AD_CHANNEL`     | `dev` / `poki` / `h5games`    | `dev` | 广告渠道；Poki/CrazyGames 构建忽略                   |
-| `VITE_ADSENSE_CLIENT` | `ca-pub-...` / `pub-...`      | 无    | H5 必需；缺失时构建无广告                            |
-| `VITE_ADSENSE_TEST`   | `on`                          | 关    | test mode；production build 强制忽略                 |
+| 变量                  | 取值                                      | 默认  | 说明                                                |
+| --------------------- | ----------------------------------------- | ----- | --------------------------------------------------- |
+| `VITE_PLATFORM`       | `web` / `poki` / `crazygames`             | `web` | 宿主；Poki 强制 `poki` 渠道                         |
+| `VITE_AD_CHANNEL`     | `dev` / `poki` / `h5games` / `crazygames` | `dev` | 广告渠道；Poki 构建忽略；CrazyGames 需显式开启 Full |
+| `VITE_ADSENSE_CLIENT` | `ca-pub-...` / `pub-...`                  | 无    | H5 必需；缺失时构建无广告                           |
+| `VITE_ADSENSE_TEST`   | `on`                                      | 关    | test mode；production build 强制忽略                |
 - `VITE_PLATFORM=poki` 时 `createServices` 强制 `adChannel=poki`；Poki 禁止其他广告系统。
+- `VITE_PLATFORM=crazygames` 且 `VITE_AD_CHANNEL=crazygames` 时才启用 CrazyGames 广告；不设置时是 Basic 构建，生产环境无广告。
 - `VITE_AD_CHANNEL` 未设置视为 `dev`：开发环境用模拟器，生产环境不可用。
 - Poki/CrazyGames 的 SDK 脚本只由 `tooling/vite.game.ts` 在对应平台构建注入；H5 SDK 只在 `h5games` 构建注入；默认构建保持零外部请求。
 - H5 的 publisher ID 来自构建环境，不写进代码；没有 ID 时构建成功但无广告，奖励入口隐藏。
@@ -83,7 +92,7 @@ await services.ads.showInterstitial()
 
 `showRewarded(placement)` 会把 placement 透传给渠道（H5 用作 `adBreak.name`，Poki 忽略），并通过 `AdChannelOptions.sound()` 读取玩家静音偏好来决定广告是否出声；游戏侧不需要感知这些。
 
-`showInterstitial()` 只用于 Poki 的 `commercialBreak`：在暂停恢复、重开等自然断点调用。它同样会停表、静音、锁输入，但不会发放奖励，也不会调用 `gameplayStart()`；游戏必须在真正回到玩法时自己调用 `gameplayStart()`。没有 `interstitialBreak` 的渠道（web/dev/H5）会直接 no-op。
+`showInterstitial()` 用于 Poki 的 `commercialBreak` 和 CrazyGames 的 `midgame`：在死亡、结算、重开等自然断点调用。它同样会停表、静音、锁输入，但不会发放奖励，也不会调用 `gameplayStart()`；游戏必须在真正回到玩法时自己调用 `gameplayStart()`。没有 `interstitialBreak` 的渠道（web/dev/H5）会直接 no-op。不要在菜单、设置、暂停恢复等导航操作上弹 midgame。
 
 `AdService` 负责：
 - 同时只跑一个广告；重复点击返回 `failed`，不会重复发奖。
@@ -110,6 +119,19 @@ await services.ads.showInterstitial()
 - `gameplayStart()` / `gameplayStop()` 去重；广告期间忽略所有宿主事件。
 - `rewardedBreak(placement, onStart)` 返回 `true` 才发奖；placement 仅用于渠道报表，Poki 忽略。
 - `commercialBreak(onStart)` 已接入：暂停恢复、暂停/结算重开时由 `AdService.showInterstitial()` 调用；广告期间屏蔽宿主事件，奖励广告后的重开传 `commercial:false`，避免连续两条广告。
+
+### CrazyGames
+
+- 构建时注入 `https://sdk.crazygames.com/crazygames-sdk-v3.js`；`init()` 调用 `SDK.init()` 后保存实例，并调用 `loadingStart()`。
+- `gameplayStart()` / `gameplayStop()` 去重；`happyTime()` 和 `gameplayStart()` 在广告期间不触发。
+- `rewardedBreak` 调 `requestAd('rewarded', { adStarted, adFinished, adError })`：
+  - 只有 `adFinished` 返回 `true`；`adError` 返回 `false`，不发奖。
+  - `adStarted` 时才调用 `onStart`；`AdService` 已提前停表/静音/锁输入，比平台要求更严格。
+  - 同步异常也 resolve `false`，不会把异常抛给游戏。
+- `interstitialBreak` 调 `requestAd('midgame', ...)`，结束或失败都 resolve；只能由死亡/结算重开等自然断点触发。
+- 初始化后 feature-detect `ad.hasAdblock()`；`adblock` 或 `adsDisabled` 后本次会话 `rewardedAvailable=false`，隐藏奖励入口。`unfilled` / `adCooldown` 不永久禁用，允许下次重试。
+- `muteAudio`：`SDK.game.settings.muteAudio` 通过 `PlatformAdapter.hostMuted()` / `onHostMutedChange()` 传给 `AudioManager`；宿主静音优先于玩家音效偏好，且不写入存档。
+- 广告拦截用户仍可完整游玩；标准按钮始终可用，不渲染无效奖励按钮，也不显示自定义“广告被拦截”提示。
 
 ### Dev 模拟器
 
@@ -153,7 +175,7 @@ await services.ads.showInterstitial()
 
 ## 6. 落点与合规
 
-Poki 审核硬规则（摘要）：
+Poki / CrazyGames 审核硬规则（摘要）：
 - 奖励按钮必须有明显的视频图标，不能使用绿色。
 - 标准按钮必须同时出现，尺寸不小于奖励按钮，位于奖励按钮上方或旁边。
 - 一次奖励只对应一条广告，不能要求连看多条。
@@ -162,6 +184,7 @@ Poki 审核硬规则（摘要）：
 - 不要在游戏内实现广告冷却或每日次数上限。
 - 广告拦截时不发奖励，不显示自定义“广告被拦截”提示。
 - 不能把核心玩法锁在广告后面；标准路径永远可用。
+- CrazyGames 的 midgame 只能在死亡、关卡完成、重开等自然断点，不能挂在菜单、设置、暂停恢复等导航按钮上。
 - 奖励要立即生效，并给动画/音效确认。
 
 H5 / 自有站额外要求：
@@ -197,6 +220,8 @@ H5 / 自有站额外要求：
 自动：
 - `AdService`：结果映射、单飞、静音、`gameplayStop`、无冷却、不可用渠道、placement 透传。
 - `PokiRuntime`：init 去重、事件去重、广告期间事件屏蔽、异常返回 `false`。
+- `CrazyGamesRuntime`：init 去重、事件去重、locale、`rewarded` 成功/失败、`adblock`/`adsDisabled`、`hasAdblock` 预检、midgame、重入、广告期间屏蔽宿主事件、`muteAudio` 与设置变化。
+- `AudioManager`：宿主静音优先于玩家偏好、广告 suspend 期间宿主解除静音仍保持静音、宿主静音时不创建 AudioContext。
 - `H5GamesAdChannel`：onReady 前不可用、viewed/dismissed/no-fill、`adBreak` 异常、placement、sound、重复 `adBreakDone`。
 
 人工（Dev 模拟器）：
@@ -239,8 +264,8 @@ H5 真实广告验收（需要 AdSense/H5 审核）：
 
 ## 10. 当前状态
 
-- 已实现：Host/AdChannel 拆分、`AdService`、Dev 模拟器、Poki 适配器、H5 Games Ads 渠道、合规 UI 原语、Poki/H5 构建注入、`ads.txt` 生成。
-- 未验证：Poki 真实广告（没有开发者账号/Inspector）；H5 真实广告（没有 AdSense/H5 审核）。
+- 已实现：Host/AdChannel 拆分、`AdService`、Dev 模拟器、Poki 适配器、CrazyGames 适配器与广告渠道、H5 Games Ads 渠道、合规 UI 原语、Poki/CrazyGames/H5 构建注入、`ads.txt` 生成。
+- 未验证：Poki 真实广告（没有开发者账号/Inspector）；CrazyGames 真实广告与 midgame（代码与构建已准备，门户 QA 待跑）；H5 真实广告（没有 AdSense/H5 审核）。
 - 未实现：AdMob/Pangle/Meta、mediation、同意管理 UI。
 - 游戏落点：复活与局前道具在 Phase 1/2 接入，见 §11。
 
@@ -324,6 +349,13 @@ Poki：
 - 开发者账号 + Inspector。
 - 验证 SDK 事件顺序、广告期间无事件、`gameLoadingFinished`、广告拦截不发奖。
 - 奖励按钮层级/颜色/图标符合审核要求。
+
+CrazyGames：
+- 开发者账号 + 门户 preview/QA 工具。
+- 验证 `loadingStart → loadingStop → gameplayStart`、暂停恢复无 midgame、死亡结算重开有 midgame。
+- 验证 rewarded 只在 `adFinished` 发奖、`adError` 不发奖、广告拦截后奖励入口消失。
+- 验证 `muteAudio` 优先于游戏内开关，`?muteAudio=true` 下无法重新打开声音。
+- 验证首次进入到可玩只需 1 次点击，iframe 内不请求全屏。
 
 H5：
 - AdSense 账号 + H5 Games Ads 申请通过 + 站点审核。

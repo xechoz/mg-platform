@@ -1,5 +1,5 @@
 import type { AdChannelKind, Lang, PlatformAdapter, PlatformKind } from '@mg/platform'
-import { createAdChannel, createPlatform, SUPPORTED_LANGS } from '@mg/platform'
+import { createAdChannel, createPlatform, isLang, SUPPORTED_LANGS } from '@mg/platform'
 import type Phaser from 'phaser'
 import { AdService } from '../ads/AdService'
 import { AudioManager, type SfxSampleUrls } from '../audio/AudioManager'
@@ -65,6 +65,11 @@ export interface GameServices {
   createSave<T>(config: SaveConfig<T>): SaveStore<T>
   setSound(enabled: boolean): void
   setLang(lang: Lang): void
+  /**
+   * Applies host language detection after platform init. An explicit URL or
+   * saved player choice always wins and is never overwritten.
+   */
+  syncPlatformLang(): void
 }
 
 let current: GameServices | null = null
@@ -90,7 +95,9 @@ export function createServices(def: GameDefinition): GameServices {
     platformKind === 'poki'
       ? 'poki'
       : platformKind === 'crazygames'
-        ? 'dev'
+        ? import.meta.env.VITE_AD_CHANNEL === 'crazygames'
+          ? 'crazygames'
+          : 'dev'
         : import.meta.env.VITE_AD_CHANNEL === 'h5games'
           ? 'h5games'
           : 'dev'
@@ -101,6 +108,8 @@ export function createServices(def: GameDefinition): GameServices {
   const i18n = new I18n(mergeI18n(coreI18n, def.i18n), lang)
 
   const audio = new AudioManager(settings.value.sound, def.audioSamples)
+  audio.setHostMuted(platform.hostMuted?.() ?? false)
+  platform.onHostMutedChange?.((muted) => audio.setHostMuted(muted))
   const ads = new AdService(
     createAdChannel(adChannelKind, { sound: () => audio.soundEnabled }),
     platform,
@@ -134,6 +143,14 @@ export function createServices(def: GameDefinition): GameServices {
       settings.update({ lang: next, langChosen: true })
       i18n.setLang(next)
       document.documentElement.lang = htmlLang(next)
+      document.title = `${i18n.t('game.title')} · Mini Games`
+    },
+    syncPlatformLang(): void {
+      if (settings.value.langChosen || isLang(params.get('lang'))) return
+      const detected = platform.lang()
+      if (!detected || detected === i18n.lang) return
+      i18n.setLang(detected)
+      document.documentElement.lang = htmlLang(detected)
       document.title = `${i18n.t('game.title')} · Mini Games`
     },
   }
