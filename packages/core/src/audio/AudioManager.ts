@@ -1,3 +1,5 @@
+import { peakAmplitude, peakNormalizationGain } from './normalize'
+
 export type SfxName = 'click' | 'eat' | 'die' | 'turn' | 'start' | 'pause' | 'boost' | 'slow'
 
 /** Bundled sample URLs per effect; effects without samples stay fully synthesised. */
@@ -28,8 +30,55 @@ interface NoiseOptions {
 }
 
 const NOISE_SECONDS = 0.12
-/** Peak of a bundled sample is normalised to -6 dBFS, so this lands near the synth SFX. */
-const SAMPLE_GAIN = 0.25
+const MASTER_GAIN = 1
+/** Soft limiter: effects below this magnitude pass unchanged. */
+const SOFT_CLIP_KNEE = 0.9
+/** Hard ceiling after the soft knee; stays below 0 dBFS so stacked effects never clip. */
+const SOFT_CLIP_CEILING = 0.95
+
+/**
+ * WaveShaper curve: identity below the knee, then a smooth tanh shoulder that
+ * saturates to the ceiling. A DynamicsCompressorNode was tried first, but its
+ * fixed makeup gain swallowed 8-12 dB from short synth transients; this curve
+ * leaves normal effects untouched and only rounds off stacked peaks.
+ */
+function softClipCurve(): Float32Array<ArrayBuffer> {
+  const size = 4096
+  const curve = new Float32Array(size)
+  const span = SOFT_CLIP_CEILING - SOFT_CLIP_KNEE
+  for (let index = 0; index < size; index += 1) {
+    const input = (index / (size - 1)) * 2 - 1
+    const magnitude = Math.abs(input)
+    const shaped =
+      magnitude <= SOFT_CLIP_KNEE
+        ? magnitude
+        : SOFT_CLIP_KNEE + span * Math.tanh((magnitude - SOFT_CLIP_KNEE) / span)
+    curve[index] = Math.sign(input) * shaped
+  }
+  return curve
+}
+
+/**
+ * Peak level per effect, in linear gain, tuned for phone speakers: peaks sit
+ * between -9 and -1 dBFS instead of the previous -32…-18 dBFS. Mobile hardware
+ * rolls off below ~500 Hz, so the synth voices keep their fundamentals and
+ * harmonics above that range rather than relying on low sine tones.
+ */
+const SFX_LEVELS: Record<SfxName, number> = {
+  click: 0.35,
+  turn: 0.4,
+  eat: 0.9,
+  die: 0.9,
+  pause: 0.45,
+  start: 0.55,
+  boost: 0.6,
+  slow: 0.6,
+}
+
+interface AudioSample {
+  buffer: AudioBuffer
+  gain: number
+}
 
 /**
  * Zero-asset sound effects generated with Web Audio. Real sound files can be
@@ -40,7 +89,7 @@ export class AudioManager {
   private master: GainNode | null = null
   private noiseBuffer: AudioBuffer | null = null
   private readonly sampleUrls = new Map<SfxName, readonly string[]>()
-  private readonly samples = new Map<SfxName, AudioBuffer[]>()
+  private readonly samples = new Map<SfxName, AudioSample[]>()
   private samplesLoading = false
   private enabled: boolean
 
@@ -61,7 +110,7 @@ export class AudioManager {
   setEnabled(enabled: boolean): void {
     this.enabled = enabled
     if (this.master && this.ctx) {
-      this.master.gain.setTargetAtTime(enabled ? 0.9 : 0, this.ctx.currentTime, 0.02)
+      this.master.gain.setTargetAtTime(enabled ? MASTER_GAIN : 0, this.ctx.currentTime, 0.02)
     }
   }
 
@@ -74,7 +123,7 @@ export class AudioManager {
   /** Restores the master gain according to the saved sound preference. */
   resume(): void {
     if (!this.master || !this.ctx) return
-    this.master.gain.setTargetAtTime(this.enabled ? 0.9 : 0, this.ctx.currentTime, 0.02)
+    this.master.gain.setTargetAtTime(this.enabled ? MASTER_GAIN : 0, this.ctx.currentTime, 0.02)
   }
 
   /** Must be called from a user gesture at least once (iOS/Safari). */
@@ -85,17 +134,21 @@ export class AudioManager {
       if (!Ctor) return
       this.ctx = new Ctor()
       this.master = this.ctx.createGain()
-      this.master.gain.value = 0.9
-      this.master.connect(this.ctx.destination)
+      this.master.gain.value = MASTER_GAIN
+      const limiter = this.ctx.createWaveShaper()
+      limiter.curve = softClipCurve()
+      limiter.oversample = '2x'
+      this.master.connect(limiter)
+      limiter.connect(this.ctx.destination)
     }
-    if (this.ctx.state === 'suspended') void this.ctx.resume()
+    if (this.ctx.state !== 'running' && this.ctx.state !== 'closed') void this.ctx.resume()
     this.loadSamples()
   }
 
   play(name: SfxName, { pitch = 1, gain = 1 }: SfxOptions = {}): void {
     if (!this.enabled) return
     if (!this.ctx) return
-    if (this.ctx.state === 'suspended') void this.ctx.resume()
+    if (this.ctx.state !== 'running' && this.ctx.state !== 'closed') void this.ctx.resume()
 
     const buffers = this.samples.get(name)
     if (buffers) {
@@ -103,36 +156,43 @@ export class AudioManager {
       return
     }
 
+    const level = SFX_LEVELS[name] * gain
     switch (name) {
       case 'click':
-        this.tone(520, 0.05, { type: 'square', gain: 0.04 * gain })
+        this.tone(1100, 0.05, { type: 'square', gain: level })
         break
       case 'turn':
-        this.tone(320, 0.03, { type: 'square', gain: 0.025 * gain })
+        this.tone(880, 0.04, { type: 'triangle', gain: level })
         break
       case 'eat':
         // Filtered noise gives the bite its transient; the pop carries the score cue.
-        this.noise(0.05, { gain: 0.05 * gain, frequency: 1800 * pitch, q: 1.3 })
-        this.tone(520, 0.07, { type: 'triangle', gain: 0.05 * gain, endFrequency: 780, pitch })
-        this.tone(1560, 0.055, { type: 'sine', gain: 0.015 * gain, delay: 0.02, pitch })
+        // Every layer sits in the phone speaker's usable band (>= 760 Hz).
+        this.noise(0.05, { gain: level * 0.45, frequency: 2600 * pitch, q: 1.2 })
+        this.tone(760, 0.07, { type: 'triangle', gain: level * 0.6, endFrequency: 1050, pitch })
+        this.tone(1520, 0.055, { type: 'sine', gain: level * 0.25, delay: 0.02, pitch })
         break
       case 'die':
-        this.tone(250, 0.35, { type: 'sawtooth', gain: 0.08 * gain, endFrequency: 60 })
+        // Keep the falling body for headphones, plus an octave and a noise burst
+        // so the death cue survives a phone speaker that cannot reproduce 60 Hz.
+        this.tone(250, 0.35, { type: 'sawtooth', gain: level * 0.7, endFrequency: 60 })
+        this.tone(500, 0.35, { type: 'sawtooth', gain: level * 0.35, endFrequency: 120 })
+        this.noise(0.08, { gain: level * 0.3, frequency: 1200, q: 0.9 })
         break
       case 'pause':
-        this.tone(440, 0.08, { type: 'sine', gain: 0.04 * gain, endFrequency: 300 })
+        this.tone(660, 0.08, { type: 'sine', gain: level, endFrequency: 440 })
         break
       case 'start':
-        this.tone(523, 0.08, { type: 'triangle', gain: 0.05 * gain, delay: 0 })
-        this.tone(659, 0.08, { type: 'triangle', gain: 0.05 * gain, delay: 0.08 })
-        this.tone(784, 0.12, { type: 'triangle', gain: 0.05 * gain, delay: 0.16 })
+        this.tone(659, 0.08, { type: 'triangle', gain: level })
+        this.tone(784, 0.08, { type: 'triangle', gain: level, delay: 0.08 })
+        this.tone(988, 0.12, { type: 'triangle', gain: level, delay: 0.16 })
         break
       case 'boost':
-        this.tone(620, 0.08, { type: 'square', gain: 0.045 * gain, endFrequency: 940 })
-        this.tone(940, 0.14, { type: 'triangle', gain: 0.05 * gain, delay: 0.07 })
+        this.tone(880, 0.08, { type: 'square', gain: level * 0.6, endFrequency: 1320 })
+        this.tone(1320, 0.14, { type: 'triangle', gain: level * 0.5, delay: 0.07 })
         break
       case 'slow':
-        this.tone(430, 0.2, { type: 'sine', gain: 0.05 * gain, endFrequency: 190 })
+        this.tone(660, 0.2, { type: 'triangle', gain: level * 0.7, endFrequency: 330 })
+        this.tone(220, 0.2, { type: 'sine', gain: level * 0.35, endFrequency: 150 })
         break
     }
   }
@@ -148,25 +208,33 @@ export class AudioManager {
           .then((response) => response.arrayBuffer())
           .then((data) => ctx.decodeAudioData(data))
           .then((buffer) => {
-            const buffers = this.samples.get(name) ?? []
-            buffers.push(buffer)
-            this.samples.set(name, buffers)
+            const channels = Array.from({ length: buffer.numberOfChannels }, (_, index) =>
+              buffer.getChannelData(index),
+            )
+            const sample: AudioSample = {
+              buffer,
+              gain: peakNormalizationGain(peakAmplitude(channels)),
+            }
+            const samples = this.samples.get(name) ?? []
+            samples.push(sample)
+            this.samples.set(name, samples)
           })
           .catch(() => undefined)
       }
     }
   }
 
-  private playSample(buffers: readonly AudioBuffer[], pitch: number, gainMultiplier: number): void {
+  private playSample(samples: readonly AudioSample[], pitch: number, gainMultiplier: number): void {
     const ctx = this.ctx
     const master = this.master
-    if (!ctx || !master) return
+    const sample = samples[Math.floor(Math.random() * samples.length)]
+    if (!ctx || !master || !sample) return
 
     const source = ctx.createBufferSource()
     const gain = ctx.createGain()
-    source.buffer = buffers[Math.floor(Math.random() * buffers.length)]
+    source.buffer = sample.buffer
     source.playbackRate.value = pitch
-    gain.gain.value = SAMPLE_GAIN * gainMultiplier
+    gain.gain.value = sample.gain * gainMultiplier
     source.connect(gain)
     gain.connect(master)
     source.start()

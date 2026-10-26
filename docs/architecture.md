@@ -298,6 +298,7 @@ const outcome = await services.ads.showRewarded('revive')
 - `index.html`、`manifest.webmanifest`、`game.manifest.json`、`favicon.svg` 无法 import TS，保留静态字面量；`colors.test.ts` 校验它们与 `colors.ts` 的关键颜色一致，防止漂移。贪吃蛇的 favicon 以主题 `accent` 作底色、`onAccent` 作内边框；PWA PNG 由 favicon 重新生成并填实透明角。
 - 图标优先 Lucide 等开源图标，只取实际用到的，记录来源/许可证。当前菜单/按钮图标为程序化 Graphics，不引入图标依赖。
 - 音效以 WebAudio 合成兜底；`eat` 使用打包的 CC0 咬合采样（`games/snake/src/assets/audio/eat-1.wav`/`eat-2.wav`，来自 OpenGameArt「7 Eating Crunches」/ StarNinjas，CC0），经 `GameDefinition.audioSamples` 注册，在首次用户手势后 `fetch + decodeAudioData` 缓存；`play()` 的 `pitch` 对采样走 `playbackRate`，连吃按五声音阶升调。
+- **音效电平按峰值定标**：合成音效峰值 −9…−1 dBFS；采样解码后用 `peakAmplitude` / `peakNormalizationGain`（`packages/core/src/audio/normalize.ts`）归一化到 −1 dBFS，最多提升 +18 dB，避免换素材后忽大忽小。master 后接 `WaveShaperNode` 软削波（0.9 以下直通，上限 −0.5 dBFS），多层叠加（盛宴连吃、倒计时 + 吃果）不会硬削波，也不像 `DynamicsCompressorNode` 那样把短促的合成音效压低。合成音效的基频与泛音落在 700 Hz 以上，并为 `die` 叠加高八度层，保证手机外放在 500 Hz 以下滚降时仍能听清。
 - 运行时零外部请求：无 CDN、外部字体、统计脚本、远程图片/音频。
 - 首包目标 ≤ 1.5MB gzip；Phaser 本身约 370KB gzip。贪吃蛇 2.0 约 375KB gzip。
 
