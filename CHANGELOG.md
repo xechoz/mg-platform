@@ -2,6 +2,11 @@
 
 ## 未发布
 
+### 加载体验
+
+- 首屏新增内联 HTML/CSS splash：Phaser 下载和启动前立即显示主题背景、标题与加载动画，首个 canvas 出现后淡出；自托管、Poki、CrazyGames 构建共用。
+- Poki/CrazyGames 外部 SDK 脚本移到 `<body>` 内，避免阻塞首屏 HTML 解析和 splash 绘制；SDK 仍在游戏模块启动前加载。
+
 ### 输入
 
 - 修复方向键与空格无法操作：页面滚动守卫在捕获阶段对方向键调用 `preventDefault`，Phaser 会忽略 `defaultPrevented` 的按键事件，导致方向控制与空格暂停全部失效。改为通过 Phaser `input.keyboard.capture` 在游戏处理后再阻止页面滚动，WASD/方向键/空格全部恢复。
@@ -17,6 +22,7 @@
 
 - 新增 `VITE_PLATFORM=crazygames` 构建：注入 CrazyGames SDK v3，`PlatformAdapter` 映射 loading、gameplay、happy time 和语言；`VITE_AD_CHANNEL=crazygames` 启用 Full Launch 广告渠道，Basic Launch 构建默认无广告。
 - 新增 `CrazyGamesAdChannel`：`rewarded` 只在 `adFinished` 发奖，`adError` 不发奖；`midgame` 只用于死亡/结算等自然断点。`adblock`/`adsDisabled` 后本次会话隐藏奖励入口，`unfilled`/`adCooldown` 保持可重试。
+- 修复 CrazyGames 广告错误按字符串判断导致 `adblock`/`adsDisabled` 不生效：按 SDK v3 的 `{ code, message }` 对象读取错误码，错误日志保留 code 与详情。
 - 接入 CrazyGames `muteAudio`：宿主静音优先于游戏内音效开关，广告期间也不会因为解除宿主静音而中途出声；不写入玩家存档。
 - CrazyGames 构建跳过 Preload 点击门槛，加载完成直接进菜单，从新用户到可玩只需菜单「开始」1 次点击。
 - 平台语言在 SDK 初始化后再次同步：URL `?lang=` > 玩家显式选择 > SDK locale > 英文，自动检测不写入 `langChosen`。

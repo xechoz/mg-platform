@@ -194,11 +194,12 @@ describe('CrazyGamesRuntime', () => {
     await runtime.init()
     const ad = adOf(sdk)
     ad.requestAd.mockImplementation((_type, callbacks) => {
-      callbacks.adError?.('unfilled')
+      callbacks.adError?.({ code: 'unfilled', message: 'No ad available' })
     })
 
     await expect(runtime.rewardedBreak()).resolves.toBe(false)
     expect(runtime.rewardedAvailable).toBe(true)
+    expect(console.warn).toHaveBeenCalledWith('[crazygames] ad error: unfilled (No ad available)')
   })
 
   it('disables the channel after an adblock error', async () => {
@@ -208,7 +209,7 @@ describe('CrazyGamesRuntime', () => {
     await runtime.init()
     const ad = adOf(sdk)
     ad.requestAd.mockImplementation((_type, callbacks) => {
-      callbacks.adError?.('adblock')
+      callbacks.adError?.({ code: 'adblock' })
     })
 
     await expect(runtime.rewardedBreak()).resolves.toBe(false)
@@ -222,7 +223,7 @@ describe('CrazyGamesRuntime', () => {
     await runtime.init()
     const ad = adOf(sdk)
     ad.requestAd.mockImplementation((_type, callbacks) => {
-      callbacks.adError?.('adsDisabled')
+      callbacks.adError?.({ code: 'adsDisabled' })
     })
 
     await expect(runtime.rewardedBreak()).resolves.toBe(false)

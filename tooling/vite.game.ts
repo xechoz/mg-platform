@@ -62,7 +62,8 @@ function pokiSdkPlugin(): Plugin {
           {
             tag: 'script',
             attrs: { src: POKI_SDK_URL },
-            injectTo: 'head-prepend',
+            // Load after the inline splash so the external SDK never blocks first paint.
+            injectTo: 'body',
           },
         ],
       }
@@ -91,7 +92,8 @@ function crazyGamesSdkPlugin(): Plugin {
           {
             tag: 'script',
             attrs: { src: CRAZYGAMES_SDK_URL },
-            injectTo: 'head-prepend',
+            // Load after the inline splash so the external SDK never blocks first paint.
+            injectTo: 'body',
           },
         ],
       }

@@ -14,6 +14,7 @@ import {
 export {
   type CrazyGamesAdCallbacks,
   CrazyGamesAdChannel,
+  type CrazyGamesAdError,
   type CrazyGamesAdType,
   CrazyGamesPlatform,
   CrazyGamesRuntime,

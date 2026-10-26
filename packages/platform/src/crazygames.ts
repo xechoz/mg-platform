@@ -2,10 +2,15 @@ import { type AdChannel, isLang, type Lang, type PlatformAdapter } from './types
 
 export type CrazyGamesAdType = 'midgame' | 'rewarded'
 
+export interface CrazyGamesAdError {
+  code: string
+  message?: string
+}
+
 export interface CrazyGamesAdCallbacks {
   adStarted?: () => void
   adFinished?: () => void
-  adError?: (error: string) => void
+  adError?: (error: CrazyGamesAdError) => void
 }
 
 export interface CrazyGamesSettings {
@@ -199,10 +204,11 @@ export class CrazyGamesRuntime {
     })
   }
 
-  private handleAdError(error: string): void {
-    if (error === 'adblock') this.adsBlocked = true
-    if (error === 'adsDisabled') this.adsDisabled = true
-    console.warn(`[crazygames] ad error: ${error}`)
+  private handleAdError(error: CrazyGamesAdError): void {
+    if (error.code === 'adblock') this.adsBlocked = true
+    if (error.code === 'adsDisabled') this.adsDisabled = true
+    const detail = error.message ? ` (${error.message})` : ''
+    console.warn(`[crazygames] ad error: ${error.code}${detail}`)
   }
 
   private setHostMuted(muted: boolean): void {

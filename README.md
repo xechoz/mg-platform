@@ -34,6 +34,16 @@ npm run build:snake
 npm run preview -w @mg/snake
 ```
 
+本地运行已打包的 CrazyGames 版本：
+
+```bash
+cd games/snake
+./run-crazygames.sh basic   # http://localhost:8080
+./run-crazygames.sh full    # http://localhost:8081
+```
+
+脚本会解压对应的 `snake-crazygames-<mode>.zip` 并启动静态服务器；需要先在 `games/snake/dist` 打包出 zip。
+
 ## 移动端全屏
 
 - Android / iPad：首次点击「开始」后进入全屏，主菜单即全屏。
