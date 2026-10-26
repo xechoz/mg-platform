@@ -44,6 +44,9 @@ for (const game of games) {
     if (source.includes('PokiSDK')) {
       errors.push(`${relative}: talk to Poki through @mg/platform, not window.PokiSDK`)
     }
+    if (source.includes('CrazyGames')) {
+      errors.push(`${relative}: talk to CrazyGames through @mg/platform, not window.CrazyGames`)
+    }
     if (source.includes('localStorage.')) {
       errors.push(`${relative}: use the SaveStore instead of localStorage`)
     }
@@ -72,6 +75,9 @@ for (const pkgDir of readdirSync(join(root, 'packages'), { withFileTypes: true }
     }
     if (source.includes('PokiSDK') && pkg.name !== '@mg/platform') {
       errors.push(`${relative}: only @mg/platform may touch PokiSDK`)
+    }
+    if (source.includes('CrazyGames') && pkg.name !== '@mg/platform') {
+      errors.push(`${relative}: only @mg/platform may touch CrazyGames`)
     }
   }
 }

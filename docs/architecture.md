@@ -375,6 +375,9 @@ interstitialBreak?(onStart?: () => void): Promise<void>
 - `@mg/platform` 是唯一允许接触广告 SDK 的地方；Poki 宿主与 Poki 广告共享同一个 SDK 运行时。
 - 游戏只通过 `@mg/core` 的 `AdService`；它负责单飞、静音、`gameplayStop`、结果映射和调试统计。
 - `VITE_PLATFORM=poki` 强制 `adChannel=poki`；自有站默认无广告渠道（奖励入口隐藏）。
+- `VITE_PLATFORM=crazygames` 注入 CrazyGames SDK v3，并把 `loadingStart/Stop`、`gameplayStart/Stop`、`happytime`、locale 映射到 `PlatformAdapter`；CrazyGames 广告渠道尚未接入。
+- CrazyGames 构建不加载 H5 Ads 或其他外部广告；平台 SDK 只由 Vite 插件注入，游戏代码不接触 `window.CrazyGames`。
+- 不提供 TrackKit 式的通用自定义事件层；需要分析时走平台后台、平台原生事件或以后单独设计的渠道，避免与生命周期重复上报。
 - 自有站 H5 Games Ads 已实现：`VITE_AD_CHANNEL=h5games` + `VITE_ADSENSE_CLIENT`；缺少 publisher ID 时构建无广告。真实广告还需要 AdSense/H5 审核、`ads.txt`、隐私政策和 CMP。
 - H5 的 `rewardedAvailable` 只表示 SDK ready，不表示库存；no-fill 按未奖励处理。
 - 广告只在死亡/菜单/结算等边界触发；广告期间停表、静音、锁输入，且不触发 SDK 事件。

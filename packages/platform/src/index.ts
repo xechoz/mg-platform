@@ -1,3 +1,4 @@
+import { CrazyGamesPlatform, CrazyGamesRuntime } from './crazygames'
 import { H5GamesAdChannel } from './h5games'
 import { PokiAdChannel, PokiPlatform, PokiRuntime } from './poki'
 import {
@@ -10,6 +11,11 @@ import {
   WebPlatform,
 } from './types'
 
+export {
+  CrazyGamesPlatform,
+  CrazyGamesRuntime,
+  type CrazyGamesSdk,
+} from './crazygames'
 export {
   type H5AdApi,
   type H5AdBreakConfig,
@@ -36,12 +42,21 @@ function pokiRuntime(): PokiRuntime {
   return sharedPoki
 }
 
+let sharedCrazyGames: CrazyGamesRuntime | null = null
+
+function crazyGamesRuntime(): CrazyGamesRuntime {
+  sharedCrazyGames ??= new CrazyGamesRuntime()
+  return sharedCrazyGames
+}
+
 export function createPlatform(kind: PlatformKind = 'web'): PlatformAdapter {
   switch (kind) {
     case 'web':
       return new WebPlatform()
     case 'poki':
       return new PokiPlatform(pokiRuntime())
+    case 'crazygames':
+      return new CrazyGamesPlatform(crazyGamesRuntime())
   }
 }
 

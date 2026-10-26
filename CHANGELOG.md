@@ -9,6 +9,11 @@
 - 合成音效频谱上移以适配手机扬声器：`click` 520→1100 Hz、`turn` 320→880 Hz、`start` 上移到 E5/G5/B5、`slow` 改为 660→330 Hz 三角波、`die` 叠加高八度锯齿与 1.2 kHz 噪声瞬态。
 - 新增 `packages/core/src/audio/normalize.ts` 与单测，覆盖峰值测量、归一化增益、静音与提升上限。
 
+### 平台接入
+
+- 新增 `VITE_PLATFORM=crazygames` 构建：注入 CrazyGames SDK v3，`PlatformAdapter` 映射 loading、gameplay、happy time 和语言；CrazyGames 广告渠道暂未接入。
+- 移除未发布的 TrackKit 自定义统计抽象；平台生命周期统一由 `PlatformAdapter` 负责，不再保留 `services.track` 与游戏侧事件 facade。
+
 ### 移动端菜单
 
 - 竖屏菜单重新分配纵向空间：开始按钮底边从屏幕底部约 92% 抬到约 81%，操作提示与全屏/A2HS 提示移到按钮下方；两行全屏提示按 56 高度预留，不再和按钮或操作提示重叠；demo 最大宽度 520→560，填掉 logo/最高分与按钮之间的空白。横屏保持左右分栏，只统一底部提示间距与安全区。

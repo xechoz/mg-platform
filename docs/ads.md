@@ -54,15 +54,15 @@ VITE_ADSENSE_TEST=on npm run dev:snake
 VITE_AD_CHANNEL=h5games VITE_ADSENSE_CLIENT=ca-pub-... npm run site
 ```
 
-| 变量                  | 取值                       | 默认  | 说明                                 |
-| --------------------- | -------------------------- | ----- | ------------------------------------ |
-| `VITE_PLATFORM`       | `web` / `poki`             | `web` | 宿主；Poki 强制 `poki` 渠道          |
-| `VITE_AD_CHANNEL`     | `dev` / `poki` / `h5games` | `dev` | 广告渠道；Poki 构建忽略              |
-| `VITE_ADSENSE_CLIENT` | `ca-pub-...` / `pub-...`   | 无    | H5 必需；缺失时构建无广告            |
-| `VITE_ADSENSE_TEST`   | `on`                       | 关    | test mode；production build 强制忽略 |
+| 变量                  | 取值                          | 默认  | 说明                                                 |
+| --------------------- | ----------------------------- | ----- | ---------------------------------------------------- |
+| `VITE_PLATFORM`       | `web` / `poki` / `crazygames` | `web` | 宿主；Poki 强制 `poki` 渠道；CrazyGames 暂无广告渠道 |
+| `VITE_AD_CHANNEL`     | `dev` / `poki` / `h5games`    | `dev` | 广告渠道；Poki/CrazyGames 构建忽略                   |
+| `VITE_ADSENSE_CLIENT` | `ca-pub-...` / `pub-...`      | 无    | H5 必需；缺失时构建无广告                            |
+| `VITE_ADSENSE_TEST`   | `on`                          | 关    | test mode；production build 强制忽略                 |
 - `VITE_PLATFORM=poki` 时 `createServices` 强制 `adChannel=poki`；Poki 禁止其他广告系统。
 - `VITE_AD_CHANNEL` 未设置视为 `dev`：开发环境用模拟器，生产环境不可用。
-- Poki SDK 脚本只由 `tooling/vite.game.ts` 在 Poki 构建注入；H5 SDK 只在 `h5games` 构建注入；默认构建保持零外部请求。
+- Poki/CrazyGames 的 SDK 脚本只由 `tooling/vite.game.ts` 在对应平台构建注入；H5 SDK 只在 `h5games` 构建注入；默认构建保持零外部请求。
 - H5 的 publisher ID 来自构建环境，不写进代码；没有 ID 时构建成功但无广告，奖励入口隐藏。
 - `VITE_ADSENSE_TEST=on` 只允许 dev/staging；`vite build`（production）会警告并忽略。
 - `npm run site` 在 `VITE_AD_CHANNEL=h5games` 且 publisher ID 有效时生成 `dist-site/ads.txt`。

@@ -86,5 +86,6 @@ docs/          # 架构、开发清单、发布说明
 
 - 自有站：`npm run site` → 部署 `dist-site/`（Cloudflare Pages / GitHub Pages 均可）。
 - Poki：`VITE_PLATFORM=poki npm run build:snake`，将 `games/snake/dist` 打成 zip（`index.html` 在根目录）。Poki 适配器与 SDK 注入在提交前接入。
+- CrazyGames：`VITE_PLATFORM=crazygames npm run build:snake`，构建时注入 CrazyGames SDK v3；广告渠道尚未接入。
 
 详见 [docs/publishing.md](docs/publishing.md)。

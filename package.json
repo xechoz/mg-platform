@@ -16,6 +16,7 @@
     "build:games": "npm run build --workspaces --if-present",
     "site": "npm run build:games && node tooling/build-site.ts",
     "new:game": "node tooling/create-game.ts",
+    "stats": "node tooling/count-lines.ts",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && biome check . && node tooling/check-boundaries.ts",
     "test": "vitest run",

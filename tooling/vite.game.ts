@@ -2,6 +2,7 @@ import { loadEnv, type Plugin, type UserConfig } from 'vite'
 import { ADSENSE_TEST_CLIENT, normalizeAdsenseClient } from './adsense.ts'
 
 const POKI_SDK_URL = 'https://game-cdn.poki.com/scripts/v2/poki-sdk.js'
+const CRAZYGAMES_SDK_URL = 'https://sdk.crazygames.com/crazygames-sdk-v3.js'
 const ADSENSE_SDK_URL = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'
 const ADSENSE_SHIM =
   'window.adsbygoogle = window.adsbygoogle || []; var adBreak = adConfig = function(o) { adsbygoogle.push(o); }'
@@ -17,7 +18,7 @@ export interface GameConfigOptions {
 export function gameConfig({ port = 5173 }: GameConfigOptions = {}): UserConfig {
   return {
     base: './',
-    plugins: [pokiSdkPlugin(), h5GamesAdsPlugin()],
+    plugins: [pokiSdkPlugin(), crazyGamesSdkPlugin(), h5GamesAdsPlugin()],
     build: {
       target: 'es2022',
       outDir: 'dist',
@@ -70,6 +71,35 @@ function pokiSdkPlugin(): Plugin {
 }
 
 /**
+ * CrazyGames is the only build allowed to load the CrazyGames SDK. The
+ * self-hosted and Poki builds must stay free of its external script.
+ */
+function crazyGamesSdkPlugin(): Plugin {
+  let enabled = false
+
+  return {
+    name: 'mg-crazygames-sdk',
+    configResolved(config) {
+      const env = loadEnv(config.mode, config.root, 'VITE_')
+      enabled = (process.env.VITE_PLATFORM ?? env.VITE_PLATFORM) === 'crazygames'
+    },
+    transformIndexHtml(html) {
+      if (!enabled) return html
+      return {
+        html,
+        tags: [
+          {
+            tag: 'script',
+            attrs: { src: CRAZYGAMES_SDK_URL },
+            injectTo: 'head-prepend',
+          },
+        ],
+      }
+    },
+  }
+}
+
+/**
  * Google H5 Games Ads is opt-in through `VITE_AD_CHANNEL=h5games`. The shim
  * must run before the async SDK so early `adConfig`/`adBreak` calls are queued.
  * Without a publisher ID the build stays ad-free instead of shipping a broken
@@ -90,7 +120,7 @@ function h5GamesAdsPlugin(): Plugin {
       const env = loadEnv(config.mode, config.root, 'VITE_')
       const platform = process.env.VITE_PLATFORM ?? env.VITE_PLATFORM
       const channel = process.env.VITE_AD_CHANNEL ?? env.VITE_AD_CHANNEL
-      if (platform === 'poki' || channel !== 'h5games') return
+      if (platform === 'poki' || platform === 'crazygames' || channel !== 'h5games') return
 
       const productionBuild = config.command === 'build' && config.mode === 'production'
       const wantsTest = (process.env.VITE_ADSENSE_TEST ?? env.VITE_ADSENSE_TEST) === 'on'

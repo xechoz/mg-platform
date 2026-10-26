@@ -55,7 +55,7 @@ export interface AdChannelOptions {
   readonly sound?: () => boolean
 }
 
-export type PlatformKind = 'web' | 'poki'
+export type PlatformKind = 'web' | 'poki' | 'crazygames'
 export type AdChannelKind = 'dev' | 'poki' | 'h5games'
 
 /** No-op host used by the self-hosted site and local development. */

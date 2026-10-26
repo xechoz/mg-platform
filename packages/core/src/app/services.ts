@@ -77,17 +77,25 @@ export function createServices(def: GameDefinition): GameServices {
   }
   const params = new URLSearchParams(window.location.search)
   const defaultLang = def.defaultLang ?? 'en'
+  const debug = def.debug === true || params.has('debug')
   const settings = new SettingsStore(defaultLang)
 
-  const platformKind: PlatformKind = import.meta.env.VITE_PLATFORM === 'poki' ? 'poki' : 'web'
+  const platformKind: PlatformKind =
+    import.meta.env.VITE_PLATFORM === 'poki'
+      ? 'poki'
+      : import.meta.env.VITE_PLATFORM === 'crazygames'
+        ? 'crazygames'
+        : 'web'
   const adChannelKind: AdChannelKind =
     platformKind === 'poki'
       ? 'poki'
-      : import.meta.env.VITE_AD_CHANNEL === 'h5games'
-        ? 'h5games'
-        : 'dev'
+      : platformKind === 'crazygames'
+        ? 'dev'
+        : import.meta.env.VITE_AD_CHANNEL === 'h5games'
+          ? 'h5games'
+          : 'dev'
   const platform = createPlatform(platformKind)
-  const fallback = platformKind === 'poki' ? 'en' : defaultLang
+  const fallback = platformKind === 'web' ? defaultLang : 'en'
   const stored = settings.value.langChosen ? settings.value.lang : undefined
   const lang = resolveLang(params, stored, fallback, platform.lang())
   const i18n = new I18n(mergeI18n(coreI18n, def.i18n), lang)
@@ -108,7 +116,7 @@ export function createServices(def: GameDefinition): GameServices {
     platform,
     ads,
     params,
-    debug: def.debug === true || params.has('debug'),
+    debug,
     createSave<T>(config: SaveConfig<T>): SaveStore<T> {
       return new SaveStore<T>({
         key: `mg:${def.id}:${config.name}`,
