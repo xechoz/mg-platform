@@ -1,5 +1,6 @@
 import type { Lang } from '@mg/platform'
 
+export { isLang, SUPPORTED_LANGS } from '@mg/platform'
 export {
   type AdActiveListener,
   type AdAudio,
@@ -42,6 +43,7 @@ export {
 export { DebugOverlay } from './debug/DebugOverlay'
 export { coreI18n } from './i18n/core'
 export { type Dictionary, I18n, resolveLang } from './i18n/I18n'
+export { htmlLang, LANG_LABELS, LANG_SHORT } from './i18n/languages'
 export { createRng, type Rng, randomSeed } from './rng'
 export { BootScene } from './scenes/BootScene'
 export { PreloadScene } from './scenes/PreloadScene'

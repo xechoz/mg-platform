@@ -22,7 +22,7 @@ packages/platform
   WebPlatform       自有站宿主（无 SDK）
 
 packages/core
-  AdService         单飞、静音、gameplayStop、结果映射、调试统计
+  AdService         单飞、静音、gameplayStop、插屏、结果映射、调试统计
   RewardedButton    合规奖励按钮
   rewardOfferActions 标准 + 奖励按钮的合规模板
 
@@ -76,9 +76,14 @@ const outcome = await services.ads.showRewarded('revive')
 // outcome: 'rewarded' | 'skipped' | 'failed'
 
 if (outcome === 'rewarded') applyRevive()
+
+// 自然断点插屏：不返回奖励，也不负责 gameplayStart()
+await services.ads.showInterstitial()
 ```
 
 `showRewarded(placement)` 会把 placement 透传给渠道（H5 用作 `adBreak.name`，Poki 忽略），并通过 `AdChannelOptions.sound()` 读取玩家静音偏好来决定广告是否出声；游戏侧不需要感知这些。
+
+`showInterstitial()` 只用于 Poki 的 `commercialBreak`：在暂停恢复、重开等自然断点调用。它同样会停表、静音、锁输入，但不会发放奖励，也不会调用 `gameplayStart()`；游戏必须在真正回到玩法时自己调用 `gameplayStart()`。没有 `interstitialBreak` 的渠道（web/dev/H5）会直接 no-op。
 
 `AdService` 负责：
 - 同时只跑一个广告；重复点击返回 `failed`，不会重复发奖。
@@ -104,7 +109,7 @@ if (outcome === 'rewarded') applyRevive()
 - `gameLoadingFinished()` 在 Preload 完成后调用。
 - `gameplayStart()` / `gameplayStop()` 去重；广告期间忽略所有宿主事件。
 - `rewardedBreak(placement, onStart)` 返回 `true` 才发奖；placement 仅用于渠道报表，Poki 忽略。
-- `commercialBreak(onStart)` 只保留接口，当前没有游戏使用；调用点必须遵守 Poki 的“退出暂停回到玩法”规则。
+- `commercialBreak(onStart)` 已接入：暂停恢复、暂停/结算重开时由 `AdService.showInterstitial()` 调用；广告期间屏蔽宿主事件，奖励广告后的重开传 `commercial:false`，避免连续两条广告。
 
 ### Dev 模拟器
 

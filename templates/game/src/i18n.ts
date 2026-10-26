@@ -1,12 +1,23 @@
-import type { Dictionary } from '@mg/core'
+import type { Dictionary, Lang } from '@mg/core'
 
-export const gameI18n: Record<'zh' | 'en', Dictionary> = {
+const en = {
+  'game.title': '__TITLE__',
+  'game.subtitle': 'Template scene · start building your game',
+}
+
+export const gameI18n: Record<Lang, Dictionary> = {
+  en,
+  fr: en,
+  it: en,
+  de: en,
+  es: en,
+  tr: en,
   zh: {
     'game.title': '__TITLE__',
     'game.subtitle': '模板场景 · 开始实现你的玩法',
   },
-  en: {
-    'game.title': '__TITLE__',
-    'game.subtitle': 'Template scene · start building your game',
-  },
+  ja: en,
+  ko: en,
+  pt: en,
+  ru: en,
 }

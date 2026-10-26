@@ -98,6 +98,30 @@ export class AdService {
     return outcome
   }
 
+  /**
+   * Shows one interstitial at a natural break. The provider decides whether an
+   * ad actually plays; this method only owns mute/pause/locking.
+   */
+  async showInterstitial(): Promise<void> {
+    const interstitialBreak = this.channel.interstitialBreak
+    if (this.inFlight || !interstitialBreak) return
+
+    this.inFlight = true
+    this.platform.gameplayStop()
+    this.audio.suspend()
+    this.setActive(true)
+
+    try {
+      await interstitialBreak()
+    } catch (error) {
+      console.warn('[ads] interstitial failed', error)
+    } finally {
+      this.audio.resume()
+      this.setActive(false)
+      this.inFlight = false
+    }
+  }
+
   stats(): Readonly<Record<string, AdStats>> {
     const snapshot: Record<string, AdStats> = {}
     for (const [placement, stats] of this.counters) snapshot[placement] = { ...stats }

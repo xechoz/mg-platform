@@ -63,21 +63,30 @@ cd games/snake/dist && zip -r ../../snake-poki.zip .
 ### 已实现
 
 `packages/platform` 已拆分宿主与广告渠道：
-- `PokiPlatform`：`init`、`gameLoadingFinished`、`gameplayStart/Stop`（去重）、`happyTime`、`haptic`。
+- `PokiPlatform`：`init`、`gameLoadingFinished`（幂等）、`gameplayStart/Stop`（去重）、`happyTime`、`haptic`。
 - `PokiAdChannel`：`rewardedBreak`、`commercialBreak`；广告期间屏蔽宿主事件。
 - `tooling/vite.game.ts` 只在 `VITE_PLATFORM=poki` 构建注入 SDK 脚本。
-- `@mg/core` 的 `AdService` 负责静音、停表、单飞和结果映射。
+- `@mg/core` 的 `AdService` 负责静音、停表、单飞、插屏和结果映射。
+
+上架准备已补：
+- 11 种语言（`en/fr/it/de/es/tr/zh/ja/ko/pt/ru`），默认 `en`；Poki 构建优先使用 `PokiSDK.getLanguage()`，玩家手动选择覆盖检测结果。
+- 菜单语言弹窗使用原生语言名，不依赖国旗；`Settings` 升 v2，区分自动检测与玩家显式选择。
+- `commercialBreak` 已接入暂停恢复、暂停/结算重开；奖励广告后的重开不会重复插屏。
+- 全局键盘/滚轮守卫，阻止方向键、空格和滚轮滚动页面。
+- `index.html` / manifest 默认英文元数据。
 
 ### 提交前验证
 
 1. 用 Poki Inspector 跑 iframe、弱网、移动端模拟。
 2. 确认 SDK 事件不连续触发，广告期间没有事件。
 3. 确认 `gameLoadingFinished` 在 Preload 后触发。
-4. 确认广告拦截时不发奖，且没有自定义提示。
-5. 确认 zip 根目录有 `index.html`，资源相对路径，运行时除 Poki SDK 外无外部请求。
-6. 确认没有 Dev 模拟广告代码：`grep -r "模拟激励广告" dist` 应为空。
+4. 确认暂停恢复/重开的顺序为 `gameplayStop → commercialBreak → gameplayStart`，奖励复活为 `gameplayStop → rewardedBreak → gameplayStart`。
+5. 确认广告拦截时不发奖，且没有自定义提示。
+6. 确认 zip 根目录有 `index.html`，资源相对路径，运行时除 Poki SDK 外无外部请求。
+7. 确认没有 Dev 模拟广告代码：`grep -r "模拟激励广告" dist` 应为空。
+8. 确认 11 种语言在菜单、暂停、结算中无缺失文案，语言弹窗在竖屏/平板不溢出。
 
-当前没有 Poki 开发者账号/Inspector 权限，真实广告行为尚未验证；不要提审。
+当前仍没有 Poki 开发者账号/Inspector 权限；本地代码、构建和事件顺序已准备，但真实广告行为与 Inspector 提审尚未验证。拿到账号后先跑 Inspector，再更新本节并提交。
 
 ### 自有站
 
@@ -107,3 +116,7 @@ npm run build -w @mg/snake
 - 每个游戏独立构建，互不影响；`packages/core` 改动需要全量回归。
 - 站点发布保留上一版 `dist-site` 备份，出问题直接回滚静态文件。
 - 存档带版本号，发布新版本前确认迁移逻辑能读旧数据。
+
+## 下一步
+
+Poki 账号、Inspector 验证、发布素材、提审与发布后事项见 [`poki-next-steps.md`](./poki-next-steps.md)。

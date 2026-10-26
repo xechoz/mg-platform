@@ -27,7 +27,7 @@ export type {
   PlatformAdapter,
   PlatformKind,
 } from './types'
-export { DevAdChannel, WebPlatform } from './types'
+export { DevAdChannel, isLang, SUPPORTED_LANGS, WebPlatform } from './types'
 
 let sharedPoki: PokiRuntime | null = null
 

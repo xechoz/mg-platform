@@ -9,6 +9,7 @@ import { installResponsiveViewport } from './viewport'
 export function createGame(def: GameDefinition): Phaser.Game {
   const services = createServices(def)
   installPageStyles(services)
+  installPageScrollGuard()
 
   const initial = computeDesignSize(window.innerWidth, window.innerHeight, def.design.base)
 
@@ -65,4 +66,45 @@ function installPageStyles(services: GameServices): void {
     #game canvas { display: block; }
   `
   document.head.appendChild(style)
+}
+
+let pageScrollGuardInstalled = false
+
+/**
+ * Poki embeds games in an iframe: arrow keys, space and wheel must never scroll
+ * the host page. Capture phase also covers Phaser's canvas listeners.
+ */
+function installPageScrollGuard(): void {
+  if (pageScrollGuardInstalled) return
+  pageScrollGuardInstalled = true
+
+  window.addEventListener(
+    'keydown',
+    (event) => {
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return
+      const target = event.target
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT')
+      ) {
+        return
+      }
+      if (event.key === ' ' || event.key === 'Spacebar' || event.key.startsWith('Arrow')) {
+        event.preventDefault()
+      }
+    },
+    { capture: true },
+  )
+
+  window.addEventListener(
+    'wheel',
+    (event) => {
+      if (event.ctrlKey) return
+      event.preventDefault()
+    },
+    { passive: false },
+  )
 }

@@ -9,6 +9,7 @@ interface FakeSdk {
   commercialBreak: Mock<(onStart?: () => void) => Promise<void>>
   rewardedBreak: Mock<(onStart?: () => void) => Promise<boolean>>
   happyTime: Mock<() => void>
+  getLanguage: Mock<() => string>
 }
 
 function fakeSdk(): FakeSdk {
@@ -20,6 +21,7 @@ function fakeSdk(): FakeSdk {
     commercialBreak: vi.fn<(onStart?: () => void) => Promise<void>>().mockResolvedValue(undefined),
     rewardedBreak: vi.fn<(onStart?: () => void) => Promise<boolean>>().mockResolvedValue(true),
     happyTime: vi.fn<() => void>(),
+    getLanguage: vi.fn<() => string>().mockReturnValue('en'),
   }
 }
 
@@ -55,11 +57,29 @@ describe('PokiRuntime', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {})
     const sdk = fakeSdk()
     sdk.init.mockRejectedValue(new Error('blocked'))
+    sdk.getLanguage.mockReturnValue('fr-FR')
     const runtime = new PokiRuntime(() => sdk)
 
     await runtime.init()
 
     expect(runtime.rewardedAvailable).toBe(false)
+    expect(runtime.lang()).toBe('fr')
+  })
+
+  it('reads the host language before init and normalizes it', () => {
+    const sdk = fakeSdk()
+    const runtime = new PokiRuntime(() => sdk)
+
+    sdk.getLanguage.mockReturnValue('en-US')
+    expect(runtime.lang()).toBe('en')
+    sdk.getLanguage.mockReturnValue('zh-CN')
+    expect(runtime.lang()).toBe('zh')
+    sdk.getLanguage.mockReturnValue('pt-BR')
+    expect(runtime.lang()).toBe('pt')
+    sdk.getLanguage.mockReturnValue('sv-SE')
+    expect(runtime.lang()).toBeNull()
+    sdk.getLanguage.mockReturnValue('')
+    expect(runtime.lang()).toBeNull()
   })
 
   it('does not fire duplicate gameplay events', async () => {
@@ -82,10 +102,31 @@ describe('PokiRuntime', () => {
     await runtime.init()
 
     runtime.loadingFinished()
+    runtime.loadingFinished()
     runtime.happyTime()
 
     expect(sdk.gameLoadingFinished).toHaveBeenCalledTimes(1)
     expect(sdk.happyTime).toHaveBeenCalledTimes(1)
+  })
+
+  it('passes the ad start callback to the SDK exactly once', async () => {
+    const sdk = fakeSdk()
+    sdk.rewardedBreak.mockImplementation((onStart) => {
+      onStart?.()
+      return Promise.resolve(true)
+    })
+    sdk.commercialBreak.mockImplementation((onStart) => {
+      onStart?.()
+      return Promise.resolve()
+    })
+    const runtime = new PokiRuntime(() => sdk)
+    await runtime.init()
+    const onStart = vi.fn<() => void>()
+
+    await runtime.rewardedBreak(onStart)
+    await runtime.interstitialBreak(onStart)
+
+    expect(onStart).toHaveBeenCalledTimes(2)
   })
 
   it('blocks host events while an ad is active', async () => {
@@ -112,6 +153,35 @@ describe('PokiRuntime', () => {
 
     resolveAd(true)
     await expect(ad).resolves.toBe(true)
+
+    runtime.gameplayStop()
+    expect(sdk.gameplayStop).toHaveBeenCalledTimes(1)
+  })
+
+  it('blocks host events while an interstitial is active', async () => {
+    const sdk = fakeSdk()
+    let resolveAd!: () => void
+    sdk.commercialBreak.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveAd = resolve
+        }),
+    )
+    const runtime = new PokiRuntime(() => sdk)
+    await runtime.init()
+    runtime.gameplayStart()
+
+    const ad = runtime.interstitialBreak()
+    runtime.gameplayStart()
+    runtime.gameplayStop()
+    runtime.happyTime()
+
+    expect(sdk.gameplayStart).toHaveBeenCalledTimes(1)
+    expect(sdk.gameplayStop).not.toHaveBeenCalled()
+    expect(sdk.happyTime).not.toHaveBeenCalled()
+
+    resolveAd()
+    await ad
 
     runtime.gameplayStop()
     expect(sdk.gameplayStop).toHaveBeenCalledTimes(1)

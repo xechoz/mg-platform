@@ -7,7 +7,7 @@ createGame({
   id: '__NAME__',
   design: { base: 720 },
   theme: gameColors.theme,
-  defaultLang: 'zh',
+  defaultLang: 'en',
   i18n: gameI18n,
   menuScene: 'Menu',
   scenes: [PlaceholderScene],

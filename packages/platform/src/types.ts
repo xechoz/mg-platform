@@ -1,4 +1,23 @@
-export type Lang = 'zh' | 'en'
+/** Languages Poki recommends for a global release, in menu order. */
+export const SUPPORTED_LANGS = [
+  'en',
+  'fr',
+  'it',
+  'de',
+  'es',
+  'tr',
+  'zh',
+  'ja',
+  'ko',
+  'pt',
+  'ru',
+] as const
+
+export type Lang = (typeof SUPPORTED_LANGS)[number]
+
+export function isLang(value: unknown): value is Lang {
+  return typeof value === 'string' && (SUPPORTED_LANGS as readonly string[]).includes(value)
+}
 
 /**
  * Host platform: the page/app that owns the game and its lifecycle events.

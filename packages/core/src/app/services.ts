@@ -1,10 +1,11 @@
 import type { AdChannelKind, Lang, PlatformAdapter, PlatformKind } from '@mg/platform'
-import { createAdChannel, createPlatform } from '@mg/platform'
+import { createAdChannel, createPlatform, SUPPORTED_LANGS } from '@mg/platform'
 import type Phaser from 'phaser'
 import { AdService } from '../ads/AdService'
 import { AudioManager, type SfxSampleUrls } from '../audio/AudioManager'
 import { coreI18n } from '../i18n/core'
 import { type Dictionary, I18n, resolveLang } from '../i18n/I18n'
+import { htmlLang } from '../i18n/languages'
 import { SaveStore, type SaveStoreOptions } from '../storage/SaveStore'
 import { SettingsStore } from '../storage/settings'
 import type { ButtonDecoration } from '../ui/Button'
@@ -75,12 +76,8 @@ export function createServices(def: GameDefinition): GameServices {
     ...def.theme,
   }
   const params = new URLSearchParams(window.location.search)
-  const defaultLang = def.defaultLang ?? 'zh'
+  const defaultLang = def.defaultLang ?? 'en'
   const settings = new SettingsStore(defaultLang)
-  const i18n = new I18n(mergeI18n(coreI18n, def.i18n), defaultLang)
-  const lang = resolveLang(params, settings.value.lang, defaultLang)
-  i18n.setLang(lang)
-  if (settings.value.lang !== lang) settings.update({ lang })
 
   const platformKind: PlatformKind = import.meta.env.VITE_PLATFORM === 'poki' ? 'poki' : 'web'
   const adChannelKind: AdChannelKind =
@@ -89,8 +86,13 @@ export function createServices(def: GameDefinition): GameServices {
       : import.meta.env.VITE_AD_CHANNEL === 'h5games'
         ? 'h5games'
         : 'dev'
-  const audio = new AudioManager(settings.value.sound, def.audioSamples)
   const platform = createPlatform(platformKind)
+  const fallback = platformKind === 'poki' ? 'en' : defaultLang
+  const stored = settings.value.langChosen ? settings.value.lang : undefined
+  const lang = resolveLang(params, stored, fallback, platform.lang())
+  const i18n = new I18n(mergeI18n(coreI18n, def.i18n), lang)
+
+  const audio = new AudioManager(settings.value.sound, def.audioSamples)
   const ads = new AdService(
     createAdChannel(adChannelKind, { sound: () => audio.soundEnabled }),
     platform,
@@ -121,15 +123,15 @@ export function createServices(def: GameDefinition): GameServices {
       if (enabled) audio.unlock()
     },
     setLang(next: Lang): void {
-      settings.update({ lang: next })
+      settings.update({ lang: next, langChosen: true })
       i18n.setLang(next)
-      document.documentElement.lang = next === 'zh' ? 'zh-CN' : 'en'
+      document.documentElement.lang = htmlLang(next)
       document.title = `${i18n.t('game.title')} · Mini Games`
     },
   }
 
   current = services
-  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en'
+  document.documentElement.lang = htmlLang(lang)
   document.title = `${i18n.t('game.title')} · Mini Games`
   return services
 }
@@ -143,8 +145,7 @@ function mergeI18n(
   core: Record<Lang, Dictionary>,
   game: Record<Lang, Dictionary>,
 ): Record<Lang, Dictionary> {
-  return {
-    zh: { ...core.zh, ...game.zh },
-    en: { ...core.en, ...game.en },
-  }
+  const merged = {} as Record<Lang, Dictionary>
+  for (const lang of SUPPORTED_LANGS) merged[lang] = { ...core[lang], ...game[lang] }
+  return merged
 }

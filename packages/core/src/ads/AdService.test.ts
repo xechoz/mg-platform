@@ -120,6 +120,73 @@ describe('AdService', () => {
     expect(ads.stats().revive).toEqual({ shown: 2, rewarded: 2, skipped: 0, failed: 0 })
   })
 
+  it('shows an interstitial and restores gameplay/audio state', async () => {
+    const audio = fakeAudio()
+    const platform = fakePlatform()
+    const interstitialBreak = vi.fn<() => Promise<void>>().mockResolvedValue(undefined)
+    const channel = fakeChannel({ interstitialBreak })
+    const ads = new AdService(channel, platform, audio)
+    const states: boolean[] = []
+    ads.onChange((active) => states.push(active))
+
+    await ads.showInterstitial()
+
+    expect(interstitialBreak).toHaveBeenCalledTimes(1)
+    expect(platform.gameplayStop).toHaveBeenCalledTimes(1)
+    expect(audio.suspend).toHaveBeenCalledTimes(1)
+    expect(audio.resume).toHaveBeenCalledTimes(1)
+    expect(states).toEqual([true, false])
+    expect(ads.active).toBe(false)
+  })
+
+  it('does nothing when the channel has no interstitial', async () => {
+    const audio = fakeAudio()
+    const platform = fakePlatform()
+    const ads = new AdService(fakeChannel(), platform, audio)
+
+    await ads.showInterstitial()
+
+    expect(platform.gameplayStop).not.toHaveBeenCalled()
+    expect(audio.suspend).not.toHaveBeenCalled()
+    expect(audio.resume).not.toHaveBeenCalled()
+    expect(ads.active).toBe(false)
+  })
+
+  it('swallows interstitial errors and restores state', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const audio = fakeAudio()
+    const platform = fakePlatform()
+    const ads = new AdService(
+      fakeChannel({ interstitialBreak: () => Promise.reject(new Error('no fill')) }),
+      platform,
+      audio,
+    )
+
+    await expect(ads.showInterstitial()).resolves.toBeUndefined()
+    expect(audio.resume).toHaveBeenCalledTimes(1)
+    expect(ads.active).toBe(false)
+  })
+
+  it('runs one interstitial at a time', async () => {
+    let resolveAd!: () => void
+    const interstitialBreak = vi.fn<() => Promise<void>>(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveAd = resolve
+        }),
+    )
+    const ads = new AdService(fakeChannel({ interstitialBreak }), fakePlatform(), fakeAudio())
+
+    const first = ads.showInterstitial()
+    await ads.showInterstitial()
+    expect(interstitialBreak).toHaveBeenCalledTimes(1)
+    expect(ads.active).toBe(true)
+
+    resolveAd()
+    await first
+    expect(ads.active).toBe(false)
+  })
+
   it('delegates channel init', async () => {
     const channel = fakeChannel()
     const ads = new AdService(channel, fakePlatform(), fakeAudio())

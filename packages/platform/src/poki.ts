@@ -1,4 +1,4 @@
-import type { AdChannel, Lang, PlatformAdapter } from './types'
+import { type AdChannel, isLang, type Lang, type PlatformAdapter } from './types'
 
 /** The subset of the Poki SDK used by this project. */
 export interface PokiSdk {
@@ -9,6 +9,7 @@ export interface PokiSdk {
   commercialBreak(onStart?: () => void): Promise<void>
   rewardedBreak(onStart?: () => void): Promise<boolean>
   happyTime(): void
+  getLanguage?(): string
 }
 
 type SdkGetter = () => PokiSdk | undefined
@@ -28,6 +29,7 @@ export class PokiRuntime {
   private ready = false
   private playing = false
   private adActive = false
+  private loadingFinishedFired = false
   private initPromise: Promise<void> | null = null
 
   constructor(getSdk: SdkGetter = readGlobalSdk) {
@@ -44,8 +46,11 @@ export class PokiRuntime {
   }
 
   loadingFinished(): void {
-    if (!this.sdk) return
-    this.sdk.gameLoadingFinished()
+    if (this.loadingFinishedFired) return
+    const sdk = this.sdk ?? this.getSdk()
+    if (!sdk) return
+    this.loadingFinishedFired = true
+    sdk.gameLoadingFinished()
   }
 
   gameplayStart(): void {
@@ -70,7 +75,7 @@ export class PokiRuntime {
     this.adActive = true
     try {
       onStart?.()
-      return await this.sdk.rewardedBreak(onStart)
+      return await this.sdk.rewardedBreak()
     } catch (error) {
       console.warn('[poki] rewardedBreak failed', error)
       return false
@@ -84,7 +89,7 @@ export class PokiRuntime {
     this.adActive = true
     try {
       onStart?.()
-      await this.sdk.commercialBreak(onStart)
+      await this.sdk.commercialBreak()
     } catch (error) {
       console.warn('[poki] commercialBreak failed', error)
     } finally {
@@ -93,7 +98,10 @@ export class PokiRuntime {
   }
 
   lang(): Lang | null {
-    return null
+    const raw = this.getSdk()?.getLanguage?.()
+    if (!raw) return null
+    const base = raw.trim().toLowerCase().split('-')[0]
+    return isLang(base) ? base : null
   }
 
   haptic(ms: number): void {

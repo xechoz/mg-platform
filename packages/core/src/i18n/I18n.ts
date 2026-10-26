@@ -1,4 +1,4 @@
-import type { Lang } from '@mg/platform'
+import { isLang, type Lang } from '@mg/platform'
 
 export type Dictionary = Record<string, string>
 
@@ -20,23 +20,25 @@ export class I18n {
   }
 
   t(key: string, params?: Record<string, string | number>): string {
-    const template = this.dicts[this.current][key] ?? this.dicts.zh[key] ?? key
+    const template = this.dicts[this.current][key] ?? this.dicts.en[key] ?? key
     if (!params) return template
     return template.replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? `{${name}}`))
   }
 }
 
 /**
- * URL override > stored choice > game default. No navigator sniffing: a
- * Chinese-first site should stay Chinese until the player picks otherwise.
+ * URL override > explicit player choice > host detection > game default.
+ * Detection comes from the host (Poki), never from navigator sniffing.
  */
 export function resolveLang(
   params: URLSearchParams,
   stored: Lang | undefined,
   fallback: Lang,
+  detected?: Lang | null,
 ): Lang {
   const fromUrl = params.get('lang')
-  if (fromUrl === 'zh' || fromUrl === 'en') return fromUrl
-  if (stored === 'zh' || stored === 'en') return stored
+  if (isLang(fromUrl)) return fromUrl
+  if (stored) return stored
+  if (detected) return detected
   return fallback
 }

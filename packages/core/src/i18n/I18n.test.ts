@@ -1,9 +1,19 @@
+import type { Lang } from '@mg/platform'
 import { describe, expect, it } from 'vitest'
-import { I18n, resolveLang } from './I18n'
+import { type Dictionary, I18n, resolveLang } from './I18n'
 
-const dictionaries = {
+const dictionaries: Record<Lang, Dictionary> = {
+  en: { greet: 'Hello, {name}', onlyEn: 'English' },
+  fr: {},
+  it: {},
+  de: {},
+  es: {},
+  tr: {},
   zh: { greet: '你好，{name}', onlyZh: '中文' },
-  en: { greet: 'Hello, {name}' },
+  ja: {},
+  ko: {},
+  pt: {},
+  ru: {},
 }
 
 describe('I18n', () => {
@@ -18,27 +28,37 @@ describe('I18n', () => {
     expect(i18n.t('greet', { name: 'Ada' })).toBe('Hello, Ada')
   })
 
-  it('falls back to zh and then to the key', () => {
-    const i18n = new I18n(dictionaries, 'en')
-    expect(i18n.t('onlyZh')).toBe('中文')
+  it('falls back to English and then to the key', () => {
+    const i18n = new I18n(dictionaries, 'fr')
+    expect(i18n.t('onlyEn')).toBe('English')
     expect(i18n.t('missing')).toBe('missing')
   })
 })
 
 describe('resolveLang', () => {
   it('prefers the URL parameter', () => {
-    expect(resolveLang(new URLSearchParams('?lang=en'), 'zh', 'zh')).toBe('en')
+    expect(resolveLang(new URLSearchParams('?lang=de'), 'fr', 'en', 'ja')).toBe('de')
   })
 
   it('uses the stored language next', () => {
-    expect(resolveLang(new URLSearchParams(), 'en', 'zh')).toBe('en')
+    expect(resolveLang(new URLSearchParams(), 'fr', 'en', 'ja')).toBe('fr')
   })
 
-  it('falls back to the game default', () => {
-    expect(resolveLang(new URLSearchParams(), undefined, 'zh')).toBe('zh')
+  it('uses host detection before the fallback', () => {
+    expect(resolveLang(new URLSearchParams(), undefined, 'en', 'ja')).toBe('ja')
+  })
+
+  it('falls back when nothing matches', () => {
+    expect(resolveLang(new URLSearchParams(), undefined, 'en')).toBe('en')
   })
 
   it('ignores invalid URL values', () => {
-    expect(resolveLang(new URLSearchParams('?lang=fr'), 'en', 'zh')).toBe('en')
+    expect(resolveLang(new URLSearchParams('?lang=xx'), undefined, 'en', 'pt')).toBe('pt')
+  })
+
+  it('accepts every supported language from the URL', () => {
+    for (const lang of ['en', 'fr', 'it', 'de', 'es', 'tr', 'zh', 'ja', 'ko', 'pt', 'ru']) {
+      expect(resolveLang(new URLSearchParams(`?lang=${lang}`), undefined, 'en')).toBe(lang)
+    }
   })
 })

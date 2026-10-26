@@ -35,7 +35,7 @@ export interface Theme {
  * any token through `GameDefinition.theme` without touching the shared UI.
  */
 export const defaultTheme: Theme = {
-  font: '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif',
+  font: '"Noto Sans SC", "PingFang SC", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Microsoft YaHei", system-ui, sans-serif',
   bg: 0xbfeaff,
   bgAlt: 0xe8faef,
   board: 0xfff9ec,
