@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.1
+
+### 修复
+
+- `AdService.showInterstitial()` 把 `channel.interstitialBreak` 取成局部变量后再调用，方法内的 `this` 丢失。Poki 与 CrazyGames 的 `interstitialBreak` 需要读 `this.runtime`，因此每次插屏都抛 `Cannot read properties of undefined (reading 'runtime')` 并被静默吞掉：广告不播放，SDK 事件日志只剩 `gameplayStop → gameplayStart`，缺少 `commercialBreak`。改为保留接收者，直接在 channel 上调用。
+- `AdService.test.ts` 新增基于类实例的插屏回归测试，覆盖原型方法依赖 `this` 的真实渠道实现（原有 `vi.fn()` 桩无法暴露该缺陷）。
+
 ## 4.0.0
 
 ### 多仓库拆分

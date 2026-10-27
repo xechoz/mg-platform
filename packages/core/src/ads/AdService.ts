@@ -103,8 +103,7 @@ export class AdService {
    * ad actually plays; this method only owns mute/pause/locking.
    */
   async showInterstitial(): Promise<void> {
-    const interstitialBreak = this.channel.interstitialBreak
-    if (this.inFlight || !interstitialBreak) return
+    if (this.inFlight || !this.channel.interstitialBreak) return
 
     this.inFlight = true
     this.platform.gameplayStop()
@@ -112,7 +111,7 @@ export class AdService {
     this.setActive(true)
 
     try {
-      await interstitialBreak()
+      await this.channel.interstitialBreak()
     } catch (error) {
       console.warn('[ads] interstitial failed', error)
     } finally {

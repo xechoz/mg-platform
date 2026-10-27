@@ -139,6 +139,35 @@ describe('AdService', () => {
     expect(ads.active).toBe(false)
   })
 
+  it('calls the interstitial with the channel as receiver', async () => {
+    class ClassChannel implements AdChannel {
+      readonly name = 'test'
+      readonly rewardedAvailable = true
+      breaks = 0
+
+      init(): Promise<void> {
+        return Promise.resolve()
+      }
+
+      rewardedBreak(): Promise<boolean> {
+        return Promise.resolve(true)
+      }
+
+      interstitialBreak(): Promise<void> {
+        // Real channels are instances with prototype methods that read `this`.
+        this.breaks += 1
+        return Promise.resolve()
+      }
+    }
+
+    const channel = new ClassChannel()
+    const ads = new AdService(channel, fakePlatform(), fakeAudio())
+
+    await ads.showInterstitial()
+
+    expect(channel.breaks).toBe(1)
+  })
+
   it('does nothing when the channel has no interstitial', async () => {
     const audio = fakeAudio()
     const platform = fakePlatform()
