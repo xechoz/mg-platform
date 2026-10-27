@@ -39,10 +39,10 @@ VITE_PLATFORM=poki npm run build -w @mg/snake
 ## 4. 提审
 
 ```bash
-cd games/snake/dist
-zip -r ../snake-poki.zip .
+npm run package:snake:poki
 ```
 
+zip 输出到仓库根目录的 `release/snake-poki.zip`。
 - 确认 zip 根有 `index.html`，资源相对路径，唯一外部请求是 Poki SDK。
 - 确认 `grep -RIn "模拟激励广告\|__mgGame" games/snake/dist` 无输出。
 - 上传 build，提交内容审核。

@@ -34,11 +34,10 @@ npm run site
 ## 3. Basic 构建与门户 QA
 
 ```bash
-VITE_PLATFORM=crazygames npm run build -w @mg/snake
-cd games/snake/dist && zip -r ../snake-crazygames-basic.zip .
+npm run package:snake:crazy:basic
 ```
 
-上传后将 `games/snake/dist` 或其 zip 用于门户 preview，检查：
+zip 输出到仓库根目录的 `release/snake-crazygames-basic.zip`。上传后将 `games/snake/dist` 或其 zip 用于门户 preview，检查：
 - `loadingStart → loadingStop → gameplayStart` 顺序正确，无连续重复事件。
 - 暂停恢复只出现 `gameplayStop → gameplayStart`，不出现 midgame。
 - 死亡结算/重开出现 `gameplayStop → midgame → gameplayStart`（Basic 无广告渠道时应直接继续）。
@@ -54,9 +53,10 @@ Basic 通过后先上线，不要等 Full 素材和广告全部完成。
 ## 4. Full 构建与广告验收
 
 ```bash
-VITE_PLATFORM=crazygames VITE_AD_CHANNEL=crazygames npm run build -w @mg/snake
-cd games/snake/dist && zip -r ../snake-crazygames-full.zip .
+npm run package:snake:crazy:full
 ```
+
+zip 输出到仓库根目录的 `release/snake-crazygames-full.zip`。
 
 门户 QA 重点：
 - 结算页奖励按钮有视频图标、不是绿色；标准「再来一局」同时出现、尺寸不小于奖励按钮，位于其上方或旁边。

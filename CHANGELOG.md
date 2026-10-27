@@ -25,6 +25,7 @@
 
 ### 开发体验
 
+- 新增统一打包脚本与 `npm run package:snake:{poki,crazy:basic,crazy:full}`：自动按渠道构建并输出 zip 到仓库根目录 `release/`（已忽略），不再手工指定产物路径。
 - dev server 固定端口（贪吃蛇 5173），不再自动递增：启动前结束占用该端口的旧 Vite 进程，其他程序占用则报错退出。
 
 ### 加载体验

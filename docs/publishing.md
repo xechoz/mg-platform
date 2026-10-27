@@ -56,9 +56,10 @@ Poki 要求每个游戏是独立包：
 ### 构建
 
 ```bash
-VITE_PLATFORM=poki npm run build -w @mg/snake
-cd games/snake/dist && zip -r ../../snake-poki.zip .
+npm run package:snake:poki
 ```
+
+产物为仓库根目录的 `release/snake-poki.zip`（`release/` 已被忽略，不打进站点）。打包脚本 `tooling/package-game.ts` 会构建当前代码并压缩 `games/snake/dist`。
 
 ### 已实现
 
@@ -100,13 +101,13 @@ CrazyGames 分两个阶段：
 
 ```bash
 # Basic：不启用 CrazyGames 广告，奖励入口隐藏
-VITE_PLATFORM=crazygames npm run build -w @mg/snake
-cd games/snake/dist && zip -r ../snake-crazygames-basic.zip .
+npm run package:snake:crazy:basic
 
 # Full：启用 CrazyGames 激励 + midgame 广告
-VITE_PLATFORM=crazygames VITE_AD_CHANNEL=crazygames npm run build -w @mg/snake
-cd games/snake/dist && zip -r ../snake-crazygames-full.zip .
+npm run package:snake:crazy:full
 ```
+
+两个 zip 都输出到仓库根目录的 `release/`（`release/snake-crazygames-basic.zip`、`release/snake-crazygames-full.zip`）。
 
 两种构建都会由 `tooling/vite.game.ts` 在 `index.html` 的 `<body>` 末尾注入 `https://sdk.crazygames.com/crazygames-sdk-v3.js`（不阻塞首屏解析，仍早于游戏模块执行）。端口预览时注意：只有 `localhost` 等白名单域名能拿到 SDK 实例；用局域网 IP 打开时 SDK 会返回 disabled 存根，游戏仍可玩，但没有生命周期事件、宿主静音与广告。验证 SDK 行为请用 `http://localhost` 或 CrazyGames 门户预览。提交包必须：
 - `index.html` 在 zip 根目录；

@@ -11,3 +11,4 @@ coverage/
 games/*/store/
 games/*/*.zip
 games/*/*-poki/
+release/
