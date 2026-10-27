@@ -27,6 +27,7 @@ interface FakeSdk {
       locale?: string
     }
   }
+  environment?: string
 }
 
 function fakeSdk(): FakeSdk {
@@ -94,12 +95,47 @@ describe('CrazyGamesRuntime', () => {
     expect(sdk.game.loadingStart).not.toHaveBeenCalled()
     expect(sdk.game.gameplayStart).not.toHaveBeenCalled()
     expect(sdk.game.loadingStop).not.toHaveBeenCalled()
+    expect(runtime.lang()).toBeNull()
     expect(runtime.rewardedAvailable).toBe(false)
   })
 
-  it('normalizes the host locale', () => {
+  it('stays usable when the domain is disabled', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const sdk = fakeSdk()
+    sdk.environment = 'disabled'
+    Object.defineProperty(sdk, 'user', {
+      get() {
+        throw new Error('sdkDisabled')
+      },
+    })
+    const runtime = new CrazyGamesRuntime(() => sdk)
+
+    await runtime.init()
+    runtime.gameplayStart()
+    runtime.loadingFinished()
+
+    expect(sdk.game.loadingStart).not.toHaveBeenCalled()
+    expect(sdk.game.gameplayStart).not.toHaveBeenCalled()
+    expect(runtime.lang()).toBeNull()
+    expect(runtime.rewardedAvailable).toBe(false)
+  })
+
+  it('does not touch SDK getters before init', () => {
+    const sdk = fakeSdk()
+    Object.defineProperty(sdk, 'user', {
+      get() {
+        throw new Error('sdkNotInitialized')
+      },
+    })
+    const runtime = new CrazyGamesRuntime(() => sdk)
+
+    expect(runtime.lang()).toBeNull()
+  })
+
+  it('normalizes the host locale', async () => {
     const sdk = fakeSdk()
     const runtime = new CrazyGamesRuntime(() => sdk)
+    await runtime.init()
 
     sdk.user = { systemInfo: { locale: 'en-US' } }
     expect(runtime.lang()).toBe('en')

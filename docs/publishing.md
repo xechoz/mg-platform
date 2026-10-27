@@ -108,7 +108,7 @@ VITE_PLATFORM=crazygames VITE_AD_CHANNEL=crazygames npm run build -w @mg/snake
 cd games/snake/dist && zip -r ../snake-crazygames-full.zip .
 ```
 
-两种构建都会由 `tooling/vite.game.ts` 在 `index.html` 的 head 注入 `https://sdk.crazygames.com/crazygames-sdk-v3.js`。提交包必须：
+两种构建都会由 `tooling/vite.game.ts` 在 `index.html` 的 `<body>` 末尾注入 `https://sdk.crazygames.com/crazygames-sdk-v3.js`（不阻塞首屏解析，仍早于游戏模块执行）。端口预览时注意：只有 `localhost` 等白名单域名能拿到 SDK 实例；用局域网 IP 打开时 SDK 会返回 disabled 存根，游戏仍可玩，但没有生命周期事件、宿主静音与广告。验证 SDK 行为请用 `http://localhost` 或 CrazyGames 门户预览。提交包必须：
 - `index.html` 在 zip 根目录；
 - 资源使用相对路径（项目已用 `base: './'`）；
 - 运行时除 CrazyGames SDK 外没有外部请求；

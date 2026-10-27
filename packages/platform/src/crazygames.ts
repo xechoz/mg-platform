@@ -39,6 +39,8 @@ export interface CrazyGamesSdk {
       locale?: string
     }
   }
+  /** 'local', 'crazygames' … or 'disabled' when the SDK refuses the domain. */
+  readonly environment?: string
 }
 
 type SdkGetter = () => CrazyGamesSdk | undefined
@@ -104,7 +106,9 @@ export class CrazyGamesRuntime {
   }
 
   lang(): Lang | null {
-    const raw = this.getSdk()?.user?.systemInfo?.locale
+    // SDK getters (`user`, `game`, `ad`) throw until init() resolves, and
+    // core asks for the host locale before the boot scene initializes us.
+    const raw = this.sdk?.user?.systemInfo?.locale
     if (!raw) return null
     const base = raw.trim().toLowerCase().split('-')[0]
     return isLang(base) ? base : null
@@ -227,7 +231,13 @@ export class CrazyGamesRuntime {
     if (!sdk) return
     try {
       await sdk.init()
-      this.sdk = sdk
+      // Domains CrazyGames does not serve get a stub: init() resolves, but every
+      // module getter throws `sdkDisabled`. Treat it as absent before touching
+      // anything, otherwise a later lang() call would reject uncaught.
+      if (sdk.environment === 'disabled') {
+        console.warn('[crazygames] SDK disabled on this domain, continuing without SDK')
+        return
+      }
       sdk.game.loadingStart()
       this.loadingStarted = true
       this.applySettings(sdk.game.settings)
@@ -235,6 +245,7 @@ export class CrazyGamesRuntime {
       sdk.game.addSettingsChangeListener?.((settings) => {
         this.applySettings(settings)
       })
+      this.sdk = sdk
       await this.detectAdblock(sdk)
     } catch (error) {
       // CrazyGames guidance: the game must remain playable when the SDK fails.

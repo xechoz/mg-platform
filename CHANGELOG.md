@@ -2,6 +2,11 @@
 
 ## 未发布
 
+### 平台
+
+- 修复 CrazyGames 构建启动即报 `CrazySDK is not initialized yet... Uncaught h`：核心层在 Boot 初始化 SDK 之前就会读取宿主语言，而 CrazyGames 的 `SDK.user` 等 getter 在 `init()` 完成前会直接抛错。locale 检测改为只读已初始化的 SDK 句柄，init 前返回 `null`，由启动完成后的 `syncPlatformLang()` 再应用宿主语言。
+- 修复局域网 IP 等非白名单域名下再报 `Uncaught (in promise) sdkDisabled`：这类域名上 `SDK.init()` 会「成功」并返回 disabled 存根，随后所有模块 getter 抛错。初始化后先检查 `SDK.environment === 'disabled'`，按无 SDK 继续，不再调用 `loadingStart` 或读取 locale。
+
 ### 性能
 
 - 超级水果狂欢的水果层改为按渲染倍率预烘焙的 14 张水果贴图与复用图片池，吃果时只做格子差分更新；不再让 Phaser 每帧重新三角化满屏水果路径，并消除每口整层重画，修复 20 秒狂欢的掉帧。
