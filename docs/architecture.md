@@ -221,7 +221,7 @@ createGame({
 })
 ```
 
-可选字段：`theme`（覆盖主题 token，贪吃蛇来自 `src/colors.ts`）、`debug`、`assets`（images/audio/json）、`backdrop`（核心 Boot/Menu 共用的程序化背景）、`titleLogo`（Boot 加载页顶部的品牌 Logo，返回容器与自然尺寸）。未提供 `backdrop` 或 `titleLogo` 时，核心回退到简化背景与文字标题。
+可选字段：`theme`（覆盖主题 token，贪吃蛇来自 `src/colors.ts`）、`debug`、`assets`（images/audio/json）。背景与标题 Logo 由游戏菜单自己绘制，核心 Boot 不再渲染整页加载页。
 
 ### 7.4 Services
 
@@ -280,7 +280,7 @@ const outcome = await services.ads.showRewarded('revive')
 - **设计尺寸只从 `readViewport(scene)` 读取**，不要在布局里直接用 `scene.scale.width/height`（那是画布物理像素）。`readViewport` 同时同步当前场景相机与文字分辨率，场景重建后也会生效。`Text` 的 `resolution` 由 `textStyle()` 按渲染倍率写入，视口变化时已有文字会自动重设。
 - 设计稿按手机最小约 0.54 缩放校验（720 设计单位 ≈ 390 CSS px 宽）：30px 正文 ≈ 16 CSS px，26px 标签 ≈ 14 CSS px，24px 辅助提示 ≈ 13 CSS px；倍率只提升清晰度，不改变这些 CSS 尺寸。
 - 横竖屏都必须可玩，不再注入旋转遮罩；朝向变化由游戏场景自动暂停。
-- 加载流程只有两步：`Boot` 并行初始化平台 SDK 与加载资源，完成后直接进主菜单；没有单独的点击门槛。
+- 加载流程：`index.html` 的内联 splash 覆盖 Phaser 下载、`Boot` 资源预加载与 SDK 初始化，菜单场景启动后才淡出；`Boot` 不渲染任何 Phaser 加载页，也没有点击门槛。SDK 初始化最多等 1.2 秒，超时就先进菜单、在后台继续完成（宿主语言若随后才就绪，菜单会重启一次以应用）；宿主 SDK 不能阻塞首屏。
 - 移动端全屏：菜单点「开始」（`pointerup`）时请求 Fullscreen API；仅触屏、非 iframe、非 standalone 时自动请求。`#game` 是全屏目标，进入/退出触发 resize 与重排，不重启、不丢局。桌面不自动全屏，保留 F11；Poki 等 iframe 环境交给平台播放器。Dev 模拟广告覆盖层挂到当前全屏元素（无全屏则 `#game`/`body`），避免手机全屏后广告被全屏元素遮住。
 - 音频默认开启；菜单首次点击或按键即 `audio.unlock()`，之后菜单、弹窗和游戏内音效都可用。玩家保存的音效关闭偏好与宿主静音优先。
 - iPhone Safari 不支持任意 DOM 元素全屏（iOS 26/27 仍只开放给 iPad）；通过 `apple-mobile-web-app-capable` + 「添加到主屏幕」以 standalone 启动，并在不支持的移动浏览器菜单里提示 A2HS。
@@ -298,7 +298,7 @@ const outcome = await services.ads.showRewarded('revive')
 - **配色**：贪吃蛇采用琥珀橙 `#ffb020` 作主题强调色（hover `#f09300`），近白冷天空到暖奶油作背景；色块上的文字/图标用墨紫 `onAccent` `#332b45`，浅底强调文字用深海蓝 `accentInk` `#0369a1`，hover 一律变深。蛇与标题 Logo 走独立的浅蓝 `#7dd3fc` 到深海蓝 `#0369a1` 美术色。选琥珀橙是因为它与蓝色蛇身形成冷暖对比，配墨紫文字的对比度约 7.3:1；不用浅柠檬黄，因为浅黄配深棕文字会发灰、像禁用态。公共 `defaultTheme` 是未定色游戏的通用浅色基线，游戏通过 `colors.ts` 覆盖。
 - 公共 UI token 统一在 `Theme`：`ink`、`borderSoft`、`accent`、`accentHover`、`accentInk`、`onAccent`、`accentAlt`、`accentWarm`、`surface`、`surfaceAlt`、`highlight`、`onDanger`、`shadow`、`radiusLarge`；`borderSoft` 只作 1px 弱边，不承担文字对比。`displayTextStyle()` 提供描边+硬阴影，`drawIcon()` 提供程序化图标；`Button` 统一 primary/soft/ghost/danger 并内置分层几何（soft 无墨线/无厚底），支持 `minHitSize` 在不放大视觉尺寸的前提下扩大触控命中区，并通过 `ButtonDecoration` 在按钮面与文字之间留出游戏美术插槽（`ModalAction.decoration` 透传）；`Modal` 为无墨线卡片，标题可选 accent 丝带（`titleRibbon`，默认开），结算页使用无丝带的普通标题。游戏只覆盖 token，不另造一套控件。
 - **每个游戏的颜色只有一个入口**：`games/<id>/src/colors.ts`，同时包含该游戏的 `theme`（覆盖公共 token）、`art`（蛇身、果实等专属美术色）和 `logo`（品牌标题固定色板）。场景只使用 `getServices().theme` 或 `colors.art`，不写颜色字面量；透明度、`mixColor()` 派生色除外。公共层只保留 `Theme` 类型与通用默认值，不包含任何游戏专属色。**品牌 Logo 不读 `Theme` 颜色**：`logo` 色板独立于主题，换主题不得改变标题；`colors.test.ts` 校验对比度与 `logo.ts` 的主题引用。
-- 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/叶片散点）、`foliage.ts`（程序化叶片与画框角饰：只画叶，不画圆果体/光晕/呼吸，确保背景读作生境而不是可吃的东西）、`snakeArt.ts`（描边蛇身、表情蛇头、六种水果、冰淇淋/辣椒、金色超级水果与效果环）、`gameArt.ts`（棋盘与四角枝叶、分段色带蛇、水果/道具绘制；水果层只在 `foods` 或布局变化时重绘，避免铺满水果时每帧重建）、`feedback.ts`（吃水果/吃道具/盛宴/危险反馈）、`celebration.ts`（结算彩纸、烟花与新纪录皇冠）、`CloseButton.ts`（结算弹窗右上角关闭按钮）、`logo.ts`（固定品牌色标题 + 方块直角折线蛇身 + 果实）、`menuDemo.ts`（菜单自动演示棋盘，展示吃水果变色）、`fruitDecoration.ts`（菜单主行动按钮的散落果实）。颜色统一从 `games/snake/src/colors.ts` 读取，这些是表现层实现，不进入公共包。`backdrop.ts` 与 `logo.ts` 通过 `GameDefinition.backdrop` / `titleLogo` 交给核心 `Boot` 使用。
+- 游戏本地美术放 `games/<id>/src/ui`：贪吃蛇的 `backdrop.ts`（天空/云/山丘/叶片散点）、`foliage.ts`（程序化叶片与画框角饰：只画叶，不画圆果体/光晕/呼吸，确保背景读作生境而不是可吃的东西）、`snakeArt.ts`（描边蛇身、表情蛇头、六种水果、冰淇淋/辣椒、金色超级水果与效果环）、`gameArt.ts`（棋盘与四角枝叶、分段色带蛇、水果/道具绘制；水果层只在 `foods` 或布局变化时重绘，避免铺满水果时每帧重建）、`feedback.ts`（吃水果/吃道具/盛宴/危险反馈）、`celebration.ts`（结算彩纸、烟花与新纪录皇冠）、`CloseButton.ts`（结算弹窗右上角关闭按钮）、`logo.ts`（固定品牌色标题 + 方块直角折线蛇身 + 果实）、`menuDemo.ts`（菜单自动演示棋盘，展示吃水果变色）、`fruitDecoration.ts`（菜单主行动按钮的散落果实）。颜色统一从 `games/snake/src/colors.ts` 读取，这些是表现层实现，不进入公共包。`backdrop.ts` 与 `logo.ts` 只在游戏自己的菜单/游戏场景中使用，不再交给核心 `Boot`。
 - `index.html`、`manifest.webmanifest`、`game.manifest.json`、`favicon.svg` 无法 import TS，保留静态字面量；`colors.test.ts` 校验它们与 `colors.ts` 的关键颜色一致，防止漂移。贪吃蛇的 favicon 以主题 `accent` 作底色、`onAccent` 作内边框；PWA PNG 由 favicon 重新生成并填实透明角。
 - 图标优先 Lucide 等开源图标，只取实际用到的，记录来源/许可证。当前菜单/按钮图标为程序化 Graphics，不引入图标依赖；贪吃蛇菜单 demo 的手指导引用 Phosphor `hand-pointing`（MIT，`games/snake/src/assets/hand-pointer.svg`，许可证见同目录 `hand-pointer.LICENSE.txt`），重着色为白色填充 + 墨色描边，经 `GameDefinition.assets.images` 加载。
 - 音效以 WebAudio 合成兜底；`eat` 使用打包的 CC0 咬合采样（`games/snake/src/assets/audio/eat-1.wav`/`eat-2.wav`，来自 OpenGameArt「7 Eating Crunches」/ StarNinjas，CC0），经 `GameDefinition.audioSamples` 注册，在首次用户手势后 `fetch + decodeAudioData` 缓存；`play()` 的 `pitch` 对采样走 `playbackRate`，连吃按五声音阶升调。

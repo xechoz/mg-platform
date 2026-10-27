@@ -4,6 +4,7 @@
 
 ### 平台
 
+- 修复 CrazyGames 构建在局域网 IP 等非门户域名上启动卡住约 7 秒才进菜单：CrazyGames SDK 的 `init()` 会先等待 7 秒门户握手，超时后才把自身标记为 disabled，而 Boot 一直等它完成才切场景。核心 Boot 现在最多等待 SDK 初始化 1.2 秒，超时立即进菜单，并在后台继续完成初始化；若宿主语言随后才就绪且菜单仍在，菜单会重启一次以应用语言。所有平台生效，宿主 SDK 无法再阻塞首屏。
 - 修复 CrazyGames 构建启动即报 `CrazySDK is not initialized yet... Uncaught h`：核心层在 Boot 初始化 SDK 之前就会读取宿主语言，而 CrazyGames 的 `SDK.user` 等 getter 在 `init()` 完成前会直接抛错。locale 检测改为只读已初始化的 SDK 句柄，init 前返回 `null`，由启动完成后的 `syncPlatformLang()` 再应用宿主语言。
 - 修复局域网 IP 等非白名单域名下再报 `Uncaught (in promise) sdkDisabled`：这类域名上 `SDK.init()` 会「成功」并返回 disabled 存根，随后所有模块 getter 抛错。初始化后先检查 `SDK.environment === 'disabled'`，按无 SDK 继续，不再调用 `loadingStart` 或读取 locale。
 
@@ -24,9 +25,10 @@
 
 ### 加载体验
 
+- 移除 Phaser Boot 的整页 Logo 加载页：Boot 只负责预加载资源与初始化 SDK，不再绘制背景、标题与进度条。`index.html` 的内联 splash 保持到菜单场景启动后才淡出，启动顺序变为「splash → 菜单」两个可见阶段。`GameDefinition` 随之删除 `backdrop` 与 `titleLogo`，两者只由游戏菜单/游戏场景自己绘制。
 - 启动流程简化为两步：`Boot` 并行初始化平台 SDK 与加载资源，完成后直接进菜单；删除 `PreloadScene`、点击门槛和 `GameDefinition.tapDecoration`，所有构建（含 CrazyGames）走同一条路径。
 - 音频默认开启，菜单首次点击或按键即解锁音频；全屏改为手机点「开始」时请求，不再在加载页请求。iframe 内、PWA 已安装或已全屏时自动跳过。
-- 首屏新增内联 HTML/CSS splash：Phaser 下载和启动前立即显示主题背景、标题与加载动画，首个 canvas 出现后淡出；自托管、Poki、CrazyGames 构建共用。
+- 首屏新增内联 HTML/CSS splash：Phaser 下载和启动前立即显示主题背景、标题与加载动画，菜单场景启动后才淡出；自托管、Poki、CrazyGames 构建共用。
 - Poki/CrazyGames 外部 SDK 脚本移到 `<body>` 内，避免阻塞首屏 HTML 解析和 splash 绘制；SDK 仍在游戏模块启动前加载。
 
 ### 输入

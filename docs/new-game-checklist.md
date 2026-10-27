@@ -30,7 +30,7 @@ games/my-game/
 
 - `game.manifest.json`：`id`、中英文标题/描述、主题色、排序。
 - `src/i18n.ts`：至少保留 `game.title`，Boot 加载页依赖它。
-- `src/main.ts`：`design: { base: 720 }`（短边 720 设计单位，长边随屏幕比例）；`scenes` 注册所有场景；`menuScene` 默认 `Menu`；通过 `theme: colors.theme` 注入游戏主题，不再单独写 `backgroundColor`。可选 `titleLogo` 让 Boot 加载页使用游戏自己的品牌标题，而不是主题色文字。
+- `src/main.ts`：`design: { base: 720 }`（短边 720 设计单位，长边随屏幕比例）；`scenes` 注册所有场景；`menuScene` 默认 `Menu`；通过 `theme: colors.theme` 注入游戏主题，不再单独写 `backgroundColor`。
 - `src/colors.ts`：该游戏唯一的颜色配置，包含 `theme`（覆盖公共 token）和 `art`（游戏专属美术色）。浅底强调文字用 `accentInk`，色块上的文字/图标用 `onAccent`；如需独立品牌标题，增加固定 `logo` 色板，不让它跟随主题。
 - `PlaceholderScene`：改成真正的菜单场景（场景键保持 `Menu`）。
 - `public/manifest.webmanifest`：同步标题、描述、`theme_color`；`public/icons/` 放 180、192、512 的 PNG，正式上线前替换模板图标。

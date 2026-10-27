@@ -9,7 +9,6 @@ import { htmlLang } from '../i18n/languages'
 import { SaveStore, type SaveStoreOptions } from '../storage/SaveStore'
 import { SettingsStore } from '../storage/settings'
 import { defaultTheme, type Theme } from '../ui/theme'
-import type { Viewport } from './layout'
 
 export interface GameDefinition {
   id: string
@@ -22,17 +21,6 @@ export interface GameDefinition {
   defaultLang?: Lang
   theme?: Partial<Theme>
   debug?: boolean
-  /** Procedural backdrop shared by core screens; games keep the drawing code. */
-  backdrop?: (graphics: Phaser.GameObjects.Graphics, viewport: Viewport, theme: Theme) => void
-  /**
-   * Optional brand mark for the core boot splash. Boot scales it to fit and
-   * places it above the loading bar; games remain in charge of the artwork.
-   */
-  titleLogo?: (scene: Phaser.Scene) => {
-    container: Phaser.GameObjects.Container
-    width: number
-    height: number
-  }
   assets?: {
     images?: Array<{ key: string; url: string }>
     audio?: Array<{ key: string; urls: string | string[] }>
