@@ -5,7 +5,7 @@
 ## 1. 项目状态
 
 - 版本：**3.0.0**
-- 已发布：`games/snake`（贪吃蛇）
+- 已发布：`games/snake`（Fruit Snake: Color Trail / 贪吃蛇：水果火车）
 - 计划中：`games/lianliankan`（连连看）、`games/ludo`（Ludo）
 - 目标平台：自有网站优先，Poki 随后
 - 游戏模式：纯单人 vs AI；v1 不做热座、不做在线联机

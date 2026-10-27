@@ -6,7 +6,8 @@
 
 ## 1. 建条目与元数据
 
-- 在 CrazyGames 开发者门户创建 Snake 游戏条目，记录后台要求的标题、短描述、长描述、分类、操作说明、支持方向、语言和年龄分级。
+- 在 CrazyGames 开发者门户创建 Fruit Snake 游戏条目，记录后台要求的标题、短描述、长描述、分类、操作说明、支持方向、语言和年龄分级。
+- 标题：英文 `Fruit Snake: Color Trail`，中文 `贪吃蛇：水果火车`。游戏内字标使用短名 `Fruit Snake` / `水果火车`（`game.wordmark`），避免长标题被 `logoMaxWidth` 压小。
 - 英文文案必须完整；当前支持 11 种语言：`en/fr/it/de/es/tr/zh/ja/ko/pt/ru`。
 - 默认英文；SDK locale 可用时按 URL `?lang=` > 玩家显式选择 > SDK locale > 英文的顺序解析。
 - 分类按门户实际选项选择；操作说明写清方向键/WASD、滑动、暂停。
