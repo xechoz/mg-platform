@@ -1,115 +1,79 @@
-# Mini Games
+# mg-platform
 
-一个可复用的 2D 小游戏工程：共享游戏外壳，每个游戏独立构建、独立部署。
+Shared infrastructure for the Mini Games projects. Each game is a separate
+repository that consumes this repo as a `platform/` git submodule pinned to a
+tag.
 
-目前包含：**贪吃蛇：水果火车**（Fruit Snake: Color Trail，可玩）。
+```
+snake ── platform@v4.0.0 ──┐
+ludo  ── platform@v4.0.0 ──┼──> mg-platform
+                           │
+mini-games (site) ─────────┘   downloads release assets, not source
+```
 
-## 环境
+## Contents
 
-- Node.js >= 22.12（开发机为 26）
-- npm（使用 npm workspaces，无需 pnpm）
+- `packages/core` — `@mg/core`: Phaser game shell, scenes, UI, audio, saves,
+  i18n, seeded RNG, debug overlay.
+- `packages/platform` — `@mg/platform`: Web/Poki/CrazyGames adapters and ad
+  channels. This is the only package allowed to touch host SDK globals.
+- `tooling/` — Vite preset, packaging, boundary checks, game repo generator.
+- `templates/game-repo/` — standalone game repository template.
+- `docs/` — architecture, publishing, ads and new-game checklist.
 
-## 常用命令
+## Development
 
 ```bash
 npm install
-
-npm run dev:snake        # 本地开发贪吃蛇，同时监听局域网
-npm run build:snake      # 构建单个游戏到 games/snake/dist
-
-npm run test             # Vitest：规则层单测
-npm run typecheck        # tsc --noEmit
-npm run check            # 类型 + Biome + 依赖边界检查
-
-npm run site             # 构建全部游戏 + 汇总成 dist-site
-npm run new:game -- foo  # 从模板创建 games/foo
+npm run check
+npm run test
+npm run stats
 ```
 
-开发服务器默认监听所有网卡（`tooling/vite.game.ts` 的 `host: true`）。启动后终端会打印 `Network: http://<你的局域网 IP>:5173/`，手机与电脑连同一 Wi-Fi 后直接用浏览器打开该地址即可调试。
-
-dev 端口固定为各游戏配置的端口（贪吃蛇是 5173），不会自动换端口。启动前 `tooling/free-dev-port.ts` 会检查端口：旧的 Vite 进程会被结束；被其他程序占用时直接报错退出，不误杀也不漂移。
-
-本地查看构建产物：
+Create a new game repository:
 
 ```bash
-npm run build:snake
-npm run preview -w @mg/snake
+npm run new:game -- ludo \
+  --dir ../ludo \
+  --title "Ludo" \
+  --port 5174 \
+  --platform-ref v4.0.0
 ```
 
-本地运行已打包的 CrazyGames 版本：
+The generated repo gets its own `package.json`, lockfile, CI, `AGENTS.md`,
+`CHANGELOG.md` and a `platform/` submodule.
+
+## Versioning
+
+Platform versions start at **4.0.0** after the multi-repo split. Games pin a
+tag; platform changes are additive where possible. To upgrade a game:
 
 ```bash
-cd games/snake
-./run-crazygames.sh basic   # http://localhost:8080
-./run-crazygames.sh full    # http://localhost:8081
+# in the game repo
+cd platform
+git fetch --tags
+git checkout v4.1.0
+cd ..
+npm install
+git add platform package-lock.json
+git commit -m "chore: platform v4.1.0"
 ```
 
-脚本会解压对应的 `snake-crazygames-<mode>.zip` 并启动静态服务器；需要先在 `games/snake/dist` 打包出 zip。
+## Release assets
 
-## 移动端全屏
+The platform does not publish games. A game tag produces:
+- `<id>-web.zip` — self-hosted build, includes `game.manifest.json`
+- `<id>-poki.zip`
+- `<id>-crazygames-basic.zip`
+- `<id>-crazygames-full.zip`
 
-- Android / iPad：首次点击「开始」后进入全屏，主菜单即全屏。
-- iPhone Safari：系统不开放网页元素全屏。用分享菜单「添加到主屏幕」启动，可获得无浏览器 UI 的独立窗口；游戏菜单会给出提示。
-- 桌面：不自动全屏，按 F11 即可。
-- Poki 等 iframe 环境：不自动请求全屏，由平台播放器控制。
+The site repository only downloads these assets; it never checks out game
+source.
 
-## 结构
+## Documentation
 
-```
-AGENTS.md      # 项目级 AI 硬规则
-.opencode/
-└─ skills/     # 项目级 AI skill（仅本仓库）
-
-packages/
-├─ core/        # 游戏外壳：场景、UI、音频、存档、i18n、调试
-└─ platform/    # 平台适配：Web / Poki / CrazyGames
-
-games/
-└─ snake/
-   ├─ game.manifest.json   # 标题/描述/主题色，站点与打包共用
-   ├─ src/logic/           # 纯 TS 规则，可单测，不 import Phaser
-   ├─ src/scenes/          # Menu / Game / Hud
-   └─ src/main.ts
-
-tooling/       # Vite 预设、站点构建、边界检查、新游戏生成器
-templates/     # 新游戏模板
-docs/          # 架构、开发清单、发布说明
-```
-
-## 设计原则
-
-公共层只放**基础设施**，不放游戏规则：
-- 可以共享：加载、缩放、场景生命周期、输入原语、音频、存档机制、平台 SDK、UI 组件、随机数。
-- 不共享：回合、棋盘、吃子、计分、关卡、AI、提示、洗牌。这些留在各游戏 `src/logic`。
-- 一个能力只有被至少两个游戏实际使用、且没有游戏专属开关时，才考虑上提到 `packages/`。
-- 公共层不 import 游戏；游戏之间不互相 import；`src/logic` 不 import Phaser。
-
-详见 [docs/architecture.md](docs/architecture.md)。
-
-## 文档
-
-- [AGENTS.md](AGENTS.md) — AI 协作硬规则（项目级，仅本仓库）
-- [docs/architecture.md](docs/architecture.md) — 完整设计、原则、技术要点
-- [docs/new-game-checklist.md](docs/new-game-checklist.md) — 新增游戏清单
-- [docs/publishing.md](docs/publishing.md) — 自有站、Poki 与 CrazyGames 发布
-- [docs/crazygames-next-steps.md](docs/crazygames-next-steps.md) — CrazyGames 提审与发布后清单
-- [.opencode/skills/mini-games-dev/SKILL.md](.opencode/skills/mini-games-dev/SKILL.md) — 项目开发 skill
-
-## 发布
-
-- 自有站：`npm run site` → 部署 `dist-site/`（Cloudflare Pages / GitHub Pages 均可）。
-- Poki：`VITE_PLATFORM=poki npm run build:snake`，将 `games/snake/dist` 打成 zip（`index.html` 在根目录）。
-- CrazyGames Basic Launch（无广告）：
-
-  ```bash
-  VITE_PLATFORM=crazygames npm run build:snake
-  ```
-- CrazyGames Full Launch（启用 CrazyGames 广告）：
-
-  ```bash
-  VITE_PLATFORM=crazygames VITE_AD_CHANNEL=crazygames npm run build:snake
-  ```
-
-  两种构建都会注入 CrazyGames SDK v3；把 `games/snake/dist` 打成 zip，确保 `index.html` 在 zip 根目录。
-
-详见 [docs/publishing.md](docs/publishing.md)；提审步骤见 [docs/crazygames-next-steps.md](docs/crazygames-next-steps.md)。
+- [AGENTS.md](AGENTS.md) — hard rules
+- [docs/architecture.md](docs/architecture.md) — repository layout and boundaries
+- [docs/new-game-checklist.md](docs/new-game-checklist.md) — new game repo
+- [docs/publishing.md](docs/publishing.md) — platform tags, game releases, site
+- [docs/ads.md](docs/ads.md) — ad channel integration

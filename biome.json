@@ -7,7 +7,7 @@
       "!**/dist",
       "!**/*-poki",
       "!release",
-      "!dist-site",
+      "!templates",
       "!**/.opencode/skills",
       "!todo"
     ]

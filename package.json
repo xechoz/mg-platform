@@ -1,29 +1,21 @@
 {
-  "name": "mini-games",
-  "version": "3.0.0",
+  "name": "mg-platform",
+  "version": "4.0.0",
   "private": true,
   "type": "module",
   "engines": {
     "node": ">=22.12"
   },
   "workspaces": [
-    "packages/*",
-    "games/*"
+    "packages/*"
   ],
   "scripts": {
-    "dev:snake": "npm run dev -w @mg/snake",
-    "build:snake": "npm run build -w @mg/snake",
-    "build:games": "npm run build --workspaces --if-present",
-    "package:snake:poki": "node tooling/package-game.ts snake poki",
-    "package:snake:crazy:basic": "node tooling/package-game.ts snake crazygames-basic",
-    "package:snake:crazy:full": "node tooling/package-game.ts snake crazygames-full",
-    "site": "npm run build:games && node tooling/build-site.ts",
-    "new:game": "node tooling/create-game.ts",
-    "stats": "node tooling/count-lines.ts",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && biome check . && node tooling/check-boundaries.ts",
+    "check": "npm run typecheck && biome check . && node tooling/check-platform.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "stats": "node tooling/count-lines.ts",
+    "new:game": "node tooling/create-game-repo.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.2",

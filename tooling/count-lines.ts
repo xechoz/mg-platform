@@ -10,7 +10,7 @@ interface Counts {
   code: number
 }
 
-const CATEGORIES = ['游戏', '公共层', '模板', '工具', '测试'] as const
+const CATEGORIES = ['公共层', '模板', '工具', '测试'] as const
 type Category = (typeof CATEGORIES)[number]
 
 const SOURCE_CATEGORIES: readonly Category[] = CATEGORIES.filter((it) => it !== '测试')
@@ -18,7 +18,6 @@ const SOURCE_CATEGORIES: readonly Category[] = CATEGORIES.filter((it) => it !== 
 function categorize(file: string): Category | undefined {
   if (!file.endsWith('.ts') || file.endsWith('.config.ts')) return undefined
   if (file.endsWith('.test.ts')) return '测试'
-  if (file.startsWith('games/')) return '游戏'
   if (file.startsWith('packages/')) return '公共层'
   if (file.startsWith('templates/')) return '模板'
   if (file.startsWith('tooling/')) return '工具'

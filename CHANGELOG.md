@@ -1,6 +1,20 @@
 # Changelog
 
-## 未发布
+## 4.0.0
+
+### 多仓库拆分
+
+- 平台从原 monorepo 拆为独立仓库 `xechoz/mg-platform`，只保留 `@mg/core`、`@mg/platform`、工具链和游戏模板；游戏移至各自仓库，通过 `platform/` submodule 固定平台 tag。
+- 删除 `games/`、站点构建 `tooling/build-site.ts` 和旧的 `check-boundaries.ts` / `create-game.ts`；站点由 `xechoz/mini-games` 仓库下载 `<id>-web.zip` 发布资产。
+- 新增 `tooling/package-web.ts`（web zip，包含 `game.manifest.json`）、`tooling/check-game.ts`（游戏仓库边界）、`tooling/check-platform.ts`（平台边界）和 `tooling/create-game-repo.ts`（独立游戏仓库生成器）。
+- `tooling/package-game.ts` 改为在游戏仓库根目录运行，输出 `release/<id>-<flavor>.zip`。
+- `@mg/core` / `@mg/platform` 版本提升到 4.0.0；新增 `tsconfig.base.json` 供游戏仓库继承，`tsconfig.json` 只检查平台自身。
+- 游戏模板改为 `templates/game-repo`，包含独立 `package.json`、lockfile 配置、CI（tag 自动发布四个 zip）、`AGENTS.md` 和 `CHANGELOG.md`。
+- 平台 CI 只做 `check` + `test`；不再构建站点。
+
+## 3.x（旧 monorepo 历史）
+
+### 未发布
 
 ### 品牌
 

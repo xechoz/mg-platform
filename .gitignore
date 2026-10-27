@@ -1,6 +1,6 @@
 node_modules/
 dist/
-dist-site/
+release/
 *.log
 .DS_Store
 .env
@@ -8,7 +8,3 @@ dist-site/
 .env.*.local
 coverage/
 .vite/
-games/*/store/
-games/*/*.zip
-games/*/*-poki/
-release/

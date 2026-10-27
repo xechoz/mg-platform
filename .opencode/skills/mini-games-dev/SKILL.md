@@ -1,42 +1,48 @@
 ---
 name: Mini Games Development
-description: Use when adding a game, changing gameplay rules, touching @mg/core or @mg/platform, or making a multi-file feature/fix in the mini-games monorepo. Do not load for single-file copy, color, or layout tweaks; follow the lightweight-task path in AGENTS.md instead.
+description: Use when adding a game, changing gameplay rules, touching @mg/core or @mg/platform, or making a multi-file feature/fix in a mini-games repository. Do not load for single-file copy, color, or layout tweaks; follow the lightweight-task path in AGENTS.md instead.
 ---
 
 # Mini Games Development
 
 ## 适用范围
 
-用于本仓库 `mini-games` 的任何非平凡改动：新增游戏、改玩法、动 `@mg/core` / `@mg/platform`、跨多文件功能、审查边界、修 bug、发布。
+本 skill 同时适用于两类仓库：
 
-轻量改动（文案、颜色、单文件样式/布局，不涉及规则）不要加载本 skill，按 AGENTS.md 的轻量任务路径直接修改并跑检查。
+- **平台仓库** `xechoz/mg-platform`：`@mg/core`、`@mg/platform`、工具链、模板。
+- **游戏仓库** `xechoz/snake`、`xechoz/ludo` 等：通过 `platform/` submodule 固定平台 tag。
 
-所有约定只写在本仓库。**不要修改 `~/.config/opencode`、全局 AGENTS.md 或全局 skills。**
+轻量改动（文案、颜色、单文件样式/布局，不涉及规则）不要加载本 skill，按仓库 `AGENTS.md` 的轻量任务路径直接修改并跑检查。
+
+所有约定只写在当前仓库。**不要修改 `~/.config/opencode`、全局 AGENTS.md 或全局 skills。**
 
 ## 开始前
 
-1. `AGENTS.md` 已由 OpenCode 自动注入，不要重复读。
-2. 只在需要时读文档：改分层/公共层 → `docs/architecture.md`（先看标题，只读相关章节，不要整篇读）；新游戏 → `docs/new-game-checklist.md`；发布 → `docs/publishing.md`；广告 → `docs/ads.md`。
-3. 读目标游戏的 `game.manifest.json`、`src/main.ts`、`src/logic`、`src/scenes`。
+1. 当前仓库的 `AGENTS.md` 已由 OpenCode 自动注入，不要重复读。
+2. 判断仓库类型：
+   - 有 `game.manifest.json` / `src/logic` → 游戏仓库；需要时读 `platform/AGENTS.md`。
+   - 有 `packages/core` / `packages/platform` → 平台仓库；不要在这里找 `games/`。
+3. 只在需要时读文档：架构 → `docs/architecture.md`；新游戏 → `docs/new-game-checklist.md`；发布 → `docs/publishing.md`；广告 → `docs/ads.md`。
 4. 用 `git status` 确认工作区，不要覆盖用户未提交的改动。
 
 ## 第一步：判断改动层级
 
-| 改动                                            | 归属                                  | 额外要求                         |
-| ----------------------------------------------- | ------------------------------------- | -------------------------------- |
-| 玩法、棋盘、回合、计分、AI、关卡、洗牌          | `games/<id>/src/logic`                | 纯 TS + Vitest，不 import Phaser |
-| 该游戏的渲染、动画、HUD、菜单                   | `games/<id>/src/scenes`               | 只读 state，不回写规则           |
-| 加载、缩放、音频、存档、i18n、UI 组件、平台 SDK | `packages/core` / `packages/platform` | 检查所有游戏，CI 全绿            |
-| 新共享抽象                                      | 先证明满足上提标准                    | 否则复制，不建包                 |
+| 改动 | 归属 | 额外要求 |
+| --- | --- | --- |
+| 玩法、棋盘、回合、计分、AI、关卡、洗牌 | 游戏 `src/logic` | 纯 TS + Vitest，不 import Phaser |
+| 该游戏的渲染、动画、HUD、菜单 | 游戏 `src/scenes` | 只读 state，不回写规则 |
+| 加载、缩放、音频、存档、i18n、UI 组件、平台 SDK | 平台 `packages/core` / `packages/platform` | 平台仓库测试全绿，评估所有游戏 |
+| 新共享抽象 | 先证明满足上提标准 | 否则复制，不建包 |
+| 站点卡片/下载/部署 | `xechoz/mini-games` | 只消费 release asset，不 checkout 游戏源码 |
 
 如果需求属于“某个游戏的业务”，不要改公共层。公共层只接受基础设施需求。
 
 ## 工作流
 
-### A. 新增游戏
+### A. 新增游戏仓库
 
-1. `npm run new:game -- <name>`
-2. `npm install`
+1. 在平台仓库运行 `npm run new:game -- <name> --dir ../<name> --port <port> --platform-ref <tag>`。
+2. `cd ../<name> && npm install`。
 3. 修改 `game.manifest.json`、`src/i18n.ts`、`src/main.ts`。
 4. 把 `PlaceholderScene` 改为 `Menu` 场景。
 5. 先写 `src/logic` 和测试，再写 `GameScene` / `HudScene`。
@@ -46,41 +52,69 @@ description: Use when adding a game, changing gameplay rules, touching @mg/core 
 ### B. 游戏功能 / Bug
 
 1. 先定位是规则问题还是表现问题。
-2. 规则问题 → 在 `src/logic` 写失败用例，再修。
+2. 规则问题 → 在游戏 `src/logic` 写失败用例，再修。
 3. 表现问题 → 检查 tick/插值/输入队列/场景生命周期。
 4. 涉及暂停/失焦/恢复时，必须验证停表与 3-2-1 倒计时。
-5. 行为变化更新 `CHANGELOG.md`。
+5. 行为变化更新游戏 `CHANGELOG.md`。
 
-### C. 公共层改动
+### C. 平台改动
 
 1. 明确这是基础设施需求，而不是单个游戏的业务需求。
-2. 列出受影响游戏；至少跑全部游戏的构建与测试。
-3. 保持 API 只增不破；破坏性改动同提交迁移所有调用方。
-4. 更新 `docs/architecture.md` 和 `CHANGELOG.md`。
-5. 不要为单个游戏加 `if (gameId === ...)` 或专属开关。
+2. 平台仓库跑 `npm run check` 和 `npm run test`。
+3. 至少用一个真实游戏仓库验证 submodule 升级路径。
+4. 保持 API 只增不破；破坏性改动需要平台 major + 逐个游戏迁移。
+5. 更新平台 `docs/architecture.md` 和 `CHANGELOG.md`。
+6. 不要为单个游戏加 `if (gameId === ...)` 或专属开关。
 
-### D. 依赖变更
+### D. 游戏升级平台
+
+```bash
+cd platform
+git fetch --tags
+git checkout vX.Y.Z
+cd ..
+npm install
+git add platform package-lock.json
+git commit -m "chore: platform vX.Y.Z"
+```
+
+### E. 依赖变更
 
 1. 说明为什么标准库/已有依赖不够。
 2. 检查体积、许可证、维护状态、浏览器兼容。
 3. 运行时依赖尽量少；开发依赖不得进入产物。
 4. 不擅自升级 Phaser/Vite/TypeScript 大版本。
 
-### E. 发布
+### F. 发布
 
-1. 版本号保持一致：根、游戏、`@mg/core`、`@mg/platform`。
-2. 更新 `CHANGELOG.md`。
-3. 跑完整质量门。
-4. 仅当用户明确要求发布时：commit → push → tag → GitHub Release（附单游戏 zip）。
-5. 确认 CI 在 `main` 和 tag 上都通过。
+- **平台**：更新 `CHANGELOG.md` 和版本号，打 `vX.Y.Z` tag；游戏逐个升级。
+- **游戏**：更新 `CHANGELOG.md` 和 `package.json` 版本，打 `vX.Y.Z` tag；CI 产出四个 zip。
+- **站点**：游戏 Release 完成后再更新 `site/games.json` 的版本。
+- 仅当用户明确要求发布时：commit → push → tag → GitHub Release。
+- 确认 CI 在 `main` 和 tag 上都通过。
 
 ## 质量门
 
+平台仓库：
+
 ```bash
-npm run check        # tsc + Biome + 依赖边界
-npm run test         # Vitest
-npm run build:snake  # 或对应游戏
-npm run site         # 涉及站点/多游戏时
+npm run check
+npm run test
+```
+
+游戏仓库：
+
+```bash
+npm run check
+npm run test
+npm run build
+npm run package:web
+```
+
+站点仓库：
+
+```bash
+npm run site
 ```
 
 浏览器 smoke（桌面 + 手机横屏 + 竖屏）：
@@ -100,7 +134,7 @@ npm run site         # 涉及站点/多游戏时
 - 文案：全部 `services.i18n.t()`，中英文都写；`game.title` 必填。
 - 平台：`services.platform.gameplayStart()` / `gameplayStop()` / `happyTime()`。
 - 广告：只调 `services.ads.showRewarded(placement)`；渠道实现留在 `@mg/platform`，奖励只在 `rewarded` 时发放。详见 `docs/ads.md`。
-- H5 构建：`VITE_AD_CHANNEL=h5games` + `VITE_ADSENSE_CLIENT`；无 ID 时无广告；test mode 不能进 production；`ads.txt` 由 `npm run site` 生成。
+- H5 构建：`VITE_AD_CHANNEL=h5games` + `VITE_ADSENSE_CLIENT`；无 ID 时无广告；test mode 不能进 production；`ads.txt` 由站点构建生成。
 - UI：`Button`、`Modal`、`createPanel`、`textStyle`；不要另造一套风格。
 - 场景用 `onLayoutChange(scene, fn)` 重排，不重启场景；`GameDefinition.design` 只写 `{ base: 720 }`。
 - HUD（分数、暂停）放在棋盘外的空白区，不压缩游戏区；安全区用 `safeAreaInDesign(scene)` 内缩。
@@ -125,7 +159,7 @@ npm run site         # 涉及站点/多游戏时
 - [ ] H5 构建配置了 publisher ID；production 没有 test mode；`ads.txt` 在域名根。
 - [ ] 运行时零外部请求；无 CJK 字体包；Poki 构建无 Dev 模拟代码。
 - [ ] 新增规则边界有测试。
-- [ ] `npm run check` / `test` / 构建通过。
+- [ ] 平台/游戏/站点对应检查通过。
 - [ ] 文档与 `CHANGELOG.md` 已同步。
 
 ## 硬停止
