@@ -10,3 +10,4 @@ coverage/
 .vite/
 games/*/store/
 games/*/*.zip
+games/*/*-poki/
