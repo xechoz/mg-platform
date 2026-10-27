@@ -10,6 +10,7 @@ export type IconName =
   | 'home'
   | 'restart'
   | 'video'
+  | 'bag'
 
 /**
  * Tiny procedural icon set. Keeps the bundle asset-free while still giving
@@ -90,6 +91,12 @@ export function drawIcon(
       )
       break
     }
+    case 'bag':
+      graphics.strokeRoundedRect(-half * 0.72, -half * 0.34, half * 1.44, half * 1.16, half * 0.18)
+      graphics.beginPath()
+      graphics.arc(0, -half * 0.34, half * 0.3, Math.PI, Math.PI * 2)
+      graphics.strokePath()
+      break
     case 'video':
       graphics.lineStyle(line, color, 1)
       graphics.strokeRoundedRect(-half * 0.74, -half * 0.5, half * 1.48, half * 1.0, half * 0.16)
