@@ -1,5 +1,8 @@
 # New game checklist
 
+> Read [`game-development.md`](game-development.md) first for the full process,
+> architecture rules and quality gates.
+
 ## 1. Create the repository
 
 The game must live in its own git repository. Do not add it to
@@ -66,7 +69,8 @@ No Phaser, DOM, audio, ads or `Math.random()` in `src/logic`.
 - `services.createSave({ version, migrate })`.
 - Keys `mg:<gameId>:<name>`.
 - All visible strings in Chinese and English; `game.title` is mandatory.
-- Language priority: `?lang=` > stored choice > `defaultLang`.
+- Language priority: `?lang=` > stored choice > host detection > `defaultLang`;
+  every game defaults to `en`.
 
 ## 6. Verify
 
@@ -81,6 +85,8 @@ npm run package:web
 - Rotation pauses and resumes with a countdown.
 - Pause/blur, restart, menu, high score persistence.
 - No console errors, no external runtime requests.
+- If ads are enabled, satisfy the channel-agnostic invariants in
+  `game-development.md`; channel QA stays in `ads.md`.
 - First-load size ≤ 1.5 MB gzip.
 
 ## 7. Release

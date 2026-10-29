@@ -22,7 +22,7 @@ description: Use when adding a game, changing gameplay rules, touching @mg/core 
 2. 判断仓库类型：
    - 有 `game.manifest.json` / `src/logic` → 游戏仓库；需要时读 `platform/AGENTS.md`。
    - 有 `packages/core` / `packages/platform` → 平台仓库；不要在这里找 `games/`。
-3. 只在需要时读文档：架构 → `docs/architecture.md`；新游戏 → `docs/new-game-checklist.md`；发布 → `docs/publishing.md`；广告 → `docs/ads.md`。
+3. 只在需要时读文档：架构 → `docs/architecture.md`；开发规范与流程 → `docs/game-development.md`；新游戏 → `docs/new-game-checklist.md`；发布 → `docs/publishing.md`；广告 → `docs/ads.md`。
 4. 用 `git status` 确认工作区，不要覆盖用户未提交的改动。
 
 ## 第一步：判断改动层级
@@ -150,7 +150,7 @@ npm run site
 - [ ] 输入队列正常，非法输入被明确拒绝。
 - [ ] 暂停/失焦停表，恢复倒计时。
 - [ ] 存档版本/迁移正确，旧档可读。
-- [ ] 中英文文案完整，默认中文。
+- [ ] 中英文文案完整，默认英文（`defaultLang: 'en'`）。
 - [ ] 短边 720 动态设计空间；横竖屏都可玩，转屏自动暂停。
 - [ ] 广告只在死亡/菜单/结算等边界触发；广告期间停表、静音、锁输入。
 - [ ] 奖励只在 `rewardedBreak()` 返回 `true` 时发放；跳过/失败/拦截不发奖。

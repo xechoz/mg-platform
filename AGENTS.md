@@ -74,7 +74,7 @@
 
 31. 存档必须带 `version`；改字段要提升版本并提供 `migrate`，不能直接破坏旧存档。
 32. 存档键：`mg:<gameId>:<name>`；全局设置键：`mg:settings:v1`。
-33. 语言优先级：URL `?lang=` > 已存选择 > 游戏 `defaultLang`。**不做 navigator 嗅探**；默认中文。
+33. 语言优先级：URL `?lang=` > 已存选择 > 宿主检测（仅平台适配器）> 游戏 `defaultLang`。**不做 navigator 嗅探**；所有游戏统一 `defaultLang: 'en'`。
 34. 每个游戏必须提供 i18n key `game.title`（Boot 加载页依赖）；所有用户可见文案中英文都要有。
 35. 进入实际玩法调用 `platform.gameplayStart()`；菜单/暂停/结算调用 `gameplayStop()`；胜利或新纪录调用 `happyTime()`。
 36. Poki 构建必须单游戏独立、`index.html` 在 zip 根、资源相对路径、无外部请求；未在 Poki Inspector 验证前不要提审。

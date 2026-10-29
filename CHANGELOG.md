@@ -1,5 +1,14 @@
 # Changelog
 
+## 未发布
+
+### 文档
+
+- 新增 `docs/game-development.md`：小游戏从立项到上线的通用规范与流程，覆盖技术栈基线、分层、品类模型、创建步骤、质量门禁、发布与站点上线。
+- 新增 `docs/game-design-template.md`：立项一页纸模板。
+- 统一语言默认值为 `en`：同步更新 `AGENTS.md`、`docs/architecture.md`、`docs/new-game-checklist.md` 和游戏模板。
+- 广告章节区分“渠道无关不变量”和“上架前渠道合规”，渠道细节继续以 `docs/ads.md` 为准。
+
 ## 4.0.1
 
 ### 修复

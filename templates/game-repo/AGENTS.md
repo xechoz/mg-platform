@@ -6,8 +6,9 @@ This repository contains exactly one game. Shared infrastructure lives in the
 ## Read first
 
 1. `platform/AGENTS.md` — platform-wide rules and shared APIs.
-2. This file — game-specific scope.
-3. `src/logic` before changing rules; `src/scenes` before changing rendering.
+2. `platform/docs/game-development.md` — game development spec and process.
+3. This file — game-specific scope.
+4. `src/logic` before changing rules; `src/scenes` before changing rendering.
 
 **Never edit files under `platform/` in this repository.** Platform changes go
 to `xechoz/mg-platform`, get a new tag, and are pulled in by bumping the
@@ -40,6 +41,8 @@ submodule. Do not copy platform source into this repo.
 - Chinese uses the system font stack; do not bundle CJK fonts.
 - Every user-visible string exists in Chinese and English. `game.title` is
   required by the boot scene.
+- Default language is English (`defaultLang: 'en'`); Chinese is available
+  through the picker and `?lang=zh`.
 - Save data has a `version`; changing fields requires a migration.
 - Save keys are `mg:<gameId>:<name>`.
 - Do not commit `node_modules/`, `dist/`, `release/` or secrets.

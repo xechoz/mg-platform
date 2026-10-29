@@ -126,8 +126,9 @@ all asset URLs must be relative.
 - Input queue/buffer; no illegal reversal.
 - Pause on blur/hidden; resume with a 3-2-1 countdown.
 - Saves carry `version` and a migration; keys are `mg:<gameId>:<name>`.
-- Language priority: `?lang=` > stored choice > game default. No navigator
-  sniffing.
+- Language priority: `?lang=` > stored choice > host detection (platform
+  adapters only) > game `defaultLang`. No navigator sniffing; every game
+  defaults to `en`.
 - Zero external runtime requests. Only build-time channel injection may add an
   ad SDK script.
 - Chinese uses system fonts; CJK fonts are not bundled.

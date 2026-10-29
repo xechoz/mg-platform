@@ -19,7 +19,7 @@ mini-games (site) ─────────┘   downloads release assets, not
   channels. This is the only package allowed to touch host SDK globals.
 - `tooling/` — Vite preset, packaging, boundary checks, game repo generator.
 - `templates/game-repo/` — standalone game repository template.
-- `docs/` — architecture, publishing, ads and new-game checklist.
+- `docs/` — architecture, publishing, ads, game development spec and checklists.
 
 ## Development
 
@@ -73,6 +73,8 @@ source.
 ## Documentation
 
 - [AGENTS.md](AGENTS.md) — hard rules
+- [docs/game-development.md](docs/game-development.md) — game development spec and process
+- [docs/game-design-template.md](docs/game-design-template.md) — one-page design template
 - [docs/architecture.md](docs/architecture.md) — repository layout and boundaries
 - [docs/new-game-checklist.md](docs/new-game-checklist.md) — new game repo
 - [docs/publishing.md](docs/publishing.md) — platform tags, game releases, site
