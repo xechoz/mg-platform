@@ -37,7 +37,7 @@ npm run new:game -- ludo \
   --dir ../ludo \
   --title "Ludo" \
   --port 5174 \
-  --platform-ref v4.0.0
+  --platform-ref v4.1.0
 ```
 
 The generated repo gets its own `package.json`, lockfile, CI, `AGENTS.md`,

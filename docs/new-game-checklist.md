@@ -14,7 +14,7 @@ npm run new:game -- ludo \
   --dir ../ludo \
   --title "Ludo" \
   --port 5174 \
-  --platform-ref v4.0.0
+  --platform-ref v4.1.0
 ```
 
 The generator:
@@ -40,6 +40,8 @@ gh repo create xechoz/ludo --public --source=. --remote=origin --push
 
 - `game.manifest.json`: stable `id`, `order`, Chinese/English title and
   description, `themeColor`, tags.
+- `opencode.json`: a symlink to `platform/opencode.json` when the pinned
+  platform tag provides it; do not replace it with a copy.
 - `index.html`: title, theme color, PWA manifest, optional splash.
 - `public/manifest.webmanifest`: name, short name, icons.
 - `package.json`: name `@mg/<id>`, scripts unchanged.

@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { cpSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, readdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
 /**
@@ -65,6 +65,11 @@ if (!existsSync(join(target, 'platform'))) {
     stdio: 'inherit',
   })
   execFileSync('git', ['add', 'platform', '.gitmodules'], { cwd: target, stdio: 'inherit' })
+}
+
+const configPath = join(target, 'opencode.json')
+if (!existsSync(configPath) && existsSync(join(target, 'platform', 'opencode.json'))) {
+  symlinkSync('platform/opencode.json', configPath)
 }
 
 console.log(`created ${target}`)

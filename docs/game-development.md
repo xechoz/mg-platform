@@ -5,6 +5,32 @@
 > **不适用**：`mg-platform` 自身开发、`mini-games` 站点开发、Android/Flutter 原生项目。
 > **事实源**：硬规则以 `AGENTS.md` 为准；广告渠道细节以 `docs/ads.md` 为准。本文负责流程、架构决策和验收方法，不复制硬规则条文。
 
+## 0. 自动加载
+
+规范由平台仓库根目录的 `opencode.json` 统一提供。游戏仓库不复制配置，而是在根目录放一个软链接：
+
+```text
+<game>/opencode.json -> platform/opencode.json
+```
+
+`mg-platform/opencode.json`：
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "docs/game-development.md",
+    "platform/AGENTS.md",
+    "platform/docs/game-development.md"
+  ]
+}
+```
+
+- 平台仓库：加载 `docs/game-development.md`；`platform/...` 不存在，自动跳过。
+- 游戏仓库：加载 `platform/AGENTS.md` 和 `platform/docs/game-development.md`；`docs/game-development.md` 不存在，自动跳过。
+- `platform/` 是固定 tag 的 submodule，每个游戏指向自己锁定的那份配置；升级 submodule 即升级规范。
+- 生成器会在平台 tag 包含 `opencode.json` 时自动创建软链接；已有游戏升级到该 tag 后执行一次 `ln -s platform/opencode.json opencode.json`。
+
 ## 1. 仓库拓扑与职责
 
 | 仓库                 | 职责                                                                 | 依赖方向                 |

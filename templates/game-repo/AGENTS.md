@@ -5,8 +5,10 @@ This repository contains exactly one game. Shared infrastructure lives in the
 
 ## Read first
 
-1. `platform/AGENTS.md` — platform-wide rules and shared APIs.
-2. `platform/docs/game-development.md` — game development spec and process.
+1. `platform/AGENTS.md` — platform-wide rules and shared APIs (auto-loaded via
+   `opencode.json`).
+2. `platform/docs/game-development.md` — game development spec and process
+   (auto-loaded via `opencode.json`).
 3. This file — game-specific scope.
 4. `src/logic` before changing rules; `src/scenes` before changing rendering.
 

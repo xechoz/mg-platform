@@ -1,6 +1,6 @@
 # Changelog
 
-## 未发布
+## 4.1.0
 
 ### 文档
 
@@ -8,6 +8,11 @@
 - 新增 `docs/game-design-template.md`：立项一页纸模板。
 - 统一语言默认值为 `en`：同步更新 `AGENTS.md`、`docs/architecture.md`、`docs/new-game-checklist.md` 和游戏模板。
 - 广告章节区分“渠道无关不变量”和“上架前渠道合规”，渠道细节继续以 `docs/ads.md` 为准。
+
+### 工具
+
+- 游戏仓库不再复制 OpenCode 配置：生成器创建 `opencode.json -> platform/opencode.json` 软链接，所有游戏指向平台同一份 `instructions` 配置。
+- 平台根目录新增 `opencode.json`，同时服务平台与游戏两种上下文（缺失路径自动跳过）。
 
 ## 4.0.1
 
