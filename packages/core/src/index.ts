@@ -40,6 +40,7 @@ export {
   type SfxName,
   type SfxOptions,
   type SfxSampleUrls,
+  type SoundName,
 } from './audio/AudioManager'
 export { DebugOverlay } from './debug/DebugOverlay'
 export { coreI18n } from './i18n/core'

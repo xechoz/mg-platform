@@ -2,8 +2,17 @@ import { peakAmplitude, peakNormalizationGain } from './normalize'
 
 export type SfxName = 'click' | 'eat' | 'die' | 'turn' | 'start' | 'pause' | 'boost' | 'slow'
 
-/** Bundled sample URLs per effect; effects without samples stay fully synthesised. */
-export type SfxSampleUrls = Partial<Record<SfxName, string | readonly string[]>>
+/**
+ * Any sound a game can play. The built-in names keep their synthesised
+ * fallbacks; any other string must be registered through `audioSamples`.
+ */
+export type SoundName = SfxName | (string & Record<never, never>)
+
+/**
+ * Bundled sample URLs per sound. Built-in names override their synthesis;
+ * game-specific names are sample-only and can use any key.
+ */
+export type SfxSampleUrls = Readonly<Record<string, string | readonly string[]>>
 
 type OscType = 'sine' | 'square' | 'triangle' | 'sawtooth'
 
@@ -75,6 +84,12 @@ const SFX_LEVELS: Record<SfxName, number> = {
   slow: 0.6,
 }
 
+const BUILTIN_SFX: ReadonlySet<string> = new Set(Object.keys(SFX_LEVELS))
+
+function isBuiltinSfx(name: string): name is SfxName {
+  return BUILTIN_SFX.has(name)
+}
+
 interface AudioSample {
   buffer: AudioBuffer
   gain: number
@@ -88,8 +103,9 @@ export class AudioManager {
   private ctx: AudioContext | null = null
   private master: GainNode | null = null
   private noiseBuffer: AudioBuffer | null = null
-  private readonly sampleUrls = new Map<SfxName, readonly string[]>()
-  private readonly samples = new Map<SfxName, AudioSample[]>()
+  private readonly sampleUrls = new Map<string, readonly string[]>()
+  private readonly samples = new Map<string, AudioSample[]>()
+  private readonly warnedMissing = new Set<string>()
   private samplesLoading = false
   private enabled: boolean
   private mutedByHost = false
@@ -97,9 +113,7 @@ export class AudioManager {
 
   constructor(enabled: boolean, sampleUrls: SfxSampleUrls = {}) {
     this.enabled = enabled
-    for (const [name, urls] of Object.entries(sampleUrls) as Array<
-      [SfxName, string | readonly string[]]
-    >) {
+    for (const [name, urls] of Object.entries(sampleUrls)) {
       this.sampleUrls.set(name, typeof urls === 'string' ? [urls] : urls)
     }
   }
@@ -156,7 +170,7 @@ export class AudioManager {
     this.loadSamples()
   }
 
-  play(name: SfxName, { pitch = 1, gain = 1 }: SfxOptions = {}): void {
+  play(name: SoundName, { pitch = 1, gain = 1 }: SfxOptions = {}): void {
     if (!this.effectiveEnabled) return
     if (!this.ctx) return
     if (this.ctx.state !== 'running' && this.ctx.state !== 'closed') void this.ctx.resume()
@@ -164,6 +178,11 @@ export class AudioManager {
     const buffers = this.samples.get(name)
     if (buffers) {
       this.playSample(buffers, pitch, gain)
+      return
+    }
+
+    if (!isBuiltinSfx(name)) {
+      this.warnMissing(name)
       return
     }
 
@@ -206,6 +225,12 @@ export class AudioManager {
         this.tone(220, 0.2, { type: 'sine', gain: level * 0.35, endFrequency: 150 })
         break
     }
+  }
+
+  private warnMissing(name: string): void {
+    if (this.warnedMissing.has(name)) return
+    this.warnedMissing.add(name)
+    console.warn(`[audio] No sample registered for sound "${name}".`)
   }
 
   private get effectiveEnabled(): boolean {

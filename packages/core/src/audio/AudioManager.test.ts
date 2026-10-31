@@ -9,6 +9,14 @@ class FakeGainNode {
   readonly connect = vi.fn()
 }
 
+class FakeSource {
+  buffer: unknown = null
+  readonly playbackRate = { value: 1 }
+  readonly connect = vi.fn()
+  readonly start = vi.fn()
+  readonly stop = vi.fn()
+}
+
 class FakeAudioContext {
   static current: FakeAudioContext | null = null
 
@@ -16,6 +24,7 @@ class FakeAudioContext {
   readonly state = 'running'
   readonly destination = {}
   readonly gainNode = new FakeGainNode()
+  readonly sources: FakeSource[] = []
   readonly createGain = vi.fn(() => this.gainNode)
   readonly createWaveShaper = vi.fn(() => ({
     curve: null,
@@ -23,6 +32,15 @@ class FakeAudioContext {
     connect: vi.fn(),
   }))
   readonly createOscillator = vi.fn()
+  readonly createBufferSource = vi.fn(() => {
+    const source = new FakeSource()
+    this.sources.push(source)
+    return source
+  })
+  readonly decodeAudioData = vi.fn(async () => ({
+    numberOfChannels: 1,
+    getChannelData: () => new Float32Array([0.5, -0.5, 0.25, -0.25]),
+  }))
   readonly resume = vi.fn()
 
   constructor() {
@@ -118,5 +136,36 @@ describe('AudioManager host mute', () => {
     audio.play('click')
 
     expect(context.createOscillator).not.toHaveBeenCalled()
+  })
+})
+
+describe('custom sounds', () => {
+  it('plays a game-specific sample registered by name', async () => {
+    installAudioContext()
+    const fetchMock = vi.fn(async () => ({ arrayBuffer: async () => new ArrayBuffer(16) }))
+    vi.stubGlobal('fetch', fetchMock)
+    const audio = new AudioManager(true, { fishSplash: '/fish-splash.wav' })
+    audio.unlock()
+    const context = currentContext()
+
+    await vi.waitFor(() => {
+      audio.play('fishSplash')
+      expect(context.sources.length).toBe(1)
+    })
+    expect(fetchMock).toHaveBeenCalledWith('/fish-splash.wav')
+    expect(context.sources[0]?.start).toHaveBeenCalled()
+  })
+
+  it('ignores an unregistered custom sound without synthesising it', () => {
+    installAudioContext()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const audio = new AudioManager(true)
+    audio.unlock()
+    const context = currentContext()
+
+    expect(() => audio.play('notRegistered')).not.toThrow()
+    expect(context.createOscillator).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledTimes(1)
+    warn.mockRestore()
   })
 })
