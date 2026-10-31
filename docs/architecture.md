@@ -132,7 +132,7 @@ all asset URLs must be relative.
 - Zero external runtime requests. Only build-time channel injection may add an
   ad SDK script.
 - Chinese uses system fonts; CJK fonts are not bundled.
-- First-load target ≤ 1.5 MB gzip per game.
+- First-load target ≤ 2 MB gzip per game.
 
 ## Platform upgrades
 

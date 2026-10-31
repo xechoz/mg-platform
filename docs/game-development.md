@@ -58,7 +58,7 @@
 | 平台分发    | git submodule     | 固定 `mg-platform` tag，不改 `platform/` |
 | 运行时      | 浏览器            | 零外部请求                               |
 | 设计空间    | 短边 720          | `Scale.FIT + CENTER_BOTH`                |
-| 首包预算    | ≤ 1.5 MB gzip     | Phaser 本身约 370 KB gzip                |
+| 首包预算    | ≤ 2 MB gzip       | Phaser 本身约 370 KB gzip                |
 
 规则：
 - 新增运行时依赖前先确认必要性、体积、许可证。
@@ -397,7 +397,7 @@ npm run package:web
 - `AGENTS.md`、`README.md`、`CHANGELOG.md` 与代码一致（存档版本、脚本、平台 tag 不能写旧）。
 - 无 `node_modules/`、`dist/`、`release/`、密钥提交。
 - 运行时无新增外部请求。
-- 首包 ≤ 1.5 MB gzip。
+- 首包 ≤ 2 MB gzip。
 
 ## 12. 反模式
 
@@ -434,7 +434,7 @@ npm run package:web
 - [ ] 广告只走 `services.ads`，标准路径可用
 - [ ] `npm run check/test/build/package:web` 通过
 - [ ] 桌面/竖屏/横屏/旋转/失焦验收通过
-- [ ] 无外部请求，首包 ≤ 1.5 MB gzip
+- [ ] 无外部请求，首包 ≤ 2 MB gzip
 - [ ] `CHANGELOG.md`、版本号、`AGENTS.md` 已同步
 
 完整的建仓流程见 [`new-game-checklist.md`](new-game-checklist.md)。

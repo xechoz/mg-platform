@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.2.0
+
+### 文档
+
+- 首包体积目标从 1.5 MB gzip 放宽到 2 MB gzip：Phaser 约 370 KB，背景音乐通常再占 1–1.5 MB，1.5 MB 实际上不允许游戏带一段两分钟以上的音乐。同步更新 `AGENTS.md`、`docs/architecture.md`、`docs/game-development.md`、`docs/new-game-checklist.md` 和 `mini-games-dev` skill。
+- 体积目标仍然只是文档约束，工具链不做强制检查。
+
 ## 4.1.0
 
 ### 文档

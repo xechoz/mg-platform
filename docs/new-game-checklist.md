@@ -89,7 +89,7 @@ npm run package:web
 - No console errors, no external runtime requests.
 - If ads are enabled, satisfy the channel-agnostic invariants in
   `game-development.md`; channel QA stays in `ads.md`.
-- First-load size ≤ 1.5 MB gzip.
+- First-load size ≤ 2 MB gzip.
 
 ## 7. Release
 
