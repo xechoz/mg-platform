@@ -83,7 +83,9 @@ npm run build
 npm run package:web
 ```
 
-- Desktop 16:9, phone landscape and portrait are playable.
+- Desktop 16:9, phone landscape and portrait are playable. If mobile defaults
+  to landscape, the lock must be best-effort: unsupported devices, iframes and
+  fullscreen exit fall back to the device's current orientation.
 - Rotation pauses and resumes with a countdown.
 - Pause/blur, restart, menu, high score persistence.
 - No console errors, no external runtime requests.
