@@ -20,26 +20,3 @@ export function glossMetrics(
  * thickness that reads as 3D is untouched.
  */
 export const LIP_SIDE_INSET = 2
-
-/** One soft step of a faked blurred drop shadow, drawn nearest-first. */
-export interface ShadowStep {
-  /** Vertical offset of this step from the face. */
-  readonly dy: number
-  /** Fill alpha of this step. Steps sum back to the style alpha. */
-  readonly alpha: number
-}
-
-/**
- * Three-step falloff that reads as a soft shadow. A single hard-edged offset
- * shape looks like a second solid button behind the face; spreading the same
- * total alpha over near-to-far steps fakes the blur Graphics cannot do.
- * Same-colour translucent steps only ever darken, so unlike contrasting
- * offset layers they cannot draw visible kinks.
- */
-export function shadowSteps(offset: number, alpha: number): readonly ShadowStep[] {
-  return [
-    { dy: offset * 0.4, alpha: alpha * 0.5 },
-    { dy: offset * 0.7, alpha: alpha * 0.3 },
-    { dy: offset, alpha: alpha * 0.2 },
-  ]
-}

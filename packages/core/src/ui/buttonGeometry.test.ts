@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { glossMetrics, LIP_SIDE_INSET, shadowSteps } from './buttonGeometry'
+import { glossMetrics, LIP_SIDE_INSET } from './buttonGeometry'
 
 describe('glossMetrics', () => {
   it('clamps the gloss radius to half the gloss height', () => {
@@ -34,22 +34,5 @@ describe('glossMetrics', () => {
     ] as const) {
       expect((lip * lip) / (2 * r)).toBeLessThan(LIP_SIDE_INSET)
     }
-  })
-})
-
-describe('shadowSteps', () => {
-  it('spreads the style alpha over near-to-far steps ending at the offset', () => {
-    const steps = shadowSteps(10, 0.16)
-    expect(steps).toHaveLength(3)
-    expect(steps.map((step) => step.dy)).toEqual([4, 7, 10])
-    const total = steps.reduce((sum, step) => sum + step.alpha, 0)
-    expect(total).toBeCloseTo(0.16, 10)
-    for (const step of steps) expect(step.alpha).toBeGreaterThan(0)
-  })
-
-  it('keeps the soft variant subtle', () => {
-    const steps = shadowSteps(4, 0.1)
-    expect(steps[2]?.dy).toBeCloseTo(4, 10)
-    expect(steps.reduce((sum, step) => sum + step.alpha, 0)).toBeCloseTo(0.1, 10)
   })
 })
