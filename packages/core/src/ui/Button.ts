@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { glossMetrics, LIP_SIDE_INSET } from './buttonGeometry'
+import { LIP_SIDE_INSET } from './buttonGeometry'
 import { drawIcon, type IconName } from './icons'
 import { cssColor, mixColor, type Theme, textStyle } from './theme'
 
@@ -37,8 +37,6 @@ interface VariantStyle {
   lip: number
   shadowAlpha: number
   shadowOffset: number
-  /** Top gloss strength. */
-  gloss: number
   /** Draw a quiet 1px edge instead of an ink outline. */
   softEdge: boolean
 }
@@ -49,12 +47,11 @@ const VARIANT_STYLES: Record<ButtonVariant, VariantStyle> = {
     lip: 0,
     shadowAlpha: 0.08,
     shadowOffset: 5,
-    gloss: 0.12,
     softEdge: false,
   },
-  danger: { outline: 0, lip: 0, shadowAlpha: 0.08, shadowOffset: 5, gloss: 0.12, softEdge: false },
-  soft: { outline: 0, lip: 0, shadowAlpha: 0.06, shadowOffset: 3, gloss: 0, softEdge: true },
-  ghost: { outline: 0, lip: 0, shadowAlpha: 0, shadowOffset: 0, gloss: 0, softEdge: false },
+  danger: { outline: 0, lip: 0, shadowAlpha: 0.08, shadowOffset: 5, softEdge: false },
+  soft: { outline: 0, lip: 0, shadowAlpha: 0.06, shadowOffset: 3, softEdge: true },
+  ghost: { outline: 0, lip: 0, shadowAlpha: 0, shadowOffset: 0, softEdge: false },
 }
 
 export class Button extends Phaser.GameObjects.Container {
@@ -269,18 +266,6 @@ export class Button extends Phaser.GameObjects.Container {
         width - 1,
         height - 1,
         radius,
-      )
-    }
-
-    if (style.gloss > 0) {
-      const gloss = glossMetrics(height, radius)
-      this.background.fillStyle(this.theme.highlight, style.gloss)
-      this.background.fillRoundedRect(
-        -width / 2 + 10,
-        -height / 2 + 7 + press,
-        width - 20,
-        gloss.h,
-        gloss.r,
       )
     }
 
