@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { glossMetrics } from './buttonGeometry'
+import { glossMetrics, LIP_SIDE_INSET } from './buttonGeometry'
 import { drawIcon, type IconName } from './icons'
 import { cssColor, mixColor, type Theme, textStyle } from './theme'
 
@@ -241,7 +241,13 @@ export class Button extends Phaser.GameObjects.Container {
 
     if (lip > 0) {
       this.background.fillStyle(mixColor(face, this.theme.ink, 0.26), 1)
-      this.background.fillRoundedRect(-width / 2, -height / 2 + lip + press, width, height, radius)
+      this.background.fillRoundedRect(
+        -width / 2 + LIP_SIDE_INSET,
+        -height / 2 + lip + press,
+        width - LIP_SIDE_INSET * 2,
+        height,
+        radius,
+      )
     }
 
     if (this.variant === 'ghost') {

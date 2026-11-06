@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { glossMetrics } from './buttonGeometry'
+import { glossMetrics, LIP_SIDE_INSET } from './buttonGeometry'
 
 describe('glossMetrics', () => {
   it('clamps the gloss radius to half the gloss height', () => {
@@ -19,6 +19,20 @@ describe('glossMetrics', () => {
     for (const height of [34, 46, 48, 54, 62, 96.1]) {
       const gloss = glossMetrics(height, height / 2)
       expect(gloss.r).toBeLessThanOrEqual(gloss.h / 2)
+    }
+  })
+
+  it('insets the lip past its worst side wedge', () => {
+    // Offset stadiums cross with a wedge ~lip²/(2r) wide; 6-unit lip and a
+    // 12-unit compact face radius is the worst production case.
+    for (const [lip, r] of [
+      [6, 12],
+      [6, 17],
+      [6, 31],
+      [6, 48],
+      [4, 12],
+    ] as const) {
+      expect((lip * lip) / (2 * r)).toBeLessThan(LIP_SIDE_INSET)
     }
   })
 })
