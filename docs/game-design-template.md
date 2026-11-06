@@ -15,6 +15,7 @@
 - **One-line pitch**:
 - **Genre / reference**:
 - **Mode** (endless / level, pick one):
+- **Theme override** (none by default; if any, state the reason):
 - **Target session** (e.g. 2–5 min):
 
 ## Core loop

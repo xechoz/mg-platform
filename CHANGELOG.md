@@ -8,6 +8,7 @@
 - 新增 `docs/art-standard.md`：风格锁定、调色板、形状与光照、资产规格、动画时长与打击感预算。
 - `opencode.json` 同时加载两份新标准；游戏仓库升级平台 tag 后自动生效。
 - `game-design-template.md` 增加 `Mode` 与 `Core verb` 字段，并链接到两份标准。
+- 明确颜色规则：主色必须来自项目 `theme`，禁止把 Claude 橙（`#D97757` / `#CC785C` / `#C15F3C`）作为默认强调色；验收增加对应检查项。
 - `game-development.md`、`README.md`、`new-game-checklist.md` 同步文档入口。
 
 ## 4.4.0
