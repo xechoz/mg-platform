@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.4.3
+
+### 变更
+
+- `Button` 去掉黑色描边：`primary` / `danger` 的 `outline` 从 3 改为 0，不再绘制 ink 外圈；`soft` / `ghost` 本来就没有描边，不受影响。阴影、底部厚度、高光保留。
+
 ## 4.4.2
 
 ### 修复

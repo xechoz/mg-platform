@@ -45,14 +45,14 @@ interface VariantStyle {
 
 const VARIANT_STYLES: Record<ButtonVariant, VariantStyle> = {
   primary: {
-    outline: 3,
+    outline: 0,
     lip: 6,
     shadowAlpha: 0.16,
     shadowOffset: 10,
     gloss: 0.12,
     softEdge: false,
   },
-  danger: { outline: 3, lip: 6, shadowAlpha: 0.16, shadowOffset: 10, gloss: 0.12, softEdge: false },
+  danger: { outline: 0, lip: 6, shadowAlpha: 0.16, shadowOffset: 10, gloss: 0.12, softEdge: false },
   soft: { outline: 0, lip: 0, shadowAlpha: 0.1, shadowOffset: 4, gloss: 0, softEdge: true },
   ghost: { outline: 0, lip: 0, shadowAlpha: 0, shadowOffset: 0, gloss: 0, softEdge: false },
 }
