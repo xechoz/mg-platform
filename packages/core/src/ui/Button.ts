@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { glossMetrics } from './buttonGeometry'
 import { drawIcon, type IconName } from './icons'
 import { cssColor, mixColor, type Theme, textStyle } from './theme'
 
@@ -266,13 +267,14 @@ export class Button extends Phaser.GameObjects.Container {
     }
 
     if (style.gloss > 0) {
+      const gloss = glossMetrics(height, radius)
       this.background.fillStyle(this.theme.highlight, style.gloss)
       this.background.fillRoundedRect(
         -width / 2 + 10,
         -height / 2 + 7 + press,
         width - 20,
-        Math.max(6, height * 0.14),
-        Math.max(4, radius * 0.45),
+        gloss.h,
+        gloss.r,
       )
     }
 

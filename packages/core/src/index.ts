@@ -56,6 +56,7 @@ export {
   type ButtonOptions,
   type ButtonVariant,
 } from './ui/Button'
+export { glossMetrics } from './ui/buttonGeometry'
 export { drawIcon, type IconName } from './ui/icons'
 export { Modal, type ModalAction, type ModalOptions } from './ui/Modal'
 export { createPanel } from './ui/panel'
