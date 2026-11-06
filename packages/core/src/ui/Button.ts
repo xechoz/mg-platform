@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { glossMetrics, LIP_SIDE_INSET } from './buttonGeometry'
+import { glossMetrics, LIP_SIDE_INSET, shadowSteps } from './buttonGeometry'
 import { drawIcon, type IconName } from './icons'
 import { cssColor, mixColor, type Theme, textStyle } from './theme'
 
@@ -46,13 +46,13 @@ interface VariantStyle {
 const VARIANT_STYLES: Record<ButtonVariant, VariantStyle> = {
   primary: {
     outline: 0,
-    lip: 6,
+    lip: 0,
     shadowAlpha: 0.16,
     shadowOffset: 10,
     gloss: 0.12,
     softEdge: false,
   },
-  danger: { outline: 0, lip: 6, shadowAlpha: 0.16, shadowOffset: 10, gloss: 0.12, softEdge: false },
+  danger: { outline: 0, lip: 0, shadowAlpha: 0.16, shadowOffset: 10, gloss: 0.12, softEdge: false },
   soft: { outline: 0, lip: 0, shadowAlpha: 0.1, shadowOffset: 4, gloss: 0, softEdge: true },
   ghost: { outline: 0, lip: 0, shadowAlpha: 0, shadowOffset: 0, gloss: 0, softEdge: false },
 }
@@ -224,8 +224,10 @@ export class Button extends Phaser.GameObjects.Container {
 
     if (style.shadowAlpha > 0) {
       const offset = Math.max(2, style.shadowOffset - (this.pressed ? 4 : 0))
-      this.background.fillStyle(this.theme.shadow, style.shadowAlpha)
-      this.background.fillRoundedRect(-width / 2, -height / 2 + offset, width, height, radius)
+      for (const step of shadowSteps(offset, style.shadowAlpha)) {
+        this.background.fillStyle(this.theme.shadow, step.alpha)
+        this.background.fillRoundedRect(-width / 2, -height / 2 + step.dy, width, height, radius)
+      }
     }
 
     if (style.outline > 0) {

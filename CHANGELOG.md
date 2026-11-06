@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.4.4
+
+### 变更
+
+- `Button` 扁平化：`primary` / `danger` 的 `lip` 从 6 改为 0，不再绘制整体下移的暗色重叠层；按压下沉自动走现成的 1px 分支。`soft` / `ghost` 本来就没有唇层。
+- `Button` 投影改三层步进柔边：单层硬边偏移块看着像第二个实心按钮；新增纯函数 `shadowSteps(offset, alpha)`（`@mg/core` 导出）把同等总 alpha 按近到远铺成三层，作用到所有带投影的 variant（`primary` / `danger` / `soft`），附单测。
+
 ## 4.4.3
 
 ### 变更
