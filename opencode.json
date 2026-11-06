@@ -2,7 +2,11 @@
   "$schema": "https://opencode.ai/config.json",
   "instructions": [
     "docs/game-development.md",
+    "docs/game-design-standard.md",
+    "docs/art-standard.md",
     "platform/AGENTS.md",
-    "platform/docs/game-development.md"
+    "platform/docs/game-development.md",
+    "platform/docs/game-design-standard.md",
+    "platform/docs/art-standard.md"
   ]
 }

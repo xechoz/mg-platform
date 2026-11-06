@@ -160,6 +160,8 @@ createGame({
 - 先用 Phaser Graphics 做可玩原型，再替换正式素材。
 - 验收标准写成可执行的句子，后续直接变成 QA 矩阵。
 
+详细设计标准见 [`game-design-standard.md`](game-design-standard.md)：玩法范围、难度曲线、文字预算、交互预算、界面规则、性能预算与验收清单。美术与动画见 [`art-standard.md`](art-standard.md)。
+
 ## 6. 创建游戏：标准流程
 
 ### 6.1 阶段与退出条件
@@ -294,6 +296,7 @@ npm run check && npm run test
 
 ## 7. 玩法与交互规范
 
+> 数值上限、难度曲线、文字与交互预算见 [`game-design-standard.md`](game-design-standard.md)。
 - 固定步进 + 插值；规则速度不随帧率变化。
 - 输入队列/缓冲；拒绝非法反向；输入不能被吞掉或延迟到死亡后。
 - 失焦、切标签页、暂停必须停表；恢复给 3-2-1 倒计时。
@@ -309,6 +312,7 @@ npm run check && npm run test
 
 ## 8. 视觉、音频与资源
 
+> 风格锁定、调色板、资产规格、动画时长与手感见 [`art-standard.md`](art-standard.md)。
 - 设计空间短边 720，长边随视口；`Scale.FIT + CENTER_BOTH`。
 - 占位阶段优先 Phaser Graphics 程序化绘制。
 - 正式素材优先 CC0；每个外部素材记录许可证（如 `*.LICENSE.txt`）。

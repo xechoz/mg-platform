@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.5.0
+
+### 文档
+
+- 新增 `docs/game-design-standard.md`：玩法、文字、交互、界面、性能与验收标准。包含无限模式与关卡制两套难度曲线、范围硬上限、六项可玩性测试、P0/P1/P2 清单、原语 / 片段 / 关卡拆解规范与本地埋点闭环。
+- 新增 `docs/art-standard.md`：风格锁定、调色板、形状与光照、资产规格、动画时长与打击感预算。
+- `opencode.json` 同时加载两份新标准；游戏仓库升级平台 tag 后自动生效。
+- `game-design-template.md` 增加 `Mode` 与 `Core verb` 字段，并链接到两份标准。
+- `game-development.md`、`README.md`、`new-game-checklist.md` 同步文档入口。
+
 ## 4.4.0
 
 ### 文档

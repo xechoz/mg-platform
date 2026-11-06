@@ -74,6 +74,8 @@ source.
 
 - [AGENTS.md](AGENTS.md) — hard rules
 - [docs/game-development.md](docs/game-development.md) — game development spec and process
+- [docs/game-design-standard.md](docs/game-design-standard.md) — gameplay, text, interaction, UI and acceptance standards
+- [docs/art-standard.md](docs/art-standard.md) — visual style, asset and animation standards
 - [docs/game-design-template.md](docs/game-design-template.md) — one-page design template
 - [docs/architecture.md](docs/architecture.md) — repository layout and boundaries
 - [docs/new-game-checklist.md](docs/new-game-checklist.md) — new game repo

@@ -2,6 +2,10 @@
 
 > Fill this in before writing production code. Keep it to one page. If a field
 > is unknown, write the assumption and mark it as open.
+>
+> Quality gates: [`game-design-standard.md`](game-design-standard.md) for
+> gameplay, text, interaction and UI; [`art-standard.md`](art-standard.md) for
+> visual style and animation.
 
 ## Identity
 
@@ -10,10 +14,12 @@
 - **English name**:
 - **One-line pitch**:
 - **Genre / reference**:
+- **Mode** (endless / level, pick one):
 - **Target session** (e.g. 2–5 min):
 
 ## Core loop
 
+- **Core verb** (exactly one):
 - **Player repeats** (the 30-second loop):
 - **Win condition**:
 - **Lose condition**:

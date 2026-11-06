@@ -1,7 +1,9 @@
 # New game checklist
 
 > Read [`game-development.md`](game-development.md) first for the full process,
-> architecture rules and quality gates.
+> architecture rules and quality gates. Design quality gates live in
+> [`game-design-standard.md`](game-design-standard.md) and
+> [`art-standard.md`](art-standard.md).
 
 ## 1. Create the repository
 
